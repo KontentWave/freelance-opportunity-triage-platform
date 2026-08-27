@@ -8,6 +8,7 @@ use App\Domain\Opportunities\Enums\ContractType;
 use App\Domain\Opportunities\Enums\EmailParseErrorCode;
 use App\Domain\Opportunities\Enums\OpportunityProvider;
 use App\Domain\Opportunities\Exceptions\EmailParseException;
+use Carbon\CarbonImmutable;
 use Throwable;
 use ZBateson\MailMimeParser\Header\AddressHeader;
 use ZBateson\MailMimeParser\Header\HeaderConsts;
@@ -17,9 +18,8 @@ use ZBateson\MailMimeParser\MailMimeParser;
 final class UpworkJobAlertParser implements OpportunityEmailParser
 {
     public function __construct(
-        private readonly MailMimeParser $mimeParser = new MailMimeParser()
-    ) {
-    }
+        private readonly MailMimeParser $mimeParser = new MailMimeParser
+    ) {}
 
     public function parse(string $rawEmail): ParsedOpportunity
     {
@@ -40,8 +40,10 @@ final class UpworkJobAlertParser implements OpportunityEmailParser
         $jobUrl = $this->extractJobUrl($plainText);
         [$externalJobId, $canonicalUrl] = $this->normalizeJobUrl($jobUrl);
         [$hourlyMin, $hourlyMax, $estimatedDuration] = $this->extractHourlyTerms($plainText);
+        $postedOn = $this->extractPostedOn($plainText, $message);
         $excerpt = $this->extractExcerpt($plainText);
         [$skills, $hiddenSkillCount] = $this->extractSkills($plainText);
+        [$paymentVerified, $clientRating, $clientSpendUsd, $clientSpendApproximate, $clientCountry] = $this->extractClientSummary($plainText);
 
         return new ParsedOpportunity(
             provider: OpportunityProvider::UpworkEmail,
@@ -54,15 +56,15 @@ final class UpworkJobAlertParser implements OpportunityEmailParser
             hourlyMax: $hourlyMax,
             currency: (string) config('opportunity_sources.upwork.currency'),
             estimatedDuration: $estimatedDuration,
-            postedOn: null,
+            postedOn: $postedOn,
             excerpt: $excerpt,
             skills: $skills,
             hiddenSkillCount: $hiddenSkillCount,
-            paymentVerified: null,
-            clientRating: null,
-            clientSpendUsd: null,
-            clientSpendApproximate: false,
-            clientCountry: null,
+            paymentVerified: $paymentVerified,
+            clientRating: $clientRating,
+            clientSpendUsd: $clientSpendUsd,
+            clientSpendApproximate: $clientSpendApproximate,
+            clientCountry: $clientCountry,
             templateFingerprint: (string) config('opportunity_sources.upwork.template_fingerprint'),
         );
     }
@@ -95,7 +97,12 @@ final class UpworkJobAlertParser implements OpportunityEmailParser
         }
 
         $addresses = $fromHeader->getAddresses();
-        $fromAddress = $addresses[0]->getEmail() ?? null;
+
+        if ($addresses === []) {
+            throw new EmailParseException(EmailParseErrorCode::UnsupportedSender);
+        }
+
+        $fromAddress = $addresses[0]->getEmail();
 
         if (strtolower((string) $fromAddress) !== strtolower((string) config('opportunity_sources.upwork.from_address'))) {
             throw new EmailParseException(EmailParseErrorCode::UnsupportedSender);
@@ -171,7 +178,7 @@ final class UpworkJobAlertParser implements OpportunityEmailParser
 
         return [
             $externalJobId,
-            'https://' . $host . '/jobs/~' . $externalJobId,
+            'https://'.$host.'/jobs/~'.$externalJobId,
         ];
     }
 
@@ -219,7 +226,7 @@ final class UpworkJobAlertParser implements OpportunityEmailParser
                 continue;
             }
 
-            if (preg_match('/^(Skills:|View job details:)/i', $trimmedLine) === 1) {
+            if (preg_match('/^(Skills:|Payment verified|Rating:|Spent:|Country:|View job details:)/i', $trimmedLine) === 1) {
                 break;
             }
 
@@ -284,6 +291,65 @@ final class UpworkJobAlertParser implements OpportunityEmailParser
         return [$skills, $hiddenSkillCount];
     }
 
+    private function extractPostedOn(string $plainText, IMessage $message): ?CarbonImmutable
+    {
+        if (preg_match('/^Posted\s+on:\s*([A-Za-z]{3,9})\s+(\d{1,2})$/mi', $plainText, $matches) !== 1) {
+            return null;
+        }
+
+        try {
+            $messageDate = CarbonImmutable::parse((string) $message->getHeaderValue(HeaderConsts::DATE))->utc();
+        } catch (Throwable) {
+            return null;
+        }
+
+        $month = $matches[1];
+        $day = (int) $matches[2];
+        $candidate = CarbonImmutable::createFromFormat('!M j Y', $month.' '.$day.' '.$messageDate->year, 'UTC');
+
+        if ($candidate === null) {
+            $candidate = CarbonImmutable::createFromFormat('!F j Y', $month.' '.$day.' '.$messageDate->year, 'UTC');
+        }
+
+        if ($candidate === null) {
+            return null;
+        }
+
+        if ($candidate->greaterThan($messageDate->startOfDay())) {
+            $candidate = $candidate->subYear();
+        }
+
+        return $candidate;
+    }
+
+    /**
+     * @return array{0: ?bool, 1: ?string, 2: ?string, 3: bool, 4: ?string}
+     */
+    private function extractClientSummary(string $plainText): array
+    {
+        $paymentVerified = preg_match('/^Payment verified$/mi', $plainText) === 1 ? true : null;
+        $clientRating = null;
+        $clientSpendUsd = null;
+        $clientSpendApproximate = false;
+        $clientCountry = null;
+
+        if (preg_match('/^Rating:\s*(\d(?:\.\d{1,2})?)\s+of\s+5$/mi', $plainText, $matches) === 1) {
+            $clientRating = number_format((float) $matches[1], 2, '.', '');
+        }
+
+        if (preg_match('/^Spent:\s*\$(\d+(?:\.\d+)?)\s*([KMB])?$/mi', $plainText, $matches) === 1) {
+            $amount = (string) $matches[1];
+            $suffix = strtoupper((string) ($matches[2] ?? ''));
+            [$clientSpendUsd, $clientSpendApproximate] = $this->normalizeUsdAmount($amount, $suffix);
+        }
+
+        if (preg_match('/^Country:\s*(.+)$/mi', $plainText, $matches) === 1) {
+            $clientCountry = substr($this->normalizeWhitespace($this->decodeEntities(trim($matches[1]))), 0, 100);
+        }
+
+        return [$paymentVerified, $clientRating, $clientSpendUsd, $clientSpendApproximate, $clientCountry];
+    }
+
     /**
      * @return array{0: ?string, 1: ?string, 2: ?string}
      */
@@ -316,6 +382,24 @@ final class UpworkJobAlertParser implements OpportunityEmailParser
         }
 
         return [$hourlyMin, $hourlyMax, $estimatedDuration];
+    }
+
+    /**
+     * @return array{0: ?string, 1: bool}
+     */
+    private function normalizeUsdAmount(string $amount, string $suffix): array
+    {
+        $multiplier = match ($suffix) {
+            'K' => 1000,
+            'M' => 1000000,
+            'B' => 1000000000,
+            default => 1,
+        };
+
+        return [
+            number_format((float) $amount * $multiplier, 2, '.', ''),
+            $suffix !== '',
+        ];
     }
 
     private function decodeEntities(string $value): string

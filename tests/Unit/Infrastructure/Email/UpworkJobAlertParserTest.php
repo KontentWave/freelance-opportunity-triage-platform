@@ -7,6 +7,7 @@ use App\Domain\Opportunities\Enums\EmailParseErrorCode;
 use App\Domain\Opportunities\Enums\OpportunityProvider;
 use App\Domain\Opportunities\Exceptions\EmailParseException;
 use App\Infrastructure\Email\UpworkJobAlertParser;
+use Carbon\CarbonImmutable;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -15,7 +16,7 @@ final class UpworkJobAlertParserTest extends TestCase
     #[Test]
     public function it_parses_each_supported_hourly_fixture(): void
     {
-        $parser = new UpworkJobAlertParser();
+        $parser = new UpworkJobAlertParser;
 
         foreach ([
             'hourly-client-success.eml',
@@ -38,7 +39,7 @@ final class UpworkJobAlertParserTest extends TestCase
     #[Test]
     public function it_converts_a_zero_rate_range_to_unknown(): void
     {
-        $parser = new UpworkJobAlertParser();
+        $parser = new UpworkJobAlertParser;
 
         $parsed = $parser->parse($this->fixture('hourly-unknown-rate.eml'));
 
@@ -50,7 +51,7 @@ final class UpworkJobAlertParserTest extends TestCase
     #[Test]
     public function it_decodes_html_entities_and_normalizes_whitespace(): void
     {
-        $parser = new UpworkJobAlertParser();
+        $parser = new UpworkJobAlertParser;
 
         $parsed = $parser->parse($this->fixture('hourly-client-success.eml'));
 
@@ -61,7 +62,7 @@ final class UpworkJobAlertParserTest extends TestCase
     #[Test]
     public function it_extracts_visible_skills_and_the_hidden_skill_count(): void
     {
-        $parser = new UpworkJobAlertParser();
+        $parser = new UpworkJobAlertParser;
 
         $parsed = $parser->parse($this->fixture('hourly-client-success.eml'));
 
@@ -74,9 +75,41 @@ final class UpworkJobAlertParserTest extends TestCase
     }
 
     #[Test]
+    public function it_expands_rounded_client_spend_without_claiming_precision(): void
+    {
+        $parser = new UpworkJobAlertParser;
+
+        $parsed = $parser->parse($this->fixture('hourly-client-success.eml'));
+
+        $this->assertTrue($parsed->paymentVerified);
+        $this->assertSame('4.75', $parsed->clientRating);
+        $this->assertSame('79000.00', $parsed->clientSpendUsd);
+        $this->assertTrue($parsed->clientSpendApproximate);
+        $this->assertSame('United States', $parsed->clientCountry);
+    }
+
+    #[Test]
+    public function it_infers_the_nearest_non_future_posting_date(): void
+    {
+        $parser = new UpworkJobAlertParser;
+        $rawEmail = str_replace(
+            ['Date: Wed, 27 Aug 2026 10:15:00 +0000', 'Posted on: Aug 26'],
+            ['Date: Fri, 02 Jan 2026 10:15:00 +0000', 'Posted on: Dec 31'],
+            $this->fixture('hourly-client-success.eml'),
+        );
+
+        $parsed = $parser->parse($rawEmail);
+
+        $this->assertSame(
+            CarbonImmutable::create(2025, 12, 31, 0, 0, 0, 'UTC')->toDateString(),
+            $parsed->postedOn?->toDateString(),
+        );
+    }
+
+    #[Test]
     public function it_strips_all_query_parameters_and_fragments_from_the_job_url(): void
     {
-        $parser = new UpworkJobAlertParser();
+        $parser = new UpworkJobAlertParser;
 
         $parsed = $parser->parse($this->fixture('hourly-client-success.eml'));
 
@@ -86,13 +119,17 @@ final class UpworkJobAlertParserTest extends TestCase
     #[Test]
     public function it_rejects_a_non_https_or_non_allowlisted_job_url(): void
     {
-        $parser = new UpworkJobAlertParser();
+        $parser = new UpworkJobAlertParser;
 
         foreach ([
-            'https://www.upwork.com/jobs/~200000000000000000001?utm_source=test#fragment' => 'http://www.upwork.com/jobs/~200000000000000000001?utm_source=test#fragment',
-            'https://www.upwork.com/jobs/~200000000000000000001?utm_source=test#fragment' => 'https://evil.example.test/jobs/~200000000000000000001?utm_source=test#fragment',
-        ] as $search => $replacement) {
-            $rawEmail = str_replace($search, $replacement, $this->fixture('hourly-client-success.eml'));
+            'http://www.upwork.com/jobs/~200000000000000000001?utm_source=test#fragment',
+            'https://evil.example.test/jobs/~200000000000000000001?utm_source=test#fragment',
+        ] as $replacement) {
+            $rawEmail = str_replace(
+                'https://www.upwork.com/jobs/~200000000000000000001?utm_source=test#fragment',
+                $replacement,
+                $this->fixture('hourly-client-success.eml'),
+            );
 
             try {
                 $parser->parse($rawEmail);
@@ -107,7 +144,7 @@ final class UpworkJobAlertParserTest extends TestCase
     #[Test]
     public function it_rejects_a_missing_plain_text_part(): void
     {
-        $parser = new UpworkJobAlertParser();
+        $parser = new UpworkJobAlertParser;
         $rawEmail = <<<'EOT'
 Message-ID: <fixture-html-only@example.test>
 Date: Wed, 27 Aug 2026 10:15:00 +0000
@@ -137,9 +174,9 @@ EOT;
     #[Test]
     public function it_rejects_a_message_without_a_job_identifier(): void
     {
-        $parser = new UpworkJobAlertParser();
+        $parser = new UpworkJobAlertParser;
         $rawEmail = preg_replace(
-              '@https://www\.upwork\.com/jobs/~\d+(?:\?[^\s]+)?(?:#[^\s]+)?@',
+            '@https://www\.upwork\.com/jobs/~\d+(?:\?[^\s]+)?(?:#[^\s]+)?@',
             'https://www.upwork.com/nx/search/jobs/?q=operations',
             $this->fixture('hourly-client-success.eml'),
         );
@@ -158,7 +195,7 @@ EOT;
     #[Test]
     public function it_rejects_an_unexpected_sender(): void
     {
-        $parser = new UpworkJobAlertParser();
+        $parser = new UpworkJobAlertParser;
         $rawEmail = str_replace(
             'From: Upwork Notification <donotreply@upwork.com>',
             'From: Evil Sender <evil@example.test>',
@@ -176,7 +213,7 @@ EOT;
 
     private function fixture(string $name): string
     {
-        $contents = file_get_contents(base_path('tests/Fixtures/Emails/upwork/' . $name));
+        $contents = file_get_contents(base_path('tests/Fixtures/Emails/upwork/'.$name));
 
         $this->assertIsString($contents);
 
