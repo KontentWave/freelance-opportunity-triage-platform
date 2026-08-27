@@ -10,6 +10,8 @@ use App\Infrastructure\Email\UpworkJobAlertParser;
 use Carbon\CarbonImmutable;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use ZBateson\MailMimeParser\IMessage;
+use ZBateson\MailMimeParser\MailMimeParser;
 
 final class UpworkJobAlertParserTest extends TestCase
 {
@@ -208,6 +210,164 @@ EOT;
         } catch (EmailParseException $exception) {
             $this->assertSame(EmailParseErrorCode::UnsupportedSender, $exception->errorCode);
             $this->assertSame(EmailParseErrorCode::UnsupportedSender->value, $exception->getMessage());
+        }
+    }
+
+    #[Test]
+    public function it_rejects_an_oversized_email_before_mime_parsing(): void
+    {
+        $mimeParser = $this->createMock(MailMimeParser::class);
+        $mimeParser->expects($this->never())->method('parse');
+
+        $parser = new UpworkJobAlertParser($mimeParser);
+
+        $rawEmail = str_pad(
+            'Message-ID: <fixture-oversized@example.test>'."\n",
+            ((int) config('opportunity_sources.email_max_bytes')) + 1,
+            'A'
+        );
+
+        try {
+            $parser->parse($rawEmail);
+            $this->fail('Expected an EmailParseException to be thrown.');
+        } catch (EmailParseException $exception) {
+            $this->assertSame(EmailParseErrorCode::EmailTooLarge, $exception->errorCode);
+            $this->assertSame(EmailParseErrorCode::EmailTooLarge->value, $exception->getMessage());
+        }
+    }
+
+    #[Test]
+    public function it_returns_only_stable_error_codes(): void
+    {
+        $cases = [
+            'mime_parse_failed' => [
+                'parser' => new UpworkJobAlertParser(tap($this->createMock(MailMimeParser::class), function (MailMimeParser $mimeParser): void {
+                    $mimeParser->method('parse')->willThrowException(new \RuntimeException('fixture'));
+                })),
+                'raw_email' => $this->fixture('hourly-client-success.eml'),
+                'expected' => EmailParseErrorCode::MimeParseFailed,
+            ],
+            'missing_message_id' => [
+                'parser' => new UpworkJobAlertParser,
+                'raw_email' => preg_replace('/^Message-ID:.*\R/mi', '', $this->fixture('hourly-client-success.eml')),
+                'expected' => EmailParseErrorCode::MissingMessageId,
+            ],
+            'unsupported_sender' => [
+                'parser' => new UpworkJobAlertParser,
+                'raw_email' => str_replace(
+                    'From: Upwork Notification <donotreply@upwork.com>',
+                    'From: Evil Sender <evil@example.test>',
+                    $this->fixture('hourly-client-success.eml'),
+                ),
+                'expected' => EmailParseErrorCode::UnsupportedSender,
+            ],
+            'unsupported_subject' => [
+                'parser' => new UpworkJobAlertParser,
+                'raw_email' => str_replace(
+                    'Subject: New job alert: Client Success and Project Manager',
+                    'Subject: Weekly digest: Client Success',
+                    $this->fixture('hourly-client-success.eml'),
+                ),
+                'expected' => EmailParseErrorCode::UnsupportedSubject,
+            ],
+            'missing_plain_text' => [
+                'parser' => new UpworkJobAlertParser,
+                'raw_email' => <<<'EOT'
+Message-ID: <fixture-html-only@example.test>
+Date: Wed, 27 Aug 2026 10:15:00 +0000
+From: Upwork Notification <donotreply@upwork.com>
+To: owner@example.test
+Subject: New job alert: HTML Only
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="fixture-boundary-html-only"
+
+--fixture-boundary-html-only
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<html><body>ignored</body></html>
+--fixture-boundary-html-only--
+EOT,
+                'expected' => EmailParseErrorCode::MissingPlainText,
+            ],
+            'unsupported_contract_type' => [
+                'parser' => new UpworkJobAlertParser,
+                'raw_email' => str_replace(
+                    'Hourly: $40.00 - $60.00',
+                    'Fixed-price: $1,500.00',
+                    $this->fixture('hourly-client-success.eml'),
+                ),
+                'expected' => EmailParseErrorCode::UnsupportedContractType,
+            ],
+            'missing_job_id' => [
+                'parser' => new UpworkJobAlertParser,
+                'raw_email' => preg_replace(
+                    '@https://www\.upwork\.com/jobs/~\d+(?:\?[^\s]+)?(?:#[^\s]+)?@',
+                    'https://www.upwork.com/nx/search/jobs/?q=operations',
+                    $this->fixture('hourly-client-success.eml'),
+                ),
+                'expected' => EmailParseErrorCode::MissingJobId,
+            ],
+            'invalid_job_url' => [
+                'parser' => new UpworkJobAlertParser,
+                'raw_email' => str_replace(
+                    'https://www.upwork.com/jobs/~200000000000000000001?utm_source=test#fragment',
+                    'http://www.upwork.com/jobs/~200000000000000000001?utm_source=test#fragment',
+                    $this->fixture('hourly-client-success.eml'),
+                ),
+                'expected' => EmailParseErrorCode::InvalidJobUrl,
+            ],
+            'missing_title' => [
+                'parser' => new UpworkJobAlertParser(tap($this->createMock(MailMimeParser::class), function (MailMimeParser $mimeParser): void {
+                    $realMessage = (new MailMimeParser)->parse($this->fixture('hourly-client-success.eml'), false);
+                    $message = $this->createMock(IMessage::class);
+
+                    $message->method('getHeaderValue')->willReturnCallback(
+                        static fn (string $name): mixed => $realMessage->getHeaderValue($name)
+                    );
+                    $message->method('getHeader')->willReturnCallback(
+                        static fn (string $name): mixed => $realMessage->getHeader($name)
+                    );
+                    $message->method('getSubject')->willReturn($realMessage->getSubject());
+                    $message->method('getTextPartCount')->willReturn(1);
+                    $message->method('getTextContent')->willReturn(implode("\n\n", [
+                        'https://www.upwork.com/jobs/~200000000000000000001?utm_source=test#fragment',
+                        'https://www.upwork.com/jobs/~200000000000000000001?frkscc=tracking-token',
+                    ]));
+
+                    $mimeParser->method('parse')->willReturn($message);
+                })),
+                'raw_email' => $this->fixture('hourly-client-success.eml'),
+                'expected' => EmailParseErrorCode::MissingTitle,
+            ],
+            'malformed_terms' => [
+                'parser' => new UpworkJobAlertParser,
+                'raw_email' => str_replace(
+                    'Hourly: $40.00 - $60.00',
+                    'Hourly: TBD',
+                    $this->fixture('hourly-client-success.eml'),
+                ),
+                'expected' => EmailParseErrorCode::MalformedTerms,
+            ],
+        ];
+
+        foreach ($cases as $case) {
+            $parser = $case['parser'];
+            $rawEmail = $case['raw_email'];
+
+            $this->assertIsString($rawEmail);
+
+            try {
+                $parser->parse($rawEmail);
+                $this->fail('Expected an EmailParseException to be thrown.');
+            } catch (EmailParseException $exception) {
+                $this->assertSame($case['expected'], $exception->errorCode);
+                $this->assertSame($case['expected']->value, $exception->getMessage());
+                $this->assertContains($exception->getMessage(), array_map(
+                    static fn (EmailParseErrorCode $errorCode): string => $errorCode->value,
+                    EmailParseErrorCode::cases(),
+                ));
+            }
         }
     }
 

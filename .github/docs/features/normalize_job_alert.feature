@@ -2,7 +2,7 @@
 Feature: Normalize a job-alert email
   In order to review freelance opportunities efficiently
   As the owner of a workspace
-  I want an authorized job-alert email converted into a safe, normalized opportunity
+  I want a supported job-alert email converted into a safe, normalized opportunity
 
   Background:
     Given a workspace named "Personal freelance work"
@@ -19,12 +19,12 @@ Feature: Normalize a job-alert email
         | provider          | upwork_email                                      |
         | external job ID   | 200000000000000000001                             |
         | canonical URL     | https://www.upwork.com/jobs/~200000000000000000001 |
-        | title             | Client Success and Project Manager                |
-        | contract type     | hourly                                             |
-        | hourly minimum    | 40.00                                              |
-        | hourly maximum    | 60.00                                              |
-        | currency          | USD                                                |
-        | estimated duration | More than 6 months                                |
+        | title             | Client Success & Project Manager                  |
+        | contract type     | hourly                                            |
+        | hourly minimum    | 40.00                                             |
+        | hourly maximum    | 60.00                                             |
+        | currency          | USD                                               |
+        | estimated duration | More than 6 months                               |
       And the opportunity has these visible skills in source order:
         | position | skill              |
         | 0        | Project Management |

@@ -1,30 +1,35 @@
 # Freelance Opportunity Triage Platform
 
-This repository starts with the Phase 1 email-normalization slice for a Laravel 13 application. The current goal is to import a supported raw Upwork job-alert `.eml` message, parse its plain-text MIME part offline, and normalize it into a workspace-owned opportunity record without making any network request.
+This repository currently implements Phase 1: offline normalization of supported Upwork hourly job-alert emails into workspace-owned opportunity records.
 
-## Current Status
+The Phase 1 slice is intentionally local-only. It parses a raw `.eml` file, reads the plain-text MIME part, normalizes the observed hourly alert fields, and persists safe workspace-scoped records without contacting Gmail, IMAP, Upwork, or any other external service.
 
-- Laravel 13 scaffold installed.
-- PHP baseline pinned to 8.4.12 for local dependency resolution.
-- `zbateson/mail-mime-parser` locked at 4.0.3.
-- Laravel Boost, Pint, PHPUnit, and Larastan installed.
-- Phase 1 application code has not been implemented yet.
+## Current Phase 1 Scope
+
+Included:
+
+- local `.eml` import through `php artisan opportunity:import-email`
+- Upwork hourly alert parsing from the plain-text MIME part
+- workspace-scoped opportunity persistence and idempotent import tracking
+- quarantine records with stable parser error codes
+- PHPUnit coverage for parser, import action, command behavior, and schema constraints
+
+Not included:
+
+- Gmail, IMAP, OAuth, mailbox polling, queues, or cron
+- fixed-price alerts
+- dashboards, scoring, AI triage, or proposal workflows
+- HTTP enrichment or any remote fetch against Upwork
 
 ## Local Requirements
 
-- PHP 8.4 with `mbstring`, `iconv`, and `pdo_mysql` extensions.
-- Composer 2.
-- MariaDB 11.4 for the Phase 1 database contract target.
+- PHP 8.4
+- Composer 2
+- the PHP extensions required by the installed dependencies, including `mbstring` and `iconv`
 
-## Project Scope
-
-Phase 1 is intentionally offline-only. It does not include Gmail, IMAP, OAuth, polling, background workers, Upwork scraping, scoring, or a dashboard.
-
-The source-of-truth specification for this slice is the project sheet in `.github/docs/project_sheet.md` and the behavior scenarios in `.github/docs/features/normalize_job_alert.feature`.
+The automated test suite uses the repository's PHPUnit test database configuration. The production-oriented schema is designed around explicit workspace ownership and workspace-scoped uniqueness.
 
 ## Setup
-
-Install dependencies and prepare the local environment:
 
 ```bash
 composer install
@@ -32,22 +37,103 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-The test suite is currently configured to use an in-memory SQLite database through `phpunit.xml` and `.env.testing`.
+If you want a local database for manual command runs, configure `.env` and run:
 
-## Verification
+```bash
+php artisan migrate
+```
 
-Run the current baseline checks with:
+## Local Import Command
+
+The command requires both:
+
+- a readable local `.eml` path
+- an existing workspace ULID passed through `--workspace`
+
+Usage:
+
+```bash
+php artisan opportunity:import-email tests/Fixtures/Emails/upwork/hourly-client-success.eml --workspace=<workspace-ulid>
+```
+
+Example output on success:
+
+```text
+status: imported
+opportunity_id: 01K3MEXAMPLEULID1234567890
+external_job_id: 200000000000000000001
+```
+
+Example output on quarantined input:
+
+```text
+status: quarantined
+error_code: unsupported_sender
+```
+
+Exit codes:
+
+- `0` for `imported`, `updated`, and `duplicate`
+- `1` for `quarantined` or invalid command input
+
+## Supported Template Limits
+
+Phase 1 currently supports only the observed Upwork hourly alert template represented by the fixtures in `tests/Fixtures/Emails/upwork`.
+
+Current parser expectations:
+
+- `From` must be `donotreply@upwork.com`
+- `Subject` must start with `New job alert:`
+- a non-empty `text/plain` MIME part must exist
+- the body must contain an HTTPS Upwork job URL on `www.upwork.com` with a `/jobs/~<digits>` path
+- hourly terms must match `Hourly: $<min> - $<max>`
+
+Current normalization behavior:
+
+- raw email size is capped at `1_048_576` bytes before MIME parsing
+- canonical URLs are stripped down to `https://www.upwork.com/jobs/~<id>`
+- HTML entities and repeated whitespace are normalized
+- `$0.00 - $0.00` is treated as an unknown hourly range
+- visible skills are deduplicated case-insensitively in source order
+- `+N more` is tracked separately as `hidden_skill_count`
+
+## Fixtures
+
+Sanitized fixtures live in `tests/Fixtures/Emails/upwork`:
+
+- `hourly-client-success.eml`
+- `hourly-operations-coordinator.eml`
+- `hourly-unknown-rate.eml`
+
+These fixtures are synthetic and safe to commit. They preserve MIME structure and intentionally include fake identifiers and fake tracking-like values so the tests can prove the import flow never persists or prints them.
+
+## Phase 1 Privacy and Safety Constraints
+
+Phase 1 treats every email as untrusted input.
+
+The implementation does not:
+
+- persist raw email bodies
+- persist recipient addresses
+- persist query parameters, fragments, or tracking tokens from job links
+- render or execute HTML MIME content
+- make outbound network requests during parsing or import
+
+Typed parse failures are recorded only as safe quarantine metadata: workspace, optional safe message ID, content hash, status, and stable error code.
+
+## Validation
+
+Focused checks during development should use the narrowest relevant PHPUnit files first.
+
+The baseline repository checks are:
 
 ```bash
 php artisan test --compact
-vendor/bin/pint --dirty --format agent
 vendor/bin/phpstan analyse
+vendor/bin/pint --dirty --format agent
 ```
 
-## Next Implementation Step
+## Reference Docs
 
-Build the parser boundary first:
-
-1. Add sanitized `.eml` fixtures under `tests/Fixtures/Emails/upwork`.
-2. Add the Phase 1 parser contract, DTO, enums, and parse exception.
-3. Implement and unit-test `UpworkJobAlertParser` before persistence or CLI wiring.
+- Phase 1 as-built specification: `.github/docs/project_sheet.md`
+- Phase 1 behavior scenarios: `.github/docs/features/normalize_job_alert.feature`

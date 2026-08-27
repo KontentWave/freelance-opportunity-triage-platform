@@ -3,11 +3,16 @@
 namespace Tests\Feature;
 
 use App\Application\Opportunities\ImportOpportunityEmail;
+use App\Domain\Opportunities\Contracts\OpportunityEmailParser;
+use App\Domain\Opportunities\Data\ParsedOpportunity;
+use App\Domain\Opportunities\Enums\ContractType;
 use App\Domain\Opportunities\Enums\EmailImportStatus;
 use App\Domain\Opportunities\Enums\EmailParseErrorCode;
+use App\Domain\Opportunities\Enums\OpportunityProvider;
 use App\Models\EmailImport;
 use App\Models\Opportunity;
 use App\Models\Workspace;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -155,6 +160,52 @@ final class ImportOpportunityEmailTest extends TestCase
 
         $this->assertStringNotContainsString('owner@example.test', $serializedImport);
         $this->assertStringNotContainsString('tracking-token', $serializedImport);
+    }
+
+    #[Test]
+    public function it_rolls_back_partial_opportunity_and_skill_writes(): void
+    {
+        $workspace = Workspace::factory()->create();
+        $parser = new class implements OpportunityEmailParser
+        {
+            public function parse(string $rawEmail): ParsedOpportunity
+            {
+                return new ParsedOpportunity(
+                    provider: OpportunityProvider::UpworkEmail,
+                    sourceMessageId: 'fixture-rollback@example.test',
+                    externalJobId: '200000000000000000099',
+                    canonicalUrl: 'https://www.upwork.com/jobs/~200000000000000000099',
+                    title: 'Rollback Fixture',
+                    contractType: ContractType::Hourly,
+                    hourlyMin: '10.00',
+                    hourlyMax: '20.00',
+                    currency: 'USD',
+                    estimatedDuration: 'Less than 1 month',
+                    postedOn: null,
+                    excerpt: 'This import should fail while creating duplicate skills.',
+                    skills: ['Duplicate Skill', 'Duplicate Skill'],
+                    hiddenSkillCount: 0,
+                    paymentVerified: true,
+                    clientRating: '4.50',
+                    clientSpendUsd: '1200.00',
+                    clientSpendApproximate: false,
+                    clientCountry: 'United States',
+                    templateFingerprint: 'upwork-alert-hourly-v1',
+                );
+            }
+        };
+
+        $action = new ImportOpportunityEmail($parser);
+
+        try {
+            $action->execute($workspace->id, $this->fixture('hourly-client-success.eml'));
+            $this->fail('Expected a QueryException to be thrown.');
+        } catch (QueryException) {
+            $this->assertSame(0, Opportunity::query()->count());
+            $this->assertSame(0, EmailImport::query()->count());
+            $this->assertSame(0, $workspace->opportunities()->count());
+            $this->assertDatabaseCount('opportunity_skills', 0);
+        }
     }
 
     private function fixture(string $name): string
