@@ -1,9 +1,9 @@
 # Project Sheet — Phase 1: Fixture-Driven Email Normalization
 
 **Document role:** Living, as-built technical specification  
-**Current status:** Draft for implementation; no application code exists yet  
+**Current status:** Laravel scaffold and Phase 1 tooling installed; application code not started yet  
 **Roadmap source:** `docs/PROJECT_ROADMAP.md`, Phase 1 only  
-**Last updated:** 2026-08-25
+**Last updated:** 2026-08-27
 
 > This context intentionally excludes implementation detail for Phases 2–5. After Phase 1 is implemented and audited, update this document to match the final code exactly.
 
@@ -209,70 +209,70 @@ final class ImportOpportunityEmail
 ## Ordered Task Plan
 
 1. **Scaffold the supported runtime**
-   - Create the Laravel 13 application and commit `composer.lock`.
-   - Set PHP constraint compatible with 8.5.
-   - Add `zbateson/mail-mime-parser:^4.0` and verify the locked version is at least 4.0.3.
-   - Configure PHPUnit, Laravel Pint, Larastan/PHPStan, and test environment variables.
+    - Create the Laravel 13 application and commit `composer.lock`.
+    - Set PHP constraint compatible with 8.4.
+    - Add `zbateson/mail-mime-parser:^4.0` and verify the locked version is at least 4.0.3.
+    - Configure PHPUnit, Laravel Pint, Larastan/PHPStan, and test environment variables.
 
 2. **Create sanitized fixture evidence**
-   - Add `tests/Fixtures/Emails/upwork/hourly-client-success.eml`.
-   - Add `tests/Fixtures/Emails/upwork/hourly-operations-coordinator.eml`.
-   - Add `tests/Fixtures/Emails/upwork/hourly-unknown-rate.eml`.
-   - Preserve MIME boundaries, quoted-printable encoding, and structural variability while replacing all names, addresses, job IDs, tracking parameters, client text, and message IDs with synthetic values.
-   - Never commit the original uploaded messages or generated artifacts containing their real metadata.
+    - Add `tests/Fixtures/Emails/upwork/hourly-client-success.eml`.
+    - Add `tests/Fixtures/Emails/upwork/hourly-operations-coordinator.eml`.
+    - Add `tests/Fixtures/Emails/upwork/hourly-unknown-rate.eml`.
+    - Preserve MIME boundaries, quoted-printable encoding, and structural variability while replacing all names, addresses, job IDs, tracking parameters, client text, and message IDs with synthetic values.
+    - Never commit the original uploaded messages or generated artifacts containing their real metadata.
 
 3. **Add configuration and domain types**
-   - `config/opportunity_sources.php`: maximum raw size `1_048_576` bytes, expected sender, subject prefix, allowed host, and template fingerprint.
-   - `app/Domain/Opportunities/Contracts/OpportunityEmailParser.php`.
-   - `app/Domain/Opportunities/Data/ParsedOpportunity.php`.
-   - `app/Domain/Opportunities/Enums/OpportunityProvider.php`.
-   - `app/Domain/Opportunities/Enums/ContractType.php`.
-   - `app/Domain/Opportunities/Enums/EmailImportStatus.php`.
-   - `app/Domain/Opportunities/Enums/EmailParseErrorCode.php`.
-   - `app/Domain/Opportunities/Exceptions/EmailParseException.php`.
+    - `config/opportunity_sources.php`: maximum raw size `1_048_576` bytes, expected sender, subject prefix, allowed host, and template fingerprint.
+    - `app/Domain/Opportunities/Contracts/OpportunityEmailParser.php`.
+    - `app/Domain/Opportunities/Data/ParsedOpportunity.php`.
+    - `app/Domain/Opportunities/Enums/OpportunityProvider.php`.
+    - `app/Domain/Opportunities/Enums/ContractType.php`.
+    - `app/Domain/Opportunities/Enums/EmailImportStatus.php`.
+    - `app/Domain/Opportunities/Enums/EmailParseErrorCode.php`.
+    - `app/Domain/Opportunities/Exceptions/EmailParseException.php`.
 
 4. **Implement the pure parser**
-   - `app/Infrastructure/Email/UpworkJobAlertParser.php`.
-   - Reject an oversized raw message before MIME parsing.
-   - Decode MIME with bounded parser settings and select `text/plain` only.
-   - Validate message ID, sender, subject prefix, and supported hourly terms.
-   - Parse the observed sections using anchored, readable patterns; avoid a single whole-message regular expression.
-   - Extract the job ID only from an HTTPS URL whose host is exactly `www.upwork.com` and path matches `/jobs/~<digits>`.
-   - Build the canonical URL without query parameters or fragments.
-   - Normalize entities, whitespace, decimals, approximate spend suffixes, skill order, and posting date.
-   - Throw only typed `EmailParseException` errors with stable codes.
+    - `app/Infrastructure/Email/UpworkJobAlertParser.php`.
+    - Reject an oversized raw message before MIME parsing.
+    - Decode MIME with bounded parser settings and select `text/plain` only.
+    - Validate message ID, sender, subject prefix, and supported hourly terms.
+    - Parse the observed sections using anchored, readable patterns; avoid a single whole-message regular expression.
+    - Extract the job ID only from an HTTPS URL whose host is exactly `www.upwork.com` and path matches `/jobs/~<digits>`.
+    - Build the canonical URL without query parameters or fragments.
+    - Normalize entities, whitespace, decimals, approximate spend suffixes, skill order, and posting date.
+    - Throw only typed `EmailParseException` errors with stable codes.
 
 5. **Create tenancy-ready persistence**
-   - `database/migrations/2026_08_25_000001_create_workspaces_table.php`.
-   - `database/migrations/2026_08_25_000002_create_opportunities_table.php`.
-   - `database/migrations/2026_08_25_000003_create_opportunity_skills_table.php`.
-   - `database/migrations/2026_08_25_000004_create_email_imports_table.php`.
-   - `app/Models/Workspace.php`.
-   - `app/Models/Opportunity.php`.
-   - `app/Models/OpportunitySkill.php`.
-   - `app/Models/EmailImport.php`.
-   - Add factories for workspace and opportunity integration tests.
+    - `database/migrations/2026_08_25_000001_create_workspaces_table.php`.
+    - `database/migrations/2026_08_25_000002_create_opportunities_table.php`.
+    - `database/migrations/2026_08_25_000003_create_opportunity_skills_table.php`.
+    - `database/migrations/2026_08_25_000004_create_email_imports_table.php`.
+    - `app/Models/Workspace.php`.
+    - `app/Models/Opportunity.php`.
+    - `app/Models/OpportunitySkill.php`.
+    - `app/Models/EmailImport.php`.
+    - Add factories for workspace and opportunity integration tests.
 
 6. **Implement the import transaction**
-   - `app/Application/Opportunities/Data/ImportResult.php`.
-   - `app/Application/Opportunities/ImportOpportunityEmail.php`.
-   - Calculate SHA-256 before parsing and check workspace-scoped idempotency keys.
-   - Parse outside the database transaction; persist the normalized result inside one transaction.
-   - Insert the first job, update an existing job received under a new message ID, and replace its visible skills atomically.
-   - Record `duplicate` without changing the opportunity when message ID or content hash was already processed.
-   - On a typed parse failure, store only hash, safe message ID when available, status, and error code; never store bodies or raw exception text.
+    - `app/Application/Opportunities/Data/ImportResult.php`.
+    - `app/Application/Opportunities/ImportOpportunityEmail.php`.
+    - Calculate SHA-256 before parsing and check workspace-scoped idempotency keys.
+    - Parse outside the database transaction; persist the normalized result inside one transaction.
+    - Insert the first job, update an existing job received under a new message ID, and replace its visible skills atomically.
+    - Record `duplicate` without changing the opportunity when message ID or content hash was already processed.
+    - On a typed parse failure, store only hash, safe message ID when available, status, and error code; never store bodies or raw exception text.
 
 7. **Expose a local-only command**
-   - `app/Console/Commands/ImportOpportunityEmailCommand.php`.
-   - Signature: `opportunity:import-email {path} {--workspace=}`.
-   - Read a local file, call the application action, print status and safe identifiers only, and return a non-zero code for quarantine or invalid command input.
-   - Do not expose an HTTP upload endpoint in Phase 1.
+    - `app/Console/Commands/ImportOpportunityEmailCommand.php`.
+    - Signature: `opportunity:import-email {path} {--workspace=}`.
+    - Read a local file, call the application action, print status and safe identifiers only, and return a non-zero code for quarantine or invalid command input.
+    - Do not expose an HTTP upload endpoint in Phase 1.
 
 8. **Bind and document the slice**
-   - Bind `OpportunityEmailParser` to `UpworkJobAlertParser` in `app/Providers/AppServiceProvider.php`.
-   - Add Phase 1 usage, supported template, limitations, fixture provenance, and example command to `README.md`.
-   - Add `specs/features/normalize_job_alert.feature` using the scenarios below.
-   - Update this project sheet after implementation to reflect actual class signatures, migrations, and deviations.
+    - Bind `OpportunityEmailParser` to `UpworkJobAlertParser` in `app/Providers/AppServiceProvider.php`.
+    - Add Phase 1 usage, supported template, limitations, fixture provenance, and example command to `README.md`.
+    - Add `specs/features/normalize_job_alert.feature` using the scenarios below.
+    - Update this project sheet after implementation to reflect actual class signatures, migrations, and deviations.
 
 ## Parser Algorithm
 
