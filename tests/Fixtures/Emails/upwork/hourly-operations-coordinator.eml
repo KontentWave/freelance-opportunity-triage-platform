@@ -1,0 +1,29 @@
+Message-ID: <fixture-hourly-operations-coordinator-1@example.test>
+Date: Wed, 27 Aug 2026 11:20:00 +0000
+From: Upwork Notification <donotreply@upwork.com>
+To: owner@example.test
+Subject: New job alert: Operations Coordinator
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="fixture-boundary-2"
+
+--fixture-boundary-2
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Operations Coordinator
+https://www.upwork.com/jobs/~200000000000000000002
+
+Hourly: $25.00 - $35.00
+Est. time: 3 to 6 months
+
+Coordinate recurring operations tasks.
+
+View job details:
+https://www.upwork.com/jobs/~200000000000000000002?email_uid=synthetic-token
+
+--fixture-boundary-2
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<html><body>ignored</body></html>
+--fixture-boundary-2--

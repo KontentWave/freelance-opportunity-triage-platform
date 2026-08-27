@@ -1,0 +1,36 @@
+Message-ID: <fixture-hourly-client-success-1@example.test>
+Date: Wed, 27 Aug 2026 10:15:00 +0000
+From: Upwork Notification <donotreply@upwork.com>
+To: owner@example.test
+Subject: New job alert: Client Success and Project Manager
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="fixture-boundary-1"
+
+--fixture-boundary-1
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Client   Success   &amp;   Project Manager
+https://www.upwork.com/jobs/~200000000000000000001?utm_source=test#fragment
+
+Hourly: $40.00 - $60.00
+Est. time: More than 6 months
+
+Lead   client onboarding &amp; retention across multiple delivery tracks...
+
+Skills:
+Project Management
+Quality Assurance
+Communication
+project management
++2 more
+
+View job details:
+https://www.upwork.com/jobs/~200000000000000000001?frkscc=tracking-token
+
+--fixture-boundary-1
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<html><body>ignored</body></html>
+--fixture-boundary-1--

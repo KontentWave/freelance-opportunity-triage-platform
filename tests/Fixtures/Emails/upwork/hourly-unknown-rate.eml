@@ -1,0 +1,29 @@
+Message-ID: <fixture-hourly-unknown-rate-1@example.test>
+Date: Wed, 27 Aug 2026 12:10:00 +0000
+From: Upwork Notification <donotreply@upwork.com>
+To: owner@example.test
+Subject: New job alert: Support Operations Specialist
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="fixture-boundary-3"
+
+--fixture-boundary-3
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Support Operations Specialist
+https://www.upwork.com/jobs/~200000000000000000003?source=fixture
+
+Hourly: $0.00 - $0.00
+Est. time: Less than 1 month
+
+Investigate process gaps.
+
+View job details:
+https://www.upwork.com/jobs/~200000000000000000003?utm_medium=email
+
+--fixture-boundary-3
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<html><body>ignored</body></html>
+--fixture-boundary-3--
