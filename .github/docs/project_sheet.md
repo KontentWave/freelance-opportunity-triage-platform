@@ -263,7 +263,10 @@ Verified execution evidence:
 - Local MariaDB-only environment validation passed against the repository-managed MariaDB 11.4 container with 1 test and 4 assertions.
 - Local MariaDB-only full suite validation passed against the repository-managed MariaDB 11.4 container with 28 tests and 202 assertions.
 - `composer validate --strict`, `vendor/bin/phpstan analyse`, and `composer audit --locked` passed locally after the MariaDB-only hardening changes.
-- CI coverage evidence must still be recorded after the first successful GitHub Actions run; this document intentionally does not invent those numbers ahead of execution.
+- GitHub Actions verification passed in the `Tests / MariaDB 11.4` job on PHP 8.4.25 with PCOV 1.0.12 against MariaDB 11.4.
+- The hosted PHPUnit coverage run completed with 28 tests, 202 assertions, and 1 PHPUnit notice.
+- Hosted coverage enforcement passed with 88.37% overall coverage and 91.96% Phase 1 parser/domain coverage.
+- The hosted checks `Quality`, `Tests / MariaDB 11.4`, and `Secret scan` are now the exact branch-protection checks to require on `main`.
 
 ## Remaining Phase 1 Gaps After This Audit
 
@@ -271,5 +274,4 @@ No remaining application-scope gaps were found inside the agreed Phase 1 scope.
 
 Remaining close-out blockers are operational:
 
-- exact coverage totals should be recorded only after a successful coverage run in CI or a local PHP runtime with `pcov` or `xdebug`
 - the canonical `PROJECT_ROADMAP.md` file requested by the review is not present in this repository, so no roadmap file was added or rewritten
