@@ -269,12 +269,8 @@ Verified execution evidence:
 - The clean hosted PHPUnit run completed with 28 tests and 202 assertions with zero PHPUnit notices.
 - Hosted coverage enforcement passed with 88.37% overall coverage and 91.96% Phase 1 parser/domain coverage.
 - The hosted checks `Quality`, `Tests / MariaDB 11.4`, and `Secret scan` are now the exact branch-protection checks to require on `main`.
-- GitHub reports that `main` is not currently protected; branch protection still needs to be enabled in repository settings or via the GitHub API.
+- GitHub branch protection is enabled on `main` with pull requests required before merging, strict up-to-date status checks, required checks `Quality`, `Tests / MariaDB 11.4`, and `Secret scan`, force pushes disabled, and branch deletion disabled.
 
 ## Remaining Phase 1 Gaps After This Audit
 
 No remaining application-scope gaps were found inside the agreed Phase 1 scope.
-
-Remaining close-out blockers are operational:
-
-- branch protection for `main` is not yet enabled on GitHub
