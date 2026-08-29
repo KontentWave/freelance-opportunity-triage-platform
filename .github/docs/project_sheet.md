@@ -264,6 +264,7 @@ Verified execution evidence:
 - Local MariaDB-only full suite validation passed against the repository-managed MariaDB 11.4 container with 28 tests and 202 assertions.
 - `composer validate --strict`, `vendor/bin/phpstan analyse`, and `composer audit --locked` passed locally after the MariaDB-only hardening changes.
 - GitHub Actions verification passed in the `Tests / MariaDB 11.4` job on PHP 8.4.25 with PCOV 1.0.12 against MariaDB 11.4.
+- Final hosted verification run: `https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/33266436693`
 - A PHPUnit-notice cleanup replaced mock-as-stub usage in `UpworkJobAlertParserTest` with proper stubs and enabled `failOnPhpunitNotice="true"` plus `displayDetailsOnPhpunitNotices="true"` in `phpunit.xml`.
 - The clean hosted PHPUnit run completed with 28 tests and 202 assertions with zero PHPUnit notices.
 - Hosted coverage enforcement passed with 88.37% overall coverage and 91.96% Phase 1 parser/domain coverage.
