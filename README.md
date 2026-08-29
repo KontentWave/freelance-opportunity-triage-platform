@@ -200,7 +200,18 @@ Branch protection is still a manual GitHub setting. After the first successful w
 - `Tests / MariaDB 11.4`
 - `Secret scan`
 
+Recommended branch protection for this solo project:
+
+- protect `main`
+- require a pull request before merging
+- require branches to be up to date before merging
+- require the checks `Quality`, `Tests / MariaDB 11.4`, and `Secret scan`
+- disallow force pushes
+- disallow branch deletion
+- do not require an approving reviewer count
+
 ## Reference Docs
 
 - Phase 1 as-built specification: `.github/docs/project_sheet.md`
 - Phase 1 behavior scenarios: `.github/docs/features/normalize_job_alert.feature`
+- Product roadmap: `.github/docs/PROJECT_ROADMAP.md`

@@ -241,7 +241,7 @@ EOT;
     {
         $cases = [
             'mime_parse_failed' => [
-                'parser' => new UpworkJobAlertParser(tap($this->createMock(MailMimeParser::class), function (MailMimeParser $mimeParser): void {
+                'parser' => new UpworkJobAlertParser(tap($this->createStub(MailMimeParser::class), function (MailMimeParser $mimeParser): void {
                     $mimeParser->method('parse')->willThrowException(new \RuntimeException('fixture'));
                 })),
                 'raw_email' => $this->fixture('hourly-client-success.eml'),
@@ -318,9 +318,9 @@ EOT,
                 'expected' => EmailParseErrorCode::InvalidJobUrl,
             ],
             'missing_title' => [
-                'parser' => new UpworkJobAlertParser(tap($this->createMock(MailMimeParser::class), function (MailMimeParser $mimeParser): void {
+                'parser' => new UpworkJobAlertParser(tap($this->createStub(MailMimeParser::class), function (MailMimeParser $mimeParser): void {
                     $realMessage = (new MailMimeParser)->parse($this->fixture('hourly-client-success.eml'), false);
-                    $message = $this->createMock(IMessage::class);
+                    $message = $this->createStub(IMessage::class);
 
                     $message->method('getHeaderValue')->willReturnCallback(
                         static fn (string $name): mixed => $realMessage->getHeaderValue($name)
