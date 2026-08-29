@@ -1,8 +1,8 @@
 # Project Sheet — Phase 1: Fixture-Driven Email Normalization
 
 **Document role:** As-built Phase 1 specification  
-**Current status:** Implemented and validated in this repository  
-**Last updated:** 2026-08-27
+**Current status:** Phase 1 application slice implemented; MariaDB-only validation and CI added in-repo  
+**Last updated:** 2026-08-29
 
 ## Phase 1 Outcome
 
@@ -238,21 +238,38 @@ The feature file documents the four Phase 1 acceptance scenarios, but the reposi
 
 ## Validation Baseline
 
-Phase 1 validation currently runs with:
+Phase 1 validation is configured around MariaDB 11.4 only.
+
+Committed validation surfaces:
 
 - `php artisan test --compact`
 - `vendor/bin/phpstan analyse`
 - `vendor/bin/pint --dirty --format agent`
+- `composer validate --strict`
+- `composer audit --locked`
+- `.github/workflows/ci.yml`
 
-Automated validation in this repository is currently based on the default PHPUnit database configuration rather than a dedicated MariaDB-only CI lane.
+Committed testing safeguards:
+
+- `phpunit.xml` no longer configures SQLite for tests
+- `.env.testing.example` provides a safe MariaDB test template
+- `tests/TestCase.php` refuses destructive test execution unless the app is in `testing`, the driver is MySQL or MariaDB, and the database name ends in `_test`
+- `tests/Feature/MariaDbTestingEnvironmentTest.php` asserts that the active test database is a `_test` database and that `select version()` reports MariaDB
+
+Verified execution evidence:
+
+- A pre-hardening PHPUnit run completed with 27 passing tests and 198 assertions before the MariaDB-only guard was introduced.
+- The repository now includes `compose.yaml` with a dedicated `mariadb_test` service for repeatable local MariaDB 11.4 validation.
+- Local MariaDB-only environment validation passed against the repository-managed MariaDB 11.4 container with 1 test and 4 assertions.
+- Local MariaDB-only full suite validation passed against the repository-managed MariaDB 11.4 container with 28 tests and 202 assertions.
+- `composer validate --strict`, `vendor/bin/phpstan analyse`, and `composer audit --locked` passed locally after the MariaDB-only hardening changes.
+- CI coverage evidence must still be recorded after the first successful GitHub Actions run; this document intentionally does not invent those numbers ahead of execution.
 
 ## Remaining Phase 1 Gaps After This Audit
 
-No remaining implementation gaps were found inside the agreed Phase 1 scope.
+No remaining application-scope gaps were found inside the agreed Phase 1 scope.
 
-The only notable deviation from the original draft is documentation alignment:
+Remaining close-out blockers are operational:
 
-- the draft referenced paths that do not match the current repository layout
-- the draft implied Phase 1 was not yet implemented
-- the draft treated `unsupported_template` as an active emitted code, but the current parser reserves it without producing it
-- the draft described passing BDD scenarios, while the repository currently stores the Gherkin file as documentation and validates behavior through PHPUnit
+- exact coverage totals should be recorded only after a successful coverage run in CI or a local PHP runtime with `pcov` or `xdebug`
+- the canonical `PROJECT_ROADMAP.md` file requested by the review is not present in this repository, so no roadmap file was added or rewritten

@@ -1,0 +1,209 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@bf6b4fbd49ca58e4608c9c89fba0b8d90bd2a39f # 2.35.5
+        with:
+          php-version: "8.4"
+          coverage: none
+          extensions: mbstring, iconv, pdo_mysql
+
+      - name: Validate composer metadata
+        run: composer validate --strict
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Check formatting
+        run: vendor/bin/pint --test
+
+      - name: Run static analysis
+        run: vendor/bin/phpstan analyse --no-progress
+
+      - name: Audit locked dependencies
+        run: composer audit --locked
+
+  tests:
+    name: Tests / MariaDB 11.4
+    runs-on: ubuntu-latest
+
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_DATABASE: freelance_opportunity_triage_platform_test
+          MARIADB_USER: github
+          MARIADB_PASSWORD: github
+          MARIADB_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mariadb-admin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+
+    env:
+      APP_ENV: testing
+      APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      APP_MAINTENANCE_DRIVER: file
+      BCRYPT_ROUNDS: 4
+      DB_CONNECTION: mariadb
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_DATABASE: freelance_opportunity_triage_platform_test
+      DB_USERNAME: github
+      DB_PASSWORD: github
+      BROADCAST_CONNECTION: null
+      CACHE_STORE: array
+      MAIL_MAILER: array
+      QUEUE_CONNECTION: sync
+      SESSION_DRIVER: array
+      PULSE_ENABLED: false
+      TELESCOPE_ENABLED: false
+      NIGHTWATCH_ENABLED: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@bf6b4fbd49ca58e4608c9c89fba0b8d90bd2a39f # 2.35.5
+        with:
+          php-version: "8.4"
+          coverage: pcov
+          extensions: mbstring, iconv, pdo_mysql
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Prepare Laravel testing environment
+        run: |
+          cp .env.testing.example .env.testing
+          php -r "file_put_contents('.env.testing', preg_replace(['/^DB_USERNAME=.*$/m', '/^DB_PASSWORD=.*$/m'], ['DB_USERNAME=' . getenv('DB_USERNAME'), 'DB_PASSWORD=' . getenv('DB_PASSWORD')], file_get_contents('.env.testing')));"
+
+      - name: Wait for MariaDB service health
+        run: |
+          php -r '
+          $dsn = sprintf("mysql:host=%s;port=%s;dbname=%s", getenv("DB_HOST"), getenv("DB_PORT"), getenv("DB_DATABASE"));
+          $deadline = time() + 60;
+
+          do {
+              try {
+                  new PDO($dsn, getenv("DB_USERNAME"), getenv("DB_PASSWORD"));
+                  exit(0);
+              } catch (Throwable $throwable) {
+                  if (time() >= $deadline) {
+                      fwrite(STDERR, $throwable->getMessage() . PHP_EOL);
+                      exit(1);
+                  }
+
+                  usleep(500000);
+              }
+          } while (true);
+          '
+
+      - name: Verify MariaDB safety guard
+        run: php artisan test tests/Feature/MariaDbTestingEnvironmentTest.php --compact
+
+      - name: Run migrations
+        run: php artisan migrate:fresh --env=testing --force
+
+      - name: Run PHPUnit with coverage
+        run: |
+          mkdir -p build/logs
+          vendor/bin/phpunit --coverage-clover build/logs/clover.xml
+
+      - name: Enforce coverage thresholds
+        run: |
+          php -r '
+          $xml = simplexml_load_file("build/logs/clover.xml");
+
+          if ($xml === false) {
+              fwrite(STDERR, "Unable to read Clover coverage report." . PHP_EOL);
+              exit(1);
+          }
+
+          $overallStatements = 0;
+          $overallCovered = 0;
+          $phaseStatements = 0;
+          $phaseCovered = 0;
+
+          foreach ($xml->xpath("//file") as $file) {
+              $name = (string) $file["name"];
+              $metrics = $file->metrics;
+              $statements = (int) ($metrics["statements"] ?? 0);
+              $coveredStatements = (int) ($metrics["coveredstatements"] ?? 0);
+
+              $overallStatements += $statements;
+              $overallCovered += $coveredStatements;
+
+              if (str_contains($name, "/app/Domain/Opportunities/") || str_ends_with($name, "/app/Infrastructure/Email/UpworkJobAlertParser.php")) {
+                  $phaseStatements += $statements;
+                  $phaseCovered += $coveredStatements;
+              }
+          }
+
+          if ($overallStatements === 0 || $phaseStatements === 0) {
+              fwrite(STDERR, "Coverage report did not include expected files." . PHP_EOL);
+              exit(1);
+          }
+
+          $overallCoverage = ($overallCovered / $overallStatements) * 100;
+          $phaseCoverage = ($phaseCovered / $phaseStatements) * 100;
+
+          printf("Overall coverage: %.2f%%%s", $overallCoverage, PHP_EOL);
+          printf("Phase 1 parser/domain coverage: %.2f%%%s", $phaseCoverage, PHP_EOL);
+
+          if ($overallCoverage < 80.0) {
+              fwrite(STDERR, "Overall coverage below 80%." . PHP_EOL);
+              exit(1);
+          }
+
+          if ($phaseCoverage < 90.0) {
+              fwrite(STDERR, "Phase 1 parser/domain coverage below 90%." . PHP_EOL);
+              exit(1);
+          }
+          '
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: phpunit-coverage-clover
+          path: build/logs/clover.xml
+
+  secret_scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Scan repository content for secrets
+        uses: gitleaks/gitleaks-action@44c470ffc35caa8b1eb3e8012ca53c2f9bea4eb5 # v2.3.6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

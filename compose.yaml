@@ -1,0 +1,31 @@
+services:
+    mariadb_test:
+        image: mariadb:11.4
+        container_name: freelance-opportunity-triage-platform-mariadb-test
+        environment:
+            MARIADB_DATABASE: freelance_opportunity_triage_platform_test
+            MARIADB_USER: app
+            MARIADB_PASSWORD: app
+            MARIADB_ROOT_PASSWORD: root
+        ports:
+            - "3307:3306"
+        healthcheck:
+            test:
+                [
+                    "CMD",
+                    "mariadb-admin",
+                    "ping",
+                    "-h",
+                    "127.0.0.1",
+                    "-uroot",
+                    "-proot",
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 12
+            start_period: 10s
+        volumes:
+            - mariadb_test_data:/var/lib/mysql
+
+volumes:
+    mariadb_test_data:

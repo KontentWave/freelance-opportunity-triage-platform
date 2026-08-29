@@ -25,9 +25,12 @@ Not included:
 
 - PHP 8.4
 - Composer 2
+- MariaDB 11.4
 - the PHP extensions required by the installed dependencies, including `mbstring` and `iconv`
 
-The automated test suite uses the repository's PHPUnit test database configuration. The production-oriented schema is designed around explicit workspace ownership and workspace-scoped uniqueness.
+The automated test suite is MariaDB-only. SQLite is not a supported substitute for Phase 1 database validation.
+
+The production-oriented schema is designed around explicit workspace ownership and workspace-scoped uniqueness.
 
 ## Setup
 
@@ -42,6 +45,46 @@ If you want a local database for manual command runs, configure `.env` and run:
 ```bash
 php artisan migrate
 ```
+
+For the test suite, copy the committed test template and point it at a dedicated MariaDB database whose name ends in `_test`:
+
+```bash
+cp .env.testing.example .env.testing
+```
+
+To use the repository-managed MariaDB 11.4 test service:
+
+```bash
+docker compose up -d mariadb_test
+```
+
+Minimum MariaDB test settings:
+
+- `DB_CONNECTION=mariadb`
+- `DB_DATABASE=<your_database_name_ending_in__test>`
+- valid non-production `DB_USERNAME` and `DB_PASSWORD`
+
+The committed `compose.yaml` service uses these defaults:
+
+- `DB_HOST=127.0.0.1`
+- `DB_PORT=3307`
+- `DB_DATABASE=freelance_opportunity_triage_platform_test`
+- `DB_USERNAME=app`
+- `DB_PASSWORD=app`
+
+The local test service intentionally uses host port `3307` so it does not collide with any machine-level MySQL or MariaDB instance already bound to `3306`.
+
+You can stop and remove the local test database with:
+
+```bash
+docker compose down -v
+```
+
+The test bootstrap refuses to run destructive test database operations unless all of the following are true:
+
+- `APP_ENV=testing`
+- the configured driver is MySQL or MariaDB
+- the configured database name ends with `_test`
 
 ## Local Import Command
 
@@ -128,10 +171,34 @@ Focused checks during development should use the narrowest relevant PHPUnit file
 The baseline repository checks are:
 
 ```bash
+composer validate --strict
+php artisan test tests/Feature/MariaDbTestingEnvironmentTest.php --compact
 php artisan test --compact
 vendor/bin/phpstan analyse
 vendor/bin/pint --dirty --format agent
+composer audit --locked
 ```
+
+If your local MariaDB credentials are not configured yet, `php artisan test --compact` will fail fast by design instead of falling back to SQLite.
+
+## GitHub Actions
+
+The repository CI workflow lives at `.github/workflows/ci.yml` and defines these jobs:
+
+- `Quality`
+- `Tests / MariaDB 11.4`
+- `Secret scan`
+
+The test job provisions an isolated MariaDB 11.4 service database, runs the full PHPUnit suite with coverage enabled, and enforces these thresholds:
+
+- at least 80% overall coverage
+- at least 90% coverage for Phase 1 parser/domain code
+
+Branch protection is still a manual GitHub setting. After the first successful workflow run on GitHub, enable these exact check names as required status checks on `main`:
+
+- `Quality`
+- `Tests / MariaDB 11.4`
+- `Secret scan`
 
 ## Reference Docs
 
