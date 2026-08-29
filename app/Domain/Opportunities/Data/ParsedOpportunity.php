@@ -8,9 +8,7 @@ use Carbon\CarbonImmutable;
 
 final readonly class ParsedOpportunity
 {
-    /**
-     * @param list<string> $skills
-     */
+    /** @param list<string> $skills */
     public function __construct(
         public OpportunityProvider $provider,
         public string $sourceMessageId,
@@ -32,6 +30,5 @@ final readonly class ParsedOpportunity
         public bool $clientSpendApproximate,
         public ?string $clientCountry,
         public string $templateFingerprint,
-    ) {
-    }
+    ) {}
 }
