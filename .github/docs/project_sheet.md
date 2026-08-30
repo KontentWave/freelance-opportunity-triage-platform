@@ -280,7 +280,7 @@ No remaining application-scope gaps were found inside the agreed Phase 1 scope.
 ## Phase 2: Secure Scheduled Mailbox Intake
 
 **Document role:** Draft implementation specification for the current phase only
-**Current status:** IMAP adapter implemented; application workflow ready
+**Current status:** Application polling workflow, operational commands, guarded scheduler, and mailbox intake runbook implemented; 24-hour staging soak remains
 **Last updated:** 2026-08-30
 **Behavior specification:** `.github/docs/features/import_job_alerts_from_mailbox.feature`
 
@@ -585,7 +585,7 @@ File: `tests/Unit/Infrastructure/Email/WebklexImapMailboxClientTest.php`
 - `it_translates_authentication_connection_and_folder_errors_to_stable_codes`
 - `it_never_enables_protocol_debug_logging_or_writes_message_flags`
 
-#### Polling workflow feature tests
+#### Polling workflow feature tests — implemented
 
 File: `tests/Feature/PollOpportunityMailboxTest.php`
 
@@ -593,6 +593,7 @@ File: `tests/Feature/PollOpportunityMailboxTest.php`
 - `it_records_discovery_before_processing_and_never_advances_past_an_unrecorded_uid`
 - `it_skips_a_remote_uid_already_finalized_in_the_same_uidvalidity_namespace`
 - `it_rescans_a_bounded_window_after_uidvalidity_changes_without_duplicate_opportunities`
+- `it_does_not_fetch_a_retry_from_an_invalidated_uidvalidity_namespace`
 - `it_retries_a_temporary_fetch_failure_and_imports_exactly_once`
 - `it_reconciles_a_committed_quarantine_after_a_ledger_update_failure`
 - `it_marks_a_message_permanently_failed_after_the_third_temporary_failure`
@@ -602,7 +603,9 @@ File: `tests/Feature/PollOpportunityMailboxTest.php`
 - `it_never_persists_raw_email_headers_bodies_recipients_or_credentials`
 - `it_never_logs_raw_exceptions_or_secrets`
 
-#### Command and schedule tests
+These 13 MariaDB-backed tests use `Tests\Support\Fakes\FakeMailboxClient` and perform no external network access.
+
+#### Command tests — implemented
 
 File: `tests/Feature/OpportunityMailboxCommandTest.php`
 
@@ -611,6 +614,10 @@ File: `tests/Feature/OpportunityMailboxCommandTest.php`
 - `it_prints_only_safe_poll_counters_and_uses_documented_exit_codes`
 - `it_reports_healthy_degraded_unhealthy_and_never_run_states_from_persisted_data`
 - `it_emits_safe_machine_readable_health_json`
+
+All five command behaviors are implemented with MariaDB-backed tests.
+
+#### Schedule tests — implemented
 
 File: `tests/Feature/OpportunityMailboxScheduleTest.php`
 
