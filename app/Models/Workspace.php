@@ -31,4 +31,19 @@ class Workspace extends Model
     {
         return $this->hasMany(EmailImport::class);
     }
+
+    public function mailboxCheckpoints(): HasMany
+    {
+        return $this->hasMany(MailboxCheckpoint::class);
+    }
+
+    public function mailboxMessages(): HasMany
+    {
+        return $this->hasMany(MailboxMessage::class);
+    }
+
+    public function mailboxRuns(): HasMany
+    {
+        return $this->hasMany(MailboxRun::class);
+    }
 }
