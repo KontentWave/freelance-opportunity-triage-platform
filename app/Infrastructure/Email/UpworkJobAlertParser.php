@@ -102,9 +102,13 @@ final class UpworkJobAlertParser implements OpportunityEmailParser
             throw new EmailParseException(EmailParseErrorCode::UnsupportedSender);
         }
 
-        $fromAddress = $addresses[0]->getEmail();
+        $fromAddress = strtolower((string) $addresses[0]->getEmail());
+        $allowedFromAddresses = array_map(
+            static fn (mixed $address): string => strtolower((string) $address),
+            (array) config('opportunity_sources.upwork.from_addresses'),
+        );
 
-        if (strtolower((string) $fromAddress) !== strtolower((string) config('opportunity_sources.upwork.from_address'))) {
+        if (! in_array($fromAddress, $allowedFromAddresses, true)) {
             throw new EmailParseException(EmailParseErrorCode::UnsupportedSender);
         }
     }
