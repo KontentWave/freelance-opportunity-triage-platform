@@ -280,7 +280,7 @@ No remaining application-scope gaps were found inside the agreed Phase 1 scope.
 ## Phase 2: Secure Scheduled Mailbox Intake
 
 **Document role:** Draft implementation specification for the current phase only
-**Current status:** Compatibility spike complete; ADR-004 accepted; configuration and domain contract ready
+**Current status:** IMAP adapter implemented; application workflow ready
 **Last updated:** 2026-08-30
 **Behavior specification:** `.github/docs/features/import_job_alerts_from_mailbox.feature`
 
@@ -364,7 +364,7 @@ Create `config/opportunity_mailbox.php` and document these keys in `.env.example
 | `OPPORTUNITY_MAILBOX_VALIDATE_CERT`            |                `true` | Must be `true` outside tests.                                                      |
 | `OPPORTUNITY_MAILBOX_USERNAME`                 |                 blank | Secret-adjacent; never logged or printed.                                          |
 | `OPPORTUNITY_MAILBOX_PASSWORD`                 |                 blank | Secret; never committed, persisted, logged, printed, or included in fixtures.      |
-| `OPPORTUNITY_MAILBOX_FOLDER`                   |               `INBOX` | Dedicated folder only.                                                             |
+| `OPPORTUNITY_MAILBOX_FOLDER`                   |                 blank | Required when enabled; must select a dedicated folder only.                        |
 | `OPPORTUNITY_MAILBOX_CANDIDATE_FROM`           | `upwork@t.upwork.com` | Envelope pre-filter only; the Phase 1 parser remains authoritative.                |
 | `OPPORTUNITY_MAILBOX_CANDIDATE_SUBJECT_PREFIX` |      `New job alert:` | Envelope pre-filter only.                                                          |
 | `OPPORTUNITY_MAILBOX_BATCH_SIZE`               |                  `25` | Clamp to 1–100.                                                                    |
@@ -537,7 +537,7 @@ The deployment runbook must document a provider cron entry that invokes `php art
 2. **Configuration and domain contract**
     - Add `config/opportunity_mailbox.php` and safe `.env.example` placeholders.
     - Add the mailbox contract, DTOs, enums, and typed exceptions under `app/Domain/Mailbox`.
-    - Bind the production adapter in `App\Providers\AppServiceProvider`.
+    - Register `MailboxConfiguration` in `App\Providers\AppServiceProvider`; bind `MailboxClient` when the production adapter is implemented in task 4.
 3. **MariaDB delivery state**
     - Add migrations, models, casts, fillable fields, factories where useful, and workspace relations for checkpoints, messages, and runs.
     - Add all uniqueness, retry, foreign-key, and cascade constraints from this sheet.
@@ -579,6 +579,7 @@ File: `tests/Unit/Infrastructure/Email/WebklexImapMailboxClientTest.php`
 
 - `it_uses_uid_sequence_peek_fetching_and_certificate_validation`
 - `it_discovers_only_matching_candidate_envelopes_in_ascending_uid_order`
+- `it_uses_a_bounded_lookback_after_uidvalidity_changes`
 - `it_returns_complete_raw_rfc822_bytes`
 - `it_rejects_an_oversized_message_before_fetching_its_body`
 - `it_translates_authentication_connection_and_folder_errors_to_stable_codes`
@@ -621,9 +622,11 @@ File: `tests/Feature/OpportunityMailboxScheduleTest.php`
 File: `tests/Feature/MailboxSchemaTest.php`
 
 - `it_enforces_workspace_mailbox_uid_uniqueness`
+- `it_enforces_workspace_mailbox_checkpoint_uniqueness`
 - `it_allows_the_same_uid_namespace_in_different_workspaces`
 - `it_cascades_workspace_deletion_without_cross_workspace_effects`
 - `it_nulls_the_opportunity_reference_without_deleting_delivery_history`
+- `it_stores_only_safe_delivery_metadata`
 
 #### Behavior traceability
 

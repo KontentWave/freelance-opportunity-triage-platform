@@ -75,4 +75,9 @@ class Opportunity extends Model
     {
         return $this->hasMany(EmailImport::class);
     }
+
+    public function mailboxMessages(): HasMany
+    {
+        return $this->hasMany(MailboxMessage::class);
+    }
 }
