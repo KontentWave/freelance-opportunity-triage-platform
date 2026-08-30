@@ -39,6 +39,27 @@ final class UpworkJobAlertParserTest extends TestCase
     }
 
     #[Test]
+    public function it_accepts_each_allowlisted_upwork_sender(): void
+    {
+        $parser = new UpworkJobAlertParser;
+
+        foreach ([
+            'donotreply@upwork.com',
+            'upwork@t.upwork.com',
+        ] as $sender) {
+            $rawEmail = str_replace(
+                'From: Upwork Notification <donotreply@upwork.com>',
+                sprintf('From: Upwork Notification <%s>', $sender),
+                $this->fixture('hourly-client-success.eml'),
+            );
+
+            $parsed = $parser->parse($rawEmail);
+
+            $this->assertSame('200000000000000000001', $parsed->externalJobId);
+        }
+    }
+
+    #[Test]
     public function it_converts_a_zero_rate_range_to_unknown(): void
     {
         $parser = new UpworkJobAlertParser;

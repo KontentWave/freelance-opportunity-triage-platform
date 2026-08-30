@@ -12,6 +12,8 @@ The deployment target is expected to run PHP 8.4 and Laravel 13 with MariaDB 11.
 
 Composer resolves `webklex/php-imap:^6.2` to version 6.2.0 on the repository's PHP 8.4.12 platform. Locked dependency audit evidence is clean. This proves local dependency compatibility only; it does not prove target-host IMAP behavior.
 
+During compatibility preparation, a current alert was observed with the exact sender address `upwork@t.upwork.com`, while Phase 1 accepted only `donotreply@upwork.com`. The parser allowlist was expanded to include both exact addresses without changing the normalized opportunity contract. This is not a domain wildcard, and the parser remains authoritative after the mailbox envelope pre-filter.
+
 ## Proposed Decision
 
 Use a Laravel Artisan command invoked by Laravel's scheduler and the hosting provider's cron facility. The provider cron will invoke `php artisan schedule:run`; the application poll will run on a bounded schedule rather than as a daemon or IMAP IDLE process.

@@ -4,7 +4,7 @@
 
 **Document role:** As-built Phase 1 specification  
 **Current status:** Phase 1 application slice implemented; MariaDB-only validation and CI added in-repo  
-**Last updated:** 2026-08-29
+**Last updated:** 2026-08-30
 
 ### Phase 1 Outcome
 
@@ -69,7 +69,7 @@ The current parser supports the observed Upwork hourly email template only.
 
 Required characteristics:
 
-- `From` address must exactly match `donotreply@upwork.com`.
+- `From` address must exactly match `donotreply@upwork.com` or `upwork@t.upwork.com`.
 - Subject must begin with `New job alert:`.
 - A non-empty `text/plain` MIME part must be present.
 - The plain-text body must contain at least one HTTPS Upwork job URL on `www.upwork.com` whose path matches `/jobs/~<digits>`.
@@ -280,8 +280,8 @@ No remaining application-scope gaps were found inside the agreed Phase 1 scope.
 ## Phase 2: Secure Scheduled Mailbox Intake
 
 **Document role:** Draft implementation specification for the current phase only
-**Current status:** Ready for review; no Phase 2 implementation has started
-**Last updated:** 2026-08-29
+**Current status:** Compatibility spike in progress; target-host verification pending
+**Last updated:** 2026-08-30
 **Behavior specification:** `.github/docs/features/import_job_alerts_from_mailbox.feature`
 
 ### Action
@@ -292,7 +292,7 @@ Import newly received job-alert emails from the user's authorized, dedicated IMA
 
 Every candidate alert discovered by a scheduled poll is durably recorded before processing and is passed to `ImportOpportunityEmail` at least once. A temporary failure is retried within a bounded policy; a malformed alert is quarantined; a permanent technical failure is visible through a safe health command. Repeated delivery never creates a second opportunity.
 
-Phase 2 adds transport and operations around the completed Phase 1 import boundary. It does not change the Phase 1 parsing contract.
+Phase 2 adds transport and operations around the completed Phase 1 import boundary. The normalized opportunity contract remains unchanged. The compatibility spike expanded the parser's exact sender allowlist after a current alert was observed from `upwork@t.upwork.com`.
 
 ### Included
 
@@ -353,24 +353,24 @@ Record this decision in `.github/docs/adr/ADR-004-scheduled-imap-polling.md` dur
 
 Create `config/opportunity_mailbox.php` and document these keys in `.env.example` with blank or non-secret values:
 
-| Environment key                                |                 Default | Rule                                                                               |
-| ---------------------------------------------- | ----------------------: | ---------------------------------------------------------------------------------- |
-| `OPPORTUNITY_MAILBOX_ENABLED`                  |                 `false` | The scheduler performs no network work unless explicitly enabled.                  |
-| `OPPORTUNITY_MAILBOX_WORKSPACE_ID`             |                   blank | Must resolve to an existing workspace ULID when enabled.                           |
-| `OPPORTUNITY_MAILBOX_KEY`                      |               `primary` | Non-secret identifier, maximum 64 characters.                                      |
-| `OPPORTUNITY_MAILBOX_HOST`                     |                   blank | Required when enabled; never printed by routine commands.                          |
-| `OPPORTUNITY_MAILBOX_PORT`                     |                   `993` | Validated integer from 1 through 65535.                                            |
-| `OPPORTUNITY_MAILBOX_ENCRYPTION`               |                   `ssl` | Only implicit TLS (`ssl`) or STARTTLS (`tls`) is accepted in production.           |
-| `OPPORTUNITY_MAILBOX_VALIDATE_CERT`            |                  `true` | Must be `true` outside tests.                                                      |
-| `OPPORTUNITY_MAILBOX_USERNAME`                 |                   blank | Secret-adjacent; never logged or printed.                                          |
-| `OPPORTUNITY_MAILBOX_PASSWORD`                 |                   blank | Secret; never committed, persisted, logged, printed, or included in fixtures.      |
-| `OPPORTUNITY_MAILBOX_FOLDER`                   |                 `INBOX` | Dedicated folder only.                                                             |
-| `OPPORTUNITY_MAILBOX_CANDIDATE_FROM`           | `donotreply@upwork.com` | Envelope pre-filter only; the Phase 1 parser remains authoritative.                |
-| `OPPORTUNITY_MAILBOX_CANDIDATE_SUBJECT_PREFIX` |        `New job alert:` | Envelope pre-filter only.                                                          |
-| `OPPORTUNITY_MAILBOX_BATCH_SIZE`               |                    `25` | Clamp to 1–100.                                                                    |
-| `OPPORTUNITY_MAILBOX_INITIAL_LOOKBACK_HOURS`   |                    `24` | Clamp to 1–168; used only without a valid checkpoint or after UIDVALIDITY changes. |
-| `OPPORTUNITY_MAILBOX_MAX_ATTEMPTS`             |                     `3` | Clamp to 1–5.                                                                      |
-| `OPPORTUNITY_MAILBOX_HEALTH_MAX_AGE_MINUTES`   |                    `15` | A completed run older than this is stale.                                          |
+| Environment key                                |               Default | Rule                                                                               |
+| ---------------------------------------------- | --------------------: | ---------------------------------------------------------------------------------- |
+| `OPPORTUNITY_MAILBOX_ENABLED`                  |               `false` | The scheduler performs no network work unless explicitly enabled.                  |
+| `OPPORTUNITY_MAILBOX_WORKSPACE_ID`             |                 blank | Must resolve to an existing workspace ULID when enabled.                           |
+| `OPPORTUNITY_MAILBOX_KEY`                      |             `primary` | Non-secret identifier, maximum 64 characters.                                      |
+| `OPPORTUNITY_MAILBOX_HOST`                     |                 blank | Required when enabled; never printed by routine commands.                          |
+| `OPPORTUNITY_MAILBOX_PORT`                     |                 `993` | Validated integer from 1 through 65535.                                            |
+| `OPPORTUNITY_MAILBOX_ENCRYPTION`               |                 `ssl` | Only implicit TLS (`ssl`) or STARTTLS (`tls`) is accepted in production.           |
+| `OPPORTUNITY_MAILBOX_VALIDATE_CERT`            |                `true` | Must be `true` outside tests.                                                      |
+| `OPPORTUNITY_MAILBOX_USERNAME`                 |                 blank | Secret-adjacent; never logged or printed.                                          |
+| `OPPORTUNITY_MAILBOX_PASSWORD`                 |                 blank | Secret; never committed, persisted, logged, printed, or included in fixtures.      |
+| `OPPORTUNITY_MAILBOX_FOLDER`                   |               `INBOX` | Dedicated folder only.                                                             |
+| `OPPORTUNITY_MAILBOX_CANDIDATE_FROM`           | `upwork@t.upwork.com` | Envelope pre-filter only; the Phase 1 parser remains authoritative.                |
+| `OPPORTUNITY_MAILBOX_CANDIDATE_SUBJECT_PREFIX` |      `New job alert:` | Envelope pre-filter only.                                                          |
+| `OPPORTUNITY_MAILBOX_BATCH_SIZE`               |                  `25` | Clamp to 1–100.                                                                    |
+| `OPPORTUNITY_MAILBOX_INITIAL_LOOKBACK_HOURS`   |                  `24` | Clamp to 1–168; used only without a valid checkpoint or after UIDVALIDITY changes. |
+| `OPPORTUNITY_MAILBOX_MAX_ATTEMPTS`             |                   `3` | Clamp to 1–5.                                                                      |
+| `OPPORTUNITY_MAILBOX_HEALTH_MAX_AGE_MINUTES`   |                  `15` | A completed run older than this is stale.                                          |
 
 Configuration validation must happen before connecting. Invalid or insecure production configuration returns a stable error code and performs no network request.
 

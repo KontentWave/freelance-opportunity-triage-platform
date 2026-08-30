@@ -125,7 +125,7 @@ Phase 1 currently supports only the observed Upwork hourly alert template repres
 
 Current parser expectations:
 
-- `From` must be `donotreply@upwork.com`
+- `From` must exactly match `donotreply@upwork.com` or `upwork@t.upwork.com`
 - `Subject` must start with `New job alert:`
 - a non-empty `text/plain` MIME part must exist
 - the body must contain an HTTPS Upwork job URL on `www.upwork.com` with a `/jobs/~<digits>` path
