@@ -280,7 +280,7 @@ No remaining application-scope gaps were found inside the agreed Phase 1 scope.
 ## Phase 2: Secure Scheduled Mailbox Intake
 
 **Document role:** Draft implementation specification for the current phase only
-**Current status:** Compatibility spike in progress; target-host verification pending
+**Current status:** Compatibility spike complete; ADR-004 accepted; configuration and domain contract ready
 **Last updated:** 2026-08-30
 **Behavior specification:** `.github/docs/features/import_job_alerts_from_mailbox.feature`
 

@@ -4,7 +4,7 @@
 
 Verify whether the target host can support the proposed scheduled IMAP intake before production mailbox code is built. This check validates host capabilities only. It does not authorize implementation of the adapter or later Phase 2 slices.
 
-The current status of every live-host item is **Unresolved** until an authorized operator performs the check on the target host.
+The recorded result for candidate commit `69ab3cc` is complete. Repeat every check before deployment if the target host or mailbox provider changes.
 
 ## Safety Rules
 
@@ -116,16 +116,16 @@ Pass only when the provider supports the required cadence and successful invocat
 
 ## Result Matrix
 
-| Check        | Capability                                    | Initial result |
-| ------------ | --------------------------------------------- | -------------- |
-| P2-COMPAT-01 | PHP 8.4 and required extensions               | Unresolved     |
-| P2-COMPAT-02 | Certificate-validated outbound TLS IMAP       | Unresolved     |
-| P2-COMPAT-03 | Authentication and dedicated-folder selection | Unresolved     |
-| P2-COMPAT-04 | UID and UIDVALIDITY                           | Unresolved     |
-| P2-COMPAT-05 | Complete raw RFC822 retrieval                 | Unresolved     |
-| P2-COMPAT-06 | RFC822.SIZE availability                      | Unresolved     |
-| P2-COMPAT-07 | PEEK retrieval with unchanged flags           | Unresolved     |
-| P2-COMPAT-08 | Provider cron for `schedule:run`              | Unresolved     |
+| Check        | Capability                                    | Recorded result |
+| ------------ | --------------------------------------------- | --------------- |
+| P2-COMPAT-01 | PHP 8.4 and required extensions               | PASS            |
+| P2-COMPAT-02 | Certificate-validated outbound TLS IMAP       | PASS            |
+| P2-COMPAT-03 | Authentication and dedicated-folder selection | PASS            |
+| P2-COMPAT-04 | UID and UIDVALIDITY                           | PASS            |
+| P2-COMPAT-05 | Complete raw RFC822 retrieval                 | PASS            |
+| P2-COMPAT-06 | RFC822.SIZE availability                      | PASS            |
+| P2-COMPAT-07 | PEEK retrieval with unchanged flags           | PASS            |
+| P2-COMPAT-08 | Provider cron for `schedule:run`              | PASS            |
 
 ## Decision Rule
 

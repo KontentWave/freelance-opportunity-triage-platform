@@ -1,6 +1,6 @@
 # ADR-004: Scheduled IMAP Polling
 
-- **Status:** Proposed — pending target-host verification
+- **Status:** Accepted — target-host verified
 - **Date:** 2026-08-29
 - **Decision owners:** Project and quality engineering
 
@@ -47,6 +47,23 @@ All items in `.github/docs/runbooks/phase2-compatibility-check.md` must pass on 
 - Provider cron availability for Laravel `schedule:run`.
 
 Verification evidence must contain only safe status metadata. It must not contain mailbox endpoints, account identifiers, credentials, folder contents, message content, headers, addresses, server greetings, or raw exception text.
+
+### Verification Attempt: 2026-08-30
+
+Candidate commit: `69ab3cc`
+
+| Check          | Result | Safe reason                                            |
+| -------------- | ------ | ------------------------------------------------------ |
+| `P2-COMPAT-01` | `PASS` | PHP 8.4 and required extensions available              |
+| `P2-COMPAT-02` | `PASS` | Certificate-validated TLS connection established       |
+| `P2-COMPAT-03` | `PASS` | Authentication and isolated-folder selection succeeded |
+| `P2-COMPAT-04` | `PASS` | UID and UIDVALIDITY stable across reconnect            |
+| `P2-COMPAT-05` | `PASS` | Complete raw RFC822 bytes matched expected input       |
+| `P2-COMPAT-06` | `PASS` | RFC822.SIZE available and matched fetched octets       |
+| `P2-COMPAT-07` | `PASS` | PEEK retrieval left message flags unchanged            |
+| `P2-COMPAT-08` | `PASS` | Active cron and `schedule:run` invocation verified     |
+
+All compatibility checks passed on the designated target. Earlier failed attempts were resolved by correcting protected target inputs and using the package's supported UID-array fetch shape; no transport, authentication, or mailbox security constraint was weakened. Repeat this gate before deployment if the target host or mailbox provider changes.
 
 ## Explicit Stop Conditions
 
