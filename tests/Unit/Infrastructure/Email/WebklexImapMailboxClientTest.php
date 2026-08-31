@@ -92,6 +92,38 @@ final class WebklexImapMailboxClientTest extends TestCase
     }
 
     #[Test]
+    public function it_discovers_candidate_envelopes_from_each_allowlisted_sender(): void
+    {
+        $protocol = $this->readyProtocol();
+        $protocol->method('examineFolder')->willReturn($this->response(['uidvalidity' => 9001]));
+        $protocol->expects($this->once())->method('search')
+            ->with(
+                $this->callback(function (array $criteria): bool {
+                    $query = $criteria[0] ?? '';
+
+                    return str_contains(
+                        $query,
+                        'OR FROM "upwork@t.upwork.com" FROM "donotreply@upwork.com"',
+                    );
+                }),
+                IMAP::ST_UID,
+            )
+            ->willReturn($this->response([]));
+
+        $client = new WebklexImapMailboxClient(
+            $this->configuration([
+                'candidate_from' => 'upwork@t.upwork.com,donotreply@upwork.com',
+            ]),
+            static fn (bool $validateCert, string $encryption): ImapProtocol => $protocol,
+        );
+
+        $client->discover(
+            new MailboxCursor(9001, 100, CarbonImmutable::parse('2026-08-29 00:00:00 UTC')),
+            25,
+        );
+    }
+
+    #[Test]
     public function it_uses_a_bounded_lookback_after_uidvalidity_changes(): void
     {
         $protocol = $this->readyProtocol();

@@ -365,7 +365,7 @@ Create `config/opportunity_mailbox.php` and document these keys in `.env.example
 | `OPPORTUNITY_MAILBOX_USERNAME`                 |                 blank | Secret-adjacent; never logged or printed.                                          |
 | `OPPORTUNITY_MAILBOX_PASSWORD`                 |                 blank | Secret; never committed, persisted, logged, printed, or included in fixtures.      |
 | `OPPORTUNITY_MAILBOX_FOLDER`                   |                 blank | Required when enabled; must select a dedicated folder only.                        |
-| `OPPORTUNITY_MAILBOX_CANDIDATE_FROM`           | `upwork@t.upwork.com` | Envelope pre-filter only; the Phase 1 parser remains authoritative.                |
+| `OPPORTUNITY_MAILBOX_CANDIDATE_FROM`           | `upwork@t.upwork.com` | Comma-separated exact envelope sender allowlist; Phase 1 remains authoritative.    |
 | `OPPORTUNITY_MAILBOX_CANDIDATE_SUBJECT_PREFIX` |      `New job alert:` | Envelope pre-filter only.                                                          |
 | `OPPORTUNITY_MAILBOX_BATCH_SIZE`               |                  `25` | Clamp to 1–100.                                                                    |
 | `OPPORTUNITY_MAILBOX_INITIAL_LOOKBACK_HOURS`   |                  `24` | Clamp to 1–168; used only without a valid checkpoint or after UIDVALIDITY changes. |
@@ -571,6 +571,7 @@ File: `tests/Unit/Domain/Mailbox/MailboxConfigurationTest.php`
 - `it_rejects_missing_required_configuration_when_mailbox_intake_is_enabled`
 - `it_rejects_insecure_transport_or_disabled_certificate_validation_outside_tests`
 - `it_clamps_batch_retry_and_lookback_limits`
+- `it_parses_an_exact_candidate_sender_allowlist`
 - `it_performs_no_probe_when_mailbox_intake_is_disabled`
 
 #### IMAP adapter unit/contract tests
@@ -579,6 +580,7 @@ File: `tests/Unit/Infrastructure/Email/WebklexImapMailboxClientTest.php`
 
 - `it_uses_uid_sequence_peek_fetching_and_certificate_validation`
 - `it_discovers_only_matching_candidate_envelopes_in_ascending_uid_order`
+- `it_discovers_candidate_envelopes_from_each_allowlisted_sender`
 - `it_uses_a_bounded_lookback_after_uidvalidity_changes`
 - `it_returns_complete_raw_rfc822_bytes`
 - `it_rejects_an_oversized_message_before_fetching_its_body`

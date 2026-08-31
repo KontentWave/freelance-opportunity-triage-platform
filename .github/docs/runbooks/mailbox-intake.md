@@ -47,7 +47,7 @@ Set these values through the deployment provider's protected environment interfa
 | `OPPORTUNITY_MAILBOX_USERNAME`                 | Secret-adjacent account identifier; never print it.               |
 | `OPPORTUNITY_MAILBOX_PASSWORD`                 | Secret; never expose or persist it.                               |
 | `OPPORTUNITY_MAILBOX_FOLDER`                   | Dedicated authorized folder only; never print it.                 |
-| `OPPORTUNITY_MAILBOX_CANDIDATE_FROM`           | Envelope pre-filter; default `upwork@t.upwork.com`.               |
+| `OPPORTUNITY_MAILBOX_CANDIDATE_FROM`           | Comma-separated exact envelope sender allowlist.                  |
 | `OPPORTUNITY_MAILBOX_CANDIDATE_SUBJECT_PREFIX` | Envelope pre-filter; default `New job alert:`.                    |
 | `OPPORTUNITY_MAILBOX_BATCH_SIZE`               | Clamp is 1-100; default `25`.                                     |
 | `OPPORTUNITY_MAILBOX_INITIAL_LOOKBACK_HOURS`   | Clamp is 1-168; default `24`.                                     |
