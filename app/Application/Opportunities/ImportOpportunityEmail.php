@@ -24,7 +24,7 @@ class ImportOpportunityEmail
         $safeMessageId = $this->extractSafeMessageId($rawEmail);
         $existingImport = $this->findExistingImport($workspaceId, $contentHash, $safeMessageId);
 
-        if ($existingImport !== null) {
+        if ($existingImport !== null && $existingImport->status !== EmailImportStatus::Quarantined->value) {
             return new ImportResult(
                 status: EmailImportStatus::Duplicate,
                 opportunityId: $existingImport->opportunity_id,
@@ -36,7 +36,7 @@ class ImportOpportunityEmail
         try {
             $parsedOpportunity = $this->parser->parse($rawEmail);
         } catch (EmailParseException $exception) {
-            EmailImport::query()->create([
+            $attributes = [
                 'workspace_id' => $workspaceId,
                 'opportunity_id' => null,
                 'message_id' => $safeMessageId,
@@ -44,7 +44,13 @@ class ImportOpportunityEmail
                 'status' => EmailImportStatus::Quarantined->value,
                 'error_code' => $exception->errorCode->value,
                 'imported_at' => now(),
-            ]);
+            ];
+
+            if ($existingImport === null) {
+                EmailImport::query()->create($attributes);
+            } else {
+                $existingImport->update($attributes);
+            }
 
             return new ImportResult(
                 status: EmailImportStatus::Quarantined,
@@ -55,7 +61,7 @@ class ImportOpportunityEmail
         }
 
         try {
-            return DB::transaction(function () use ($workspaceId, $contentHash, $parsedOpportunity): ImportResult {
+            return DB::transaction(function () use ($workspaceId, $contentHash, $parsedOpportunity, $existingImport): ImportResult {
                 $opportunity = Opportunity::query()->firstOrNew([
                     'workspace_id' => $workspaceId,
                     'provider' => $parsedOpportunity->provider->value,
@@ -76,7 +82,7 @@ class ImportOpportunityEmail
                     ]);
                 }
 
-                EmailImport::query()->create([
+                $importAttributes = [
                     'workspace_id' => $workspaceId,
                     'opportunity_id' => $opportunity->id,
                     'message_id' => $parsedOpportunity->sourceMessageId,
@@ -84,7 +90,13 @@ class ImportOpportunityEmail
                     'status' => $status->value,
                     'error_code' => null,
                     'imported_at' => now(),
-                ]);
+                ];
+
+                if ($existingImport === null) {
+                    EmailImport::query()->create($importAttributes);
+                } else {
+                    $existingImport->update($importAttributes);
+                }
 
                 return new ImportResult(
                     status: $status,

@@ -169,6 +169,8 @@ Do not query or export complete database rows for incident evidence.
 
 Never add raw exception messages to logs to diagnose these codes.
 
+If alerts expose only tracking redirects and no direct `/jobs/~<digits>` URL, keep intake disabled. Do not resolve redirects over HTTP; record only `email.missing_job_id` and return to architecture review.
+
 ## Disable Intake
 
 To stop scheduled network work immediately:

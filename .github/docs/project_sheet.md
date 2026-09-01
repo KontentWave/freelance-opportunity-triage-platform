@@ -58,6 +58,7 @@ Migrations live in `database/migrations` with timestamps `2026_08_27_145314` thr
 Sanitized fixtures live under `tests/Fixtures/Emails/upwork`:
 
 - `hourly-client-success.eml`
+- `hourly-current-template.eml`
 - `hourly-operations-coordinator.eml`
 - `hourly-unknown-rate.eml`
 
@@ -65,7 +66,7 @@ These fixtures intentionally preserve MIME structure and may include synthetic r
 
 ### Supported Input Contract
 
-The current parser supports the observed Upwork hourly email template only.
+The current parser supports the legacy hourly template and the current direct-link hourly template observed from `donotreply@upwork.com`.
 
 Required characteristics:
 
@@ -74,6 +75,8 @@ Required characteristics:
 - A non-empty `text/plain` MIME part must be present.
 - The plain-text body must contain at least one HTTPS Upwork job URL on `www.upwork.com` whose path matches `/jobs/~<digits>`.
 - Hourly terms must match `Hourly: $<min> - $<max>`.
+- Current direct-link alerts may use compact integer or decimal rates and inline terms, such as `Hourly: $<min>-$<max> · Est. time: <duration>`.
+- Redirect-only alerts without an offline `/jobs/~<digits>` identifier are quarantined as `missing_job_id`; the parser never follows tracking links.
 
 Implemented normalization rules:
 
@@ -191,6 +194,9 @@ Implemented behavior:
 File: `tests/Unit/Infrastructure/Email/UpworkJobAlertParserTest.php`
 
 - `it_parses_each_supported_hourly_fixture`
+- `it_parses_the_current_direct_link_hourly_template_without_tracking_values`
+- `it_classifies_the_current_fixed_label_as_an_unsupported_contract_type`
+- `it_rejects_a_redirect_only_alert_without_resolving_tracking_links`
 - `it_converts_a_zero_rate_range_to_unknown`
 - `it_decodes_html_entities_and_normalizes_whitespace`
 - `it_extracts_visible_skills_and_the_hidden_skill_count`
@@ -213,6 +219,7 @@ File: `tests/Feature/ImportOpportunityEmailTest.php`
 - `it_updates_the_same_job_received_under_a_new_message_id`
 - `it_allows_the_same_external_job_id_in_different_workspaces`
 - `it_quarantines_invalid_input_without_storing_raw_content`
+- `it_reprocesses_an_existing_quarantine_after_parser_compatibility_improves`
 - `it_rolls_back_partial_opportunity_and_skill_writes`
 - `it_never_persists_tracking_parameters_or_recipient_addresses`
 
@@ -280,8 +287,8 @@ No remaining application-scope gaps were found inside the agreed Phase 1 scope.
 ## Phase 2: Secure Scheduled Mailbox Intake
 
 **Document role:** Draft implementation specification for the current phase only
-**Current status:** Application polling workflow, operational commands, guarded scheduler, and mailbox intake runbook implemented; 24-hour staging soak remains
-**Last updated:** 2026-08-30
+**Current status:** Staging intake paused; current redirect-only alert format lacks the offline canonical job identifier required by Phase 2
+**Last updated:** 2026-09-01
 **Behavior specification:** `.github/docs/features/import_job_alerts_from_mailbox.feature`
 
 ### Action
@@ -693,16 +700,17 @@ The soak evidence should contain counts, timestamps, commit SHA, and CI URL only
 
 ### Risks and Mitigations
 
-| Risk                                                                   | Mitigation / stop condition                                                                                                                           |
-| ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Hosting blocks outbound IMAP, required auth, or cron cadence           | Compatibility spike first; retain the Phase 1 local `.eml` command; stop before building around an unverified transport.                              |
-| IMAP library changes message flags or cannot return exact RFC822 bytes | PEEK/flag and parser-contract proofs are mandatory; amend ADR-004 or stop.                                                                            |
-| UIDVALIDITY reset causes a rescan                                      | Namespace ledger by UIDVALIDITY, bound the lookback, and rely on Phase 1 content/job idempotency.                                                     |
-| Checkpoint advances before durable discovery                           | Ledger insert and checkpoint update share one transaction; explicit rollback test.                                                                    |
-| Temporary failures create an infinite hot loop                         | Persist attempts and next-attempt timestamps; fixed bounded retry schedule.                                                                           |
-| A template change silently drops alerts                                | Envelope filter remains broad enough for configured alerts; raw messages still pass Phase 1 validation and quarantine; health degrades on quarantine. |
-| Secrets or personal mail appear in diagnostics                         | Dedicated folder, minimal schema, stable codes, no protocol debug, and adversarial output/log tests.                                                  |
-| Large backlog exceeds hosting limits                                   | Initial lookback, batch cap, sequential fetching, and short scheduler runs.                                                                           |
+| Risk                                                                   | Mitigation / stop condition                                                                                                                            |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Hosting blocks outbound IMAP, required auth, or cron cadence           | Compatibility spike first; retain the Phase 1 local `.eml` command; stop before building around an unverified transport.                               |
+| IMAP library changes message flags or cannot return exact RFC822 bytes | PEEK/flag and parser-contract proofs are mandatory; amend ADR-004 or stop.                                                                             |
+| UIDVALIDITY reset causes a rescan                                      | Namespace ledger by UIDVALIDITY, bound the lookback, and rely on Phase 1 content/job idempotency.                                                      |
+| Checkpoint advances before durable discovery                           | Ledger insert and checkpoint update share one transaction; explicit rollback test.                                                                     |
+| Temporary failures create an infinite hot loop                         | Persist attempts and next-attempt timestamps; fixed bounded retry schedule.                                                                            |
+| A template change silently drops alerts                                | Envelope filter remains broad enough for configured alerts; raw messages still pass Phase 1 validation and quarantine; health degrades on quarantine.  |
+| Redirect-only alerts omit an offline canonical job identifier          | Quarantine as `missing_job_id`; do not follow tracking links or start the soak until the input contract is restored or an ADR approves a new boundary. |
+| Secrets or personal mail appear in diagnostics                         | Dedicated folder, minimal schema, stable codes, no protocol debug, and adversarial output/log tests.                                                   |
+| Large backlog exceeds hosting limits                                   | Initial lookback, batch cap, sequential fetching, and short scheduler runs.                                                                            |
 
 ### Rollback
 

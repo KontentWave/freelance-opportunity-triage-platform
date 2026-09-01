@@ -24,6 +24,7 @@ final class UpworkJobAlertParserTest extends TestCase
             'hourly-client-success.eml',
             'hourly-operations-coordinator.eml',
             'hourly-unknown-rate.eml',
+            'hourly-current-template.eml',
         ] as $fixture) {
             $parsed = $parser->parse($this->fixture($fixture));
 
@@ -35,6 +36,65 @@ final class UpworkJobAlertParserTest extends TestCase
             $this->assertStringNotContainsString('?', $parsed->canonicalUrl);
             $this->assertStringNotContainsString('#', $parsed->canonicalUrl);
             $this->assertNotSame('', $parsed->title);
+        }
+    }
+
+    #[Test]
+    public function it_parses_the_current_direct_link_hourly_template_without_tracking_values(): void
+    {
+        $parser = new UpworkJobAlertParser;
+
+        $parsed = $parser->parse($this->fixture('hourly-current-template.eml'));
+
+        $this->assertSame('Synthetic QA Role', $parsed->title);
+        $this->assertSame('15.00', $parsed->hourlyMin);
+        $this->assertSame('25.00', $parsed->hourlyMax);
+        $this->assertSame('Less than 1 month', $parsed->estimatedDuration);
+        $this->assertSame('Test a synthetic application without using production data...', $parsed->excerpt);
+        $this->assertSame(['Quality Assurance', 'Software Testing'], $parsed->skills);
+        $this->assertTrue($parsed->paymentVerified);
+        $this->assertSame('4.80', $parsed->clientRating);
+        $this->assertSame('63000.00', $parsed->clientSpendUsd);
+        $this->assertTrue($parsed->clientSpendApproximate);
+        $this->assertSame('Exampleland', $parsed->clientCountry);
+        $this->assertStringNotContainsString('utm_', json_encode($parsed, JSON_THROW_ON_ERROR));
+    }
+
+    #[Test]
+    public function it_classifies_the_current_fixed_label_as_an_unsupported_contract_type(): void
+    {
+        $parser = new UpworkJobAlertParser;
+        $rawEmail = str_replace(
+            'Hourly: $15-$25',
+            'Fixed: $1,500.00',
+            $this->fixture('hourly-current-template.eml'),
+        );
+
+        try {
+            $parser->parse($rawEmail);
+            $this->fail('Expected an EmailParseException to be thrown.');
+        } catch (EmailParseException $exception) {
+            $this->assertSame(EmailParseErrorCode::UnsupportedContractType, $exception->errorCode);
+        }
+    }
+
+    #[Test]
+    public function it_rejects_a_redirect_only_alert_without_resolving_tracking_links(): void
+    {
+        $parser = new UpworkJobAlertParser;
+        $rawEmail = preg_replace(
+            '#https://www\.upwork\.com/jobs/~\d+[^\s]*#',
+            'https://link.t.upwork.com/ls/click?synthetic-token',
+            $this->fixture('hourly-current-template.eml'),
+        );
+
+        $this->assertIsString($rawEmail);
+
+        try {
+            $parser->parse($rawEmail);
+            $this->fail('Expected an EmailParseException to be thrown.');
+        } catch (EmailParseException $exception) {
+            $this->assertSame(EmailParseErrorCode::MissingJobId, $exception->errorCode);
         }
     }
 

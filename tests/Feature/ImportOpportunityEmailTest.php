@@ -9,6 +9,7 @@ use App\Domain\Opportunities\Enums\ContractType;
 use App\Domain\Opportunities\Enums\EmailImportStatus;
 use App\Domain\Opportunities\Enums\EmailParseErrorCode;
 use App\Domain\Opportunities\Enums\OpportunityProvider;
+use App\Domain\Opportunities\Exceptions\EmailParseException;
 use App\Models\EmailImport;
 use App\Models\Opportunity;
 use App\Models\Workspace;
@@ -143,6 +144,59 @@ final class ImportOpportunityEmailTest extends TestCase
         $this->assertStringNotContainsString('owner@example.test', $serializedImport);
         $this->assertStringNotContainsString('tracking-token', $serializedImport);
         $this->assertStringNotContainsString('Lead   client onboarding', $serializedImport);
+    }
+
+    #[Test]
+    public function it_reprocesses_an_existing_quarantine_after_parser_compatibility_improves(): void
+    {
+        $workspace = Workspace::factory()->create();
+        $parser = new class implements OpportunityEmailParser
+        {
+            public bool $supportsMessage = false;
+
+            public function parse(string $rawEmail): ParsedOpportunity
+            {
+                if (! $this->supportsMessage) {
+                    throw new EmailParseException(EmailParseErrorCode::MalformedTerms);
+                }
+
+                return new ParsedOpportunity(
+                    provider: OpportunityProvider::UpworkEmail,
+                    sourceMessageId: 'fixture-recovered@example.test',
+                    externalJobId: '200000000000000000098',
+                    canonicalUrl: 'https://www.upwork.com/jobs/~200000000000000000098',
+                    title: 'Recovered Fixture',
+                    contractType: ContractType::Hourly,
+                    hourlyMin: '15.00',
+                    hourlyMax: '25.00',
+                    currency: 'USD',
+                    estimatedDuration: 'Less than 1 month',
+                    postedOn: null,
+                    excerpt: 'Synthetic recovery fixture.',
+                    skills: ['Quality Assurance'],
+                    hiddenSkillCount: 0,
+                    paymentVerified: true,
+                    clientRating: '4.80',
+                    clientSpendUsd: '63000.00',
+                    clientSpendApproximate: true,
+                    clientCountry: 'Exampleland',
+                    templateFingerprint: 'upwork-alert-hourly-v1',
+                );
+            }
+        };
+        $action = new ImportOpportunityEmail($parser);
+        $rawEmail = $this->fixture('hourly-current-template.eml');
+
+        $quarantinedResult = $action->execute($workspace->id, $rawEmail);
+        $parser->supportsMessage = true;
+        $recoveredResult = $action->execute($workspace->id, $rawEmail);
+
+        $this->assertSame(EmailImportStatus::Quarantined, $quarantinedResult->status);
+        $this->assertSame(EmailImportStatus::Imported, $recoveredResult->status);
+        $this->assertSame(1, EmailImport::query()->count());
+        $this->assertSame(1, Opportunity::query()->count());
+        $this->assertSame('imported', EmailImport::query()->firstOrFail()->status);
+        $this->assertSame($recoveredResult->opportunityId, EmailImport::query()->firstOrFail()->opportunity_id);
     }
 
     #[Test]
