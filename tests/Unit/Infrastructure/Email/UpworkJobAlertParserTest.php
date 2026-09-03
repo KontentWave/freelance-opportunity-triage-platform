@@ -2,13 +2,18 @@
 
 namespace Tests\Unit\Infrastructure\Email;
 
+use App\Application\Opportunities\RedirectDestinationResolver;
 use App\Domain\Opportunities\Enums\ContractType;
 use App\Domain\Opportunities\Enums\EmailParseErrorCode;
 use App\Domain\Opportunities\Enums\OpportunityProvider;
+use App\Domain\Opportunities\Enums\RedirectResolutionErrorCode;
 use App\Domain\Opportunities\Exceptions\EmailParseException;
+use App\Domain\Opportunities\Exceptions\RedirectResolutionException;
 use App\Infrastructure\Email\UpworkJobAlertParser;
 use Carbon\CarbonImmutable;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Support\Fakes\FakeHostAddressResolver;
+use Tests\Support\Fakes\FakeRedirectHopClient;
 use Tests\TestCase;
 use ZBateson\MailMimeParser\IMessage;
 use ZBateson\MailMimeParser\MailMimeParser;
@@ -79,22 +84,123 @@ final class UpworkJobAlertParserTest extends TestCase
     }
 
     #[Test]
-    public function it_rejects_a_redirect_only_alert_without_resolving_tracking_links(): void
+    public function it_rejects_a_redirect_only_alert_when_resolution_is_disabled(): void
     {
-        $parser = new UpworkJobAlertParser;
-        $rawEmail = preg_replace(
-            '#https://www\.upwork\.com/jobs/~\d+[^\s]*#',
-            'https://link.t.upwork.com/ls/click?synthetic-token',
-            $this->fixture('hourly-current-template.eml'),
+        config()->set('opportunity_sources.upwork.redirect_resolution.enabled', false);
+        $addressResolver = new FakeHostAddressResolver;
+        $hopClient = new FakeRedirectHopClient;
+        $parser = new UpworkJobAlertParser(
+            redirectDestinationResolver: new RedirectDestinationResolver($addressResolver, $hopClient),
         );
 
-        $this->assertIsString($rawEmail);
+        try {
+            $parser->parse($this->redirectOnlyFixture());
+            $this->fail('Expected an EmailParseException to be thrown.');
+        } catch (EmailParseException $exception) {
+            $this->assertSame(EmailParseErrorCode::MissingJobId, $exception->errorCode);
+            $this->assertSame([], $addressResolver->resolvedHosts);
+            $this->assertSame([], $hopClient->requests);
+        }
+    }
+
+    #[Test]
+    public function it_resolves_an_enabled_redirect_only_alert_through_fake_boundaries(): void
+    {
+        config()->set('opportunity_sources.upwork.redirect_resolution.enabled', true);
+        $addressResolver = (new FakeHostAddressResolver)
+            ->withAddresses('link.t.upwork.com', ['93.184.216.34']);
+        $hopClient = (new FakeRedirectHopClient)
+            ->queueResponse(302, 'https://www.upwork.com/jobs/~299999999999999999999');
+        $parser = new UpworkJobAlertParser(
+            redirectDestinationResolver: new RedirectDestinationResolver($addressResolver, $hopClient),
+        );
+
+        $parsed = $parser->parse($this->redirectOnlyFixture());
+
+        $this->assertSame('299999999999999999999', $parsed->externalJobId);
+        $this->assertSame('https://www.upwork.com/jobs/~299999999999999999999', $parsed->canonicalUrl);
+        $this->assertSame('Synthetic QA Role', $parsed->title);
+        $this->assertSame('15.00', $parsed->hourlyMin);
+        $this->assertSame(['Quality Assurance', 'Software Testing'], $parsed->skills);
+        $this->assertSame(['link.t.upwork.com'], $addressResolver->resolvedHosts);
+        $this->assertCount(1, $hopClient->requests);
+        $this->assertSame(
+            'https://link.t.upwork.com/ls/click?synthetic-token',
+            $hopClient->requests[0]->url,
+        );
+    }
+
+    #[Test]
+    public function it_maps_redirect_failures_to_stable_email_parse_codes(): void
+    {
+        config()->set('opportunity_sources.upwork.redirect_resolution.enabled', true);
+
+        foreach ([
+            [RedirectResolutionErrorCode::UrlRejected, EmailParseErrorCode::RedirectUrlRejected],
+            [RedirectResolutionErrorCode::AddressRejected, EmailParseErrorCode::RedirectAddressRejected],
+            [RedirectResolutionErrorCode::Timeout, EmailParseErrorCode::RedirectTimeout],
+            [RedirectResolutionErrorCode::ResponseInvalid, EmailParseErrorCode::RedirectResponseInvalid],
+            [RedirectResolutionErrorCode::LimitExceeded, EmailParseErrorCode::RedirectLimitExceeded],
+            [RedirectResolutionErrorCode::DestinationInvalid, EmailParseErrorCode::RedirectDestinationInvalid],
+        ] as [$redirectCode, $emailCode]) {
+            $addressResolver = (new FakeHostAddressResolver)
+                ->failWith(new RedirectResolutionException($redirectCode));
+            $parser = new UpworkJobAlertParser(
+                redirectDestinationResolver: new RedirectDestinationResolver(
+                    $addressResolver,
+                    new FakeRedirectHopClient,
+                ),
+            );
+
+            try {
+                $parser->parse($this->redirectOnlyFixture());
+                $this->fail('Expected an EmailParseException to be thrown.');
+            } catch (EmailParseException $exception) {
+                $this->assertSame($emailCode, $exception->errorCode);
+                $this->assertSame($emailCode->value, $exception->getMessage());
+            }
+        }
+    }
+
+    #[Test]
+    public function it_does_not_resolve_a_direct_link_when_resolution_is_enabled(): void
+    {
+        config()->set('opportunity_sources.upwork.redirect_resolution.enabled', true);
+        $addressResolver = new FakeHostAddressResolver;
+        $hopClient = new FakeRedirectHopClient;
+        $parser = new UpworkJobAlertParser(
+            redirectDestinationResolver: new RedirectDestinationResolver($addressResolver, $hopClient),
+        );
+
+        $parsed = $parser->parse($this->fixture('hourly-current-template.eml'));
+
+        $this->assertSame('200000000000000000004', $parsed->externalJobId);
+        $this->assertSame([], $addressResolver->resolvedHosts);
+        $this->assertSame([], $hopClient->requests);
+    }
+
+    #[Test]
+    public function it_rejects_an_unexpected_sender_before_resolving_a_tracking_link(): void
+    {
+        config()->set('opportunity_sources.upwork.redirect_resolution.enabled', true);
+        $addressResolver = new FakeHostAddressResolver;
+        $hopClient = new FakeRedirectHopClient;
+        $parser = new UpworkJobAlertParser(
+            redirectDestinationResolver: new RedirectDestinationResolver($addressResolver, $hopClient),
+        );
+        $rawEmail = str_replace(
+            'From: Upwork Notification <donotreply@upwork.com>',
+            'From: Evil Sender <evil@example.test>',
+            $this->redirectOnlyFixture(),
+        );
 
         try {
             $parser->parse($rawEmail);
             $this->fail('Expected an EmailParseException to be thrown.');
         } catch (EmailParseException $exception) {
-            $this->assertSame(EmailParseErrorCode::MissingJobId, $exception->errorCode);
+            $this->assertSame(EmailParseErrorCode::UnsupportedSender, $exception->errorCode);
+            $this->assertSame([], $addressResolver->resolvedHosts);
+            $this->assertSame([], $hopClient->requests);
         }
     }
 
@@ -450,6 +556,19 @@ EOT,
                 ));
             }
         }
+    }
+
+    private function redirectOnlyFixture(): string
+    {
+        $rawEmail = preg_replace(
+            '#https://www\.upwork\.com/jobs/~\d+[^\s]*#',
+            'https://link.t.upwork.com/ls/click?synthetic-token',
+            $this->fixture('hourly-current-template.eml'),
+        );
+
+        $this->assertIsString($rawEmail);
+
+        return $rawEmail;
     }
 
     private function fixture(string $name): string

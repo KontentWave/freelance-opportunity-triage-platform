@@ -11,5 +11,9 @@ return [
         'allowed_host' => 'www.upwork.com',
         'template_fingerprint' => 'upwork-alert-hourly-v1',
         'currency' => 'USD',
+        'redirect_resolution' => [
+            'enabled' => (bool) env('OPPORTUNITY_REDIRECT_RESOLUTION_ENABLED', false),
+            'initial_host' => 'link.t.upwork.com',
+        ],
     ],
 ];

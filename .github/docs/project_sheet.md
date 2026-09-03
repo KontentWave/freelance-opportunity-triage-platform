@@ -286,9 +286,9 @@ No remaining application-scope gaps were found inside the agreed Phase 1 scope.
 
 ## Phase 2: Secure Scheduled Mailbox Intake
 
-**Document role:** Draft implementation specification for the current phase only
-**Current status:** Staging intake paused; current redirect-only alert format lacks the offline canonical job identifier required by Phase 2
-**Last updated:** 2026-09-01
+**Document role:** Audited implementation specification for the current phase only
+**Current status:** Local implementation complete; production redirect compatibility, protected CI checks, controlled poll, and 24-hour staging soak pending
+**Last updated:** 2026-09-03
 **Behavior specification:** `.github/docs/features/import_job_alerts_from_mailbox.feature`
 
 ### Action
@@ -310,11 +310,12 @@ Phase 2 adds transport and operations around the completed Phase 1 import bounda
 - Bounded retry state for temporary per-message failures.
 - Safe quarantine/permanent-failure state for non-retryable inputs.
 - A scheduled Artisan poll command, a connectivity-check command, and a health command.
+- Disabled-by-default redirect-only canonicalization through the reviewed resolver boundary; production bindings and activation remain gated by ADR-004.
 - MariaDB-backed tests, static analysis, dependency/security checks, and a 24-hour staging soak.
 
 ### Explicitly Excluded
 
-- Upwork HTTP requests, API calls, scraping, browser automation, Cloudflare bypassing, or proposal automation.
+- Upwork HTTP requests except the separately approved bounded redirect-only `HEAD` flow; API calls, scraping, browser automation, Cloudflare bypassing, or proposal automation.
 - Gmail OAuth consent flows, IMAP IDLE, queues, daemons, WebSockets, or a permanent Node.js worker.
 - Reading a personal mailbox outside the configured dedicated folder.
 - Deleting, moving, flagging, or marking source messages as read.
@@ -708,7 +709,7 @@ The soak evidence should contain counts, timestamps, commit SHA, and CI URL only
 | Checkpoint advances before durable discovery                           | Ledger insert and checkpoint update share one transaction; explicit rollback test.                                                                     |
 | Temporary failures create an infinite hot loop                         | Persist attempts and next-attempt timestamps; fixed bounded retry schedule.                                                                            |
 | A template change silently drops alerts                                | Envelope filter remains broad enough for configured alerts; raw messages still pass Phase 1 validation and quarantine; health degrades on quarantine.  |
-| Redirect-only alerts omit an offline canonical job identifier          | Quarantine as `missing_job_id`; do not follow tracking links or start the soak until the input contract is restored or an ADR approves a new boundary. |
+| Redirect-only alerts omit an offline canonical job identifier          | Keep the ADR-004 resolver disabled until production binding and target-host `HEAD` compatibility are approved; do not start the soak before that gate. |
 | Secrets or personal mail appear in diagnostics                         | Dedicated folder, minimal schema, stable codes, no protocol debug, and adversarial output/log tests.                                                   |
 | Large backlog exceeds hosting limits                                   | Initial lookback, batch cap, sequential fetching, and short scheduler runs.                                                                            |
 

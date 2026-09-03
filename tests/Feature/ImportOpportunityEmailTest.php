@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Application\Opportunities\ImportOpportunityEmail;
+use App\Application\Opportunities\RedirectDestinationResolver;
 use App\Domain\Opportunities\Contracts\OpportunityEmailParser;
 use App\Domain\Opportunities\Data\ParsedOpportunity;
 use App\Domain\Opportunities\Enums\ContractType;
@@ -10,12 +11,15 @@ use App\Domain\Opportunities\Enums\EmailImportStatus;
 use App\Domain\Opportunities\Enums\EmailParseErrorCode;
 use App\Domain\Opportunities\Enums\OpportunityProvider;
 use App\Domain\Opportunities\Exceptions\EmailParseException;
+use App\Infrastructure\Email\UpworkJobAlertParser;
 use App\Models\EmailImport;
 use App\Models\Opportunity;
 use App\Models\Workspace;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Support\Fakes\FakeHostAddressResolver;
+use Tests\Support\Fakes\FakeRedirectHopClient;
 use Tests\TestCase;
 
 final class ImportOpportunityEmailTest extends TestCase
@@ -214,6 +218,52 @@ final class ImportOpportunityEmailTest extends TestCase
 
         $this->assertStringNotContainsString('owner@example.test', $serializedImport);
         $this->assertStringNotContainsString('tracking-token', $serializedImport);
+    }
+
+    #[Test]
+    public function it_imports_a_new_redirect_only_alert_without_mutating_quarantine_history(): void
+    {
+        config()->set('opportunity_sources.upwork.redirect_resolution.enabled', true);
+        $workspace = Workspace::factory()->create();
+        $historicalImport = EmailImport::query()->create([
+            'workspace_id' => $workspace->id,
+            'opportunity_id' => null,
+            'message_id' => 'historical-quarantine@example.test',
+            'content_sha256' => hash('sha256', 'historical-quarantine'),
+            'status' => EmailImportStatus::Quarantined->value,
+            'error_code' => EmailParseErrorCode::MissingJobId->value,
+            'imported_at' => '2026-09-01 12:00:00',
+        ]);
+        $historicalAttributes = $historicalImport->getAttributes();
+        ksort($historicalAttributes);
+        $addressResolver = (new FakeHostAddressResolver)
+            ->withAddresses('link.t.upwork.com', ['93.184.216.34']);
+        $hopClient = (new FakeRedirectHopClient)
+            ->queueResponse(302, 'https://www.upwork.com/jobs/~299999999999999999999');
+        $action = new ImportOpportunityEmail(new UpworkJobAlertParser(
+            redirectDestinationResolver: new RedirectDestinationResolver($addressResolver, $hopClient),
+        ));
+        $rawEmail = preg_replace(
+            '#https://www\.upwork\.com/jobs/~\d+[^\s]*#',
+            'https://link.t.upwork.com/ls/click?synthetic-token',
+            $this->fixture('hourly-current-template.eml'),
+        );
+
+        $this->assertIsString($rawEmail);
+
+        $result = $action->execute($workspace->id, $rawEmail);
+
+        $this->assertSame(EmailImportStatus::Imported, $result->status);
+        $this->assertSame('299999999999999999999', $result->externalJobId);
+        $this->assertSame(2, EmailImport::query()->count());
+        $this->assertSame(1, Opportunity::query()->count());
+        $refreshedHistoricalAttributes = $historicalImport->refresh()->getAttributes();
+        ksort($refreshedHistoricalAttributes);
+        $this->assertSame($historicalAttributes, $refreshedHistoricalAttributes);
+        $this->assertStringNotContainsString(
+            'synthetic-token',
+            json_encode(EmailImport::query()->get()->toArray(), JSON_THROW_ON_ERROR),
+        );
     }
 
     #[Test]

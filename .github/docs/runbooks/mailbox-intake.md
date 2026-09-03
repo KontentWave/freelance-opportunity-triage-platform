@@ -53,6 +53,7 @@ Set these values through the deployment provider's protected environment interfa
 | `OPPORTUNITY_MAILBOX_INITIAL_LOOKBACK_HOURS`   | Clamp is 1-168; default `24`.                                     |
 | `OPPORTUNITY_MAILBOX_MAX_ATTEMPTS`             | Clamp is 1-5; Phase 2 policy uses `3`.                            |
 | `OPPORTUNITY_MAILBOX_HEALTH_MAX_AGE_MINUTES`   | Positive integer; default `15`.                                   |
+| `OPPORTUNITY_REDIRECT_RESOLUTION_ENABLED`      | Keep `false` until the separate ADR-004 production gate passes.   |
 
 After changing protected configuration, rebuild Laravel's configuration cache through the provider's deployment process:
 
@@ -71,7 +72,7 @@ Do not use `php artisan config:show opportunity_mailbox` in production because i
     php artisan migrate --force
     ```
 
-3. Set all protected mailbox configuration values except the enabled flag.
+3. Set all protected mailbox configuration values except the mailbox enabled flag. Keep `OPPORTUNITY_REDIRECT_RESOLUTION_ENABLED=false`.
 4. Rebuild the configuration cache.
 5. Confirm the application is not in debug mode through the provider configuration. Do not dump the complete application configuration.
 6. Set `OPPORTUNITY_MAILBOX_ENABLED=true` and rebuild the configuration cache again.
@@ -169,7 +170,7 @@ Do not query or export complete database rows for incident evidence.
 
 Never add raw exception messages to logs to diagnose these codes.
 
-If alerts expose only tracking redirects and no direct `/jobs/~<digits>` URL, keep intake disabled. Do not resolve redirects over HTTP; record only `email.missing_job_id` and return to architecture review.
+If alerts expose only tracking redirects and no direct `/jobs/~<digits>` URL, keep redirect resolution disabled until the ADR-004 target-host `HEAD` compatibility check, production binding review, and protected checks pass. Do not enable an unreviewed fallback or use `GET`; while disabled, these messages remain quarantined as `email.missing_job_id`.
 
 ## Disable Intake
 
