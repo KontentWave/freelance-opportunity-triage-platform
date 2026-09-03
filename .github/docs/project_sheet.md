@@ -287,7 +287,7 @@ No remaining application-scope gaps were found inside the agreed Phase 1 scope.
 ## Phase 2: Secure Scheduled Mailbox Intake
 
 **Document role:** Audited implementation specification for the current phase only
-**Current status:** Local implementation complete; production redirect compatibility, protected CI checks, controlled poll, and 24-hour staging soak pending
+**Current status:** Local implementation and protected CI complete; production activation blocked because the target redirect service returns HTTP 403 without `Location` to `HEAD`
 **Last updated:** 2026-09-03
 **Behavior specification:** `.github/docs/features/import_job_alerts_from_mailbox.feature`
 
@@ -690,6 +690,8 @@ No graphical UI is added. CLI status must not rely on color alone, must use stab
 
 Before Phase 2 is complete:
 
+First resolve the ADR-004 redirect transport blocker through a separately reviewed decision and passing target-host proof. Keep mailbox intake, redirect resolution, controlled polling, and the soak disabled until then.
+
 1. Run `opportunity:mailbox-check` on the target host and record only pass/fail plus the stable code.
 2. Confirm a fetched source message remains present and its flags are unchanged.
 3. Install the provider cron and verify scheduled timestamps through persisted `mailbox_runs`, not by exposing mail data in logs.
@@ -701,17 +703,17 @@ The soak evidence should contain counts, timestamps, commit SHA, and CI URL only
 
 ### Risks and Mitigations
 
-| Risk                                                                   | Mitigation / stop condition                                                                                                                            |
-| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Hosting blocks outbound IMAP, required auth, or cron cadence           | Compatibility spike first; retain the Phase 1 local `.eml` command; stop before building around an unverified transport.                               |
-| IMAP library changes message flags or cannot return exact RFC822 bytes | PEEK/flag and parser-contract proofs are mandatory; amend ADR-004 or stop.                                                                             |
-| UIDVALIDITY reset causes a rescan                                      | Namespace ledger by UIDVALIDITY, bound the lookback, and rely on Phase 1 content/job idempotency.                                                      |
-| Checkpoint advances before durable discovery                           | Ledger insert and checkpoint update share one transaction; explicit rollback test.                                                                     |
-| Temporary failures create an infinite hot loop                         | Persist attempts and next-attempt timestamps; fixed bounded retry schedule.                                                                            |
-| A template change silently drops alerts                                | Envelope filter remains broad enough for configured alerts; raw messages still pass Phase 1 validation and quarantine; health degrades on quarantine.  |
-| Redirect-only alerts omit an offline canonical job identifier          | Keep the ADR-004 resolver disabled until production binding and target-host `HEAD` compatibility are approved; do not start the soak before that gate. |
-| Secrets or personal mail appear in diagnostics                         | Dedicated folder, minimal schema, stable codes, no protocol debug, and adversarial output/log tests.                                                   |
-| Large backlog exceeds hosting limits                                   | Initial lookback, batch cap, sequential fetching, and short scheduler runs.                                                                            |
+| Risk                                                                   | Mitigation / stop condition                                                                                                                           |
+| ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Hosting blocks outbound IMAP, required auth, or cron cadence           | Compatibility spike first; retain the Phase 1 local `.eml` command; stop before building around an unverified transport.                              |
+| IMAP library changes message flags or cannot return exact RFC822 bytes | PEEK/flag and parser-contract proofs are mandatory; amend ADR-004 or stop.                                                                            |
+| UIDVALIDITY reset causes a rescan                                      | Namespace ledger by UIDVALIDITY, bound the lookback, and rely on Phase 1 content/job idempotency.                                                     |
+| Checkpoint advances before durable discovery                           | Ledger insert and checkpoint update share one transaction; explicit rollback test.                                                                    |
+| Temporary failures create an infinite hot loop                         | Persist attempts and next-attempt timestamps; fixed bounded retry schedule.                                                                           |
+| A template change silently drops alerts                                | Envelope filter remains broad enough for configured alerts; raw messages still pass Phase 1 validation and quarantine; health degrades on quarantine. |
+| Redirect-only alerts omit an offline canonical job identifier          | Target-host `HEAD` returned HTTP 403 without `Location`; keep resolution and intake disabled and amend ADR-004 before testing another transport.      |
+| Secrets or personal mail appear in diagnostics                         | Dedicated folder, minimal schema, stable codes, no protocol debug, and adversarial output/log tests.                                                  |
+| Large backlog exceeds hosting limits                                   | Initial lookback, batch cap, sequential fetching, and short scheduler runs.                                                                           |
 
 ### Rollback
 

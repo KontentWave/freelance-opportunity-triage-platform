@@ -202,7 +202,7 @@ Rollback must not delete imported opportunities or mutate source mailbox message
 
 ## 24-Hour Staging Soak
 
-The soak is a separate deployment verification step and is not completed by this runbook.
+The soak is a separate deployment verification step and is not completed by this runbook. As of 2026-09-03, it is blocked by the failed ADR-004 target-host redirect `HEAD` compatibility proof. Do not enable mailbox intake or begin the soak until a separately reviewed transport decision passes its target-host proof.
 
 Before starting:
 

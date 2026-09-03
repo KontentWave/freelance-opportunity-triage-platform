@@ -1,6 +1,6 @@
 # ADR-004: Scheduled IMAP Polling
 
-- **Status:** Accepted — target-host verified; disabled redirect parser integration complete locally
+- **Status:** Accepted for IMAP; redirect production activation blocked by failed `HEAD` compatibility proof
 - **Date:** 2026-08-29
 - **Last amended:** 2026-09-02
 - **Decision owners:** Project and quality engineering
@@ -192,6 +192,20 @@ The approved local slice is implemented behind `OPPORTUNITY_REDIRECT_RESOLUTION_
 All six resolver failures map to stable `EmailParseErrorCode` cases and therefore to the existing `email.<code>` mailbox quarantine boundary. Synthetic tests prove disabled mode performs no DNS or HTTP work, direct links bypass the resolver even when enabled, unsupported senders are rejected before resolution, successful resolution does not fetch the canonical destination, tracking values are not persisted, and importing a new redirect-only alert leaves an existing quarantine row byte-for-byte unchanged. No production address-resolver or hop-client container binding was added.
 
 Focused parser/import validation passed 30 tests with 264 assertions; the isolated resolver and cURL adapter remain green with 52 tests and 148 assertions. The complete MariaDB 11.4 suite passed 145 tests with 917 assertions. Repository-wide PHPStan, Pint, Composer validation, locked dependency audit, and diff checks passed. Local coverage enforcement could not run because neither PCOV nor Xdebug is installed; the protected CI coverage job remains required. Local gitleaks remains unavailable, so the hosted `Secret scan` also remains required. No test opened a network connection.
+
+### Target-Host Redirect Compatibility Result: 2026-09-03
+
+The reviewed commit `9ef3c7f` was deployed to the verified PHP 8.4 target with a clean worktree. Effective cached configuration kept both mailbox intake and redirect resolution disabled. The protected checks `Quality`, `Tests / MariaDB 11.4`, and `Secret scan` passed before the target check.
+
+A current authorized redirect-only alert was supplied through hidden terminal input and was never printed, persisted, logged, or placed in shell history by the check. Its initial URL passed the approved length, ASCII, parse, HTTPS, exact-host, no-credentials, no-port, and no-fragment checks. The bounded resolver checks failed with stable `redirect_url_rejected` and `redirect_response_invalid` outcomes. A final first-hop-only diagnostic then established the controlling result:
+
+- TLS and cURL transport completed successfully with cURL error number `0`.
+- The exact tracking host returned HTTP `403` to `HEAD`.
+- Response headers were 1,735 bytes, below the 8 KiB limit.
+- No `Location` header was returned.
+- No response body or canonical destination was requested.
+
+This is a failed compatibility proof under the explicit stop condition. The `HEAD`-only resolver cannot recover a canonical job ID from the current production redirect service. Redirect resolution, mailbox intake, controlled polling, historical replay, provider cron activation, and the 24-hour soak remain disabled. Do not add or enable a `GET` fallback without a separately reviewed ADR amendment that defines body-transfer prevention, redirect validation, traffic limits, privacy handling, tests, and target-host proof. The deployed disabled code may remain in place because it performs no redirect network work.
 
 ## Alternatives Considered
 
