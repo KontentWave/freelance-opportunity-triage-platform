@@ -289,7 +289,7 @@ No remaining application-scope gaps were found inside the agreed Phase 1 scope.
 ## Phase 2: Secure Scheduled Mailbox Intake
 
 **Document role:** Audited implementation specification for the current phase only
-**Current status:** Direct-link-only implementation approved; controlled staging poll and 24-hour soak pending
+**Current status:** Direct-link-only controlled staging poll passed; 24-hour soak pending
 **Last updated:** 2026-09-04
 **Behavior specification:** `.github/docs/features/import_job_alerts_from_mailbox.feature`
 
@@ -697,9 +697,11 @@ Before Phase 2 is complete:
 3. Install the provider cron and verify scheduled timestamps through persisted `mailbox_runs`, not by exposing mail data in logs.
 4. Let staging poll for 24 hours with real authorized alerts.
 5. Reconcile candidate UIDs against ledger rows and confirm no candidate message loss, no duplicate opportunity, no overdue retry, and no secret/raw-content leakage.
-6. Run `opportunity:mailbox-health --json` and confirm there are no transport, retry, or delivery failures. A `degraded` result caused only by expected `email.missing_job_id` quarantines is acceptable for the direct-link-only scope.
+6. Run `opportunity:mailbox-health --json` and confirm there are no transport, retry, or delivery failures. A `degraded` result caused only by expected `email.missing_job_id` or `email.unsupported_contract_type` quarantines is acceptable because redirect-only and fixed-price alerts are explicitly outside the supported parser scope.
 
 The soak evidence should contain counts, timestamps, commit SHA, and CI URL only.
+
+Controlled staging verification on 2026-09-04 at commit `32ff898` imported five direct-link alerts and safely quarantined nine redirect-only alerts as `email.missing_job_id` plus one fixed-price alert as `email.unsupported_contract_type`. All 15 discovered messages were processed with no retry or permanent failure. No historical quarantine was replayed or mutated.
 
 ### Risks and Mitigations
 
@@ -712,6 +714,7 @@ The soak evidence should contain counts, timestamps, commit SHA, and CI URL only
 | Temporary failures create an infinite hot loop                         | Persist attempts and next-attempt timestamps; fixed bounded retry schedule.                                                                           |
 | A template change silently drops alerts                                | Envelope filter remains broad enough for configured alerts; raw messages still pass Phase 1 validation and quarantine; health degrades on quarantine. |
 | Redirect-only alerts omit an offline canonical job identifier          | Quarantine as `email.missing_job_id`, persist no tracking value, and report reduced source coverage in soak evidence.                                 |
+| Fixed-price alerts enter the candidate folder                          | Quarantine as `email.unsupported_contract_type`; fixed-price normalization remains explicitly outside Phase 2.                                        |
 | Secrets or personal mail appear in diagnostics                         | Dedicated folder, minimal schema, stable codes, no protocol debug, and adversarial output/log tests.                                                  |
 | Large backlog exceeds hosting limits                                   | Initial lookback, batch cap, sequential fetching, and short scheduler runs.                                                                           |
 

@@ -153,19 +153,21 @@ Do not query or export complete database rows for incident evidence.
 
 ## Stable Error Response
 
-| Error code                      | Operational response                                                                                                   |
-| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `mailbox.configuration_invalid` | Disable intake and correct protected configuration or workspace ownership.                                             |
-| `mailbox.insecure_transport`    | Disable intake; restore `ssl` or `tls` and certificate validation.                                                     |
-| `mailbox.authentication_failed` | Disable intake; rotate or correct credentials through the secret manager.                                              |
-| `mailbox.connection_failed`     | Check provider networking and mailbox availability without recording endpoints or raw exceptions.                      |
-| `mailbox.folder_unavailable`    | Disable intake; verify the dedicated folder through an authorized mail client.                                         |
-| `mailbox.uidvalidity_changed`   | Monitor the bounded rescan and duplicate counter; Phase 1 idempotency remains authoritative.                           |
-| `mailbox.message_too_large`     | Leave the source message unchanged; the ledger quarantine is terminal.                                                 |
-| `mailbox.message_fetch_failed`  | Monitor the bounded retry schedule.                                                                                    |
-| `mailbox.import_failed`         | Monitor retries; investigate application behavior using safe codes and counters only.                                  |
-| `mailbox.retry_exhausted`       | Treat as actionable failure; preserve the ledger and source message for reviewed recovery.                             |
-| `email.*`                       | Typed Phase 1 quarantine; do not retry automatically. Review parser compatibility using separately sanitized fixtures. |
+| Error code                        | Operational response                                                                                                   |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `mailbox.configuration_invalid`   | Disable intake and correct protected configuration or workspace ownership.                                             |
+| `mailbox.insecure_transport`      | Disable intake; restore `ssl` or `tls` and certificate validation.                                                     |
+| `mailbox.authentication_failed`   | Disable intake; rotate or correct credentials through the secret manager.                                              |
+| `mailbox.connection_failed`       | Check provider networking and mailbox availability without recording endpoints or raw exceptions.                      |
+| `mailbox.folder_unavailable`      | Disable intake; verify the dedicated folder through an authorized mail client.                                         |
+| `mailbox.uidvalidity_changed`     | Monitor the bounded rescan and duplicate counter; Phase 1 idempotency remains authoritative.                           |
+| `mailbox.message_too_large`       | Leave the source message unchanged; the ledger quarantine is terminal.                                                 |
+| `mailbox.message_fetch_failed`    | Monitor the bounded retry schedule.                                                                                    |
+| `mailbox.import_failed`           | Monitor retries; investigate application behavior using safe codes and counters only.                                  |
+| `mailbox.retry_exhausted`         | Treat as actionable failure; preserve the ledger and source message for reviewed recovery.                             |
+| `email.missing_job_id`            | Expected for redirect-only alerts in the direct-link-only scope; do not retry or follow the tracking link.             |
+| `email.unsupported_contract_type` | Expected for fixed-price alerts, which are outside Phase 2; do not retry automatically.                                |
+| Other `email.*`                   | Typed Phase 1 quarantine; review parser compatibility using a separately sanitized fixture before continuing the soak. |
 
 Never add raw exception messages to logs to diagnose these codes.
 
@@ -223,10 +225,10 @@ At completion, verify:
 - Every authorized candidate UID has a corresponding durable ledger row, using an access-controlled in-memory comparison whose values are not printed.
 - Repeated delivery created no duplicate opportunity.
 - No retry is overdue and no unreviewed permanent failure remains.
-- Any quarantine is attributable only to reviewed parser outcomes; `email.missing_job_id` is acceptable for redirect-only alerts in the direct-link-only scope.
+- Any quarantine is attributable only to reviewed parser outcomes; `email.missing_job_id` and `email.unsupported_contract_type` are acceptable for the explicitly excluded redirect-only and fixed-price inputs.
 - Source messages and flags are unchanged.
 - Database rows, application logs, console output, screenshots, and CI artifacts contain no prohibited mailbox data.
-- Final health is `healthy`, or `degraded` solely because of expected `email.missing_job_id` quarantines with no transport, retry, or delivery failure.
+- Final health is `healthy`, or `degraded` solely because of expected `email.missing_job_id` or `email.unsupported_contract_type` quarantines with no transport, retry, or delivery failure.
 
 Allowed soak evidence contains only:
 

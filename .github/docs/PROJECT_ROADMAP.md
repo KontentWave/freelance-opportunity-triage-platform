@@ -1,6 +1,6 @@
 # Project Roadmap — Freelance Opportunity Triage Platform
 
-**Status:** Vision approved; Phase 1 completed with clean CI evidence; Phase 2 direct-link-only implementation ready for controlled polling and staging soak; optional Tester Skill deferred until after MVP
+**Status:** Vision approved; Phase 1 completed with clean CI evidence; Phase 2 direct-link-only controlled poll passed and staging soak is pending; optional Tester Skill deferred until after MVP
 **Primary user:** An independent freelancer reviewing opportunities from authorized job-alert emails  
 **Working title:** To be decided; do not use Upwork trademarks in product branding
 
