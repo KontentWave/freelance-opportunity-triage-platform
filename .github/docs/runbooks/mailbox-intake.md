@@ -53,7 +53,6 @@ Set these values through the deployment provider's protected environment interfa
 | `OPPORTUNITY_MAILBOX_INITIAL_LOOKBACK_HOURS`   | Clamp is 1-168; default `24`.                                     |
 | `OPPORTUNITY_MAILBOX_MAX_ATTEMPTS`             | Clamp is 1-5; Phase 2 policy uses `3`.                            |
 | `OPPORTUNITY_MAILBOX_HEALTH_MAX_AGE_MINUTES`   | Positive integer; default `15`.                                   |
-| `OPPORTUNITY_REDIRECT_RESOLUTION_ENABLED`      | Keep `false` until the separate ADR-004 production gate passes.   |
 
 After changing protected configuration, rebuild Laravel's configuration cache through the provider's deployment process:
 
@@ -72,7 +71,7 @@ Do not use `php artisan config:show opportunity_mailbox` in production because i
     php artisan migrate --force
     ```
 
-3. Set all protected mailbox configuration values except the mailbox enabled flag. Keep `OPPORTUNITY_REDIRECT_RESOLUTION_ENABLED=false`.
+3. Set all protected mailbox configuration values except the mailbox enabled flag.
 4. Rebuild the configuration cache.
 5. Confirm the application is not in debug mode through the provider configuration. Do not dump the complete application configuration.
 6. Set `OPPORTUNITY_MAILBOX_ENABLED=true` and rebuild the configuration cache again.
@@ -170,7 +169,7 @@ Do not query or export complete database rows for incident evidence.
 
 Never add raw exception messages to logs to diagnose these codes.
 
-If alerts expose only tracking redirects and no direct `/jobs/~<digits>` URL, keep redirect resolution disabled until the ADR-004 target-host `HEAD` compatibility check, production binding review, and protected checks pass. Do not enable an unreviewed fallback or use `GET`; while disabled, these messages remain quarantined as `email.missing_job_id`.
+Alerts that expose only tracking redirects and no direct `/jobs/~<digits>` URL are expected to quarantine as `email.missing_job_id`. Do not retry them, follow the tracking URL, enable a `GET` fallback, impersonate crawler or browser traffic, bypass Cloudflare, scrape, or add browser automation. Review only safe aggregate counters; never record tracking values.
 
 ## Disable Intake
 
@@ -202,7 +201,7 @@ Rollback must not delete imported opportunities or mutate source mailbox message
 
 ## 24-Hour Staging Soak
 
-The soak is a separate deployment verification step and is not completed by this runbook. As of 2026-09-03, it is blocked by the failed ADR-004 target-host redirect `HEAD` compatibility proof. Do not enable mailbox intake or begin the soak until a separately reviewed transport decision passes its target-host proof.
+The soak is a separate deployment verification step and is not completed by this runbook. The failed redirect `HEAD` compatibility proof does not block the direct-link-only soak; redirect-only alerts are expected `email.missing_job_id` quarantines.
 
 Before starting:
 
@@ -224,9 +223,10 @@ At completion, verify:
 - Every authorized candidate UID has a corresponding durable ledger row, using an access-controlled in-memory comparison whose values are not printed.
 - Repeated delivery created no duplicate opportunity.
 - No retry is overdue and no unreviewed permanent failure remains.
+- Any quarantine is attributable only to reviewed parser outcomes; `email.missing_job_id` is acceptable for redirect-only alerts in the direct-link-only scope.
 - Source messages and flags are unchanged.
 - Database rows, application logs, console output, screenshots, and CI artifacts contain no prohibited mailbox data.
-- Final health is `healthy`.
+- Final health is `healthy`, or `degraded` solely because of expected `email.missing_job_id` quarantines with no transport, retry, or delivery failure.
 
 Allowed soak evidence contains only:
 

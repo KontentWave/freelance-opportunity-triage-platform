@@ -1,8 +1,8 @@
 # ADR-004: Scheduled IMAP Polling
 
-- **Status:** Accepted for IMAP; redirect production activation blocked by failed `HEAD` compatibility proof
+- **Status:** Accepted; Phase 2 is direct-link-only
 - **Date:** 2026-08-29
-- **Last amended:** 2026-09-02
+- **Last amended:** 2026-09-04
 - **Decision owners:** Project and quality engineering
 
 ## Context
@@ -207,6 +207,16 @@ A current authorized redirect-only alert was supplied through hidden terminal in
 
 This is a failed compatibility proof under the explicit stop condition. The `HEAD`-only resolver cannot recover a canonical job ID from the current production redirect service. Redirect resolution, mailbox intake, controlled polling, historical replay, provider cron activation, and the 24-hour soak remain disabled. Do not add or enable a `GET` fallback without a separately reviewed ADR amendment that defines body-transfer prevention, redirect validation, traffic limits, privacy handling, tests, and target-host proof. The deployed disabled code may remain in place because it performs no redirect network work.
 
+### Final Direct-Link-Only Decision: 2026-09-04
+
+Phase 2 supports only alerts whose decoded plain-text body contains a canonical `https://www.upwork.com/jobs/~<digits>` link. Redirect-only alerts are expected unsupported input and quarantine through the existing `missing_job_id` parser code, presented by mailbox operations as `email.missing_job_id`. They create no opportunity and no tracking URL or token is persisted.
+
+The failed resolver spike is rejected for production and its dormant implementation, configuration flag, specialized error codes, and tests are removed. This ADR and Git history retain the design, security review, validation, and target-host evidence. No Upwork HTTP request is part of Phase 2.
+
+The project will not add a `GET` fallback, impersonate an approved crawler or browser, bypass Cloudflare or another access control, scrape marketplace pages, or introduce browser automation for this phase. Any future attempt to support redirect-only alerts requires a new reviewed decision and independent authorization; it is not a Phase 2 completion dependency.
+
+The failed redirect compatibility proof no longer blocks mailbox connectivity verification, one controlled poll, provider cron activation, or the 24-hour staging soak. Soak evidence must distinguish expected `email.missing_job_id` quarantines from transport or delivery failures and must not expose message content or tracking values.
+
 ## Alternatives Considered
 
 ### Permanent Node.js mail worker
@@ -223,4 +233,4 @@ Out of scope. The target operating model is bounded scheduled polling with no re
 
 ## Scope Boundary
 
-This amendment adds an isolated redirect policy, a disabled and unbound HTTP hop adapter, and disabled-by-default parser/import integration using fake boundaries. It does not approve production HTTP use, OAuth, scraping, browser automation, historical replay, a live compatibility request, enabling resolution, mailbox intake, cron, controlled polling, or the soak. The accepted IMAP polling implementation remains otherwise unchanged.
+Phase 2 adds no Upwork HTTP integration. It accepts direct canonical links only and safely quarantines redirect-only alerts as `missing_job_id`. OAuth, scraping, browser automation, Cloudflare bypass, crawler impersonation, historical replay, and proposal automation remain outside scope. The accepted IMAP polling implementation is otherwise unchanged.

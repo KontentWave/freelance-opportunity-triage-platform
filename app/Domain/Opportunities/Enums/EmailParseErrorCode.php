@@ -16,10 +16,4 @@ enum EmailParseErrorCode: string
     case MissingTitle = 'missing_title';
     case MalformedTerms = 'malformed_terms';
     case UnsupportedTemplate = 'unsupported_template';
-    case RedirectUrlRejected = 'redirect_url_rejected';
-    case RedirectAddressRejected = 'redirect_address_rejected';
-    case RedirectTimeout = 'redirect_timeout';
-    case RedirectResponseInvalid = 'redirect_response_invalid';
-    case RedirectLimitExceeded = 'redirect_limit_exceeded';
-    case RedirectDestinationInvalid = 'redirect_destination_invalid';
 }

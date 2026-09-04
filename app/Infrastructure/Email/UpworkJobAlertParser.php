@@ -2,15 +2,12 @@
 
 namespace App\Infrastructure\Email;
 
-use App\Application\Opportunities\RedirectDestinationResolver;
 use App\Domain\Opportunities\Contracts\OpportunityEmailParser;
 use App\Domain\Opportunities\Data\ParsedOpportunity;
 use App\Domain\Opportunities\Enums\ContractType;
 use App\Domain\Opportunities\Enums\EmailParseErrorCode;
 use App\Domain\Opportunities\Enums\OpportunityProvider;
-use App\Domain\Opportunities\Enums\RedirectResolutionErrorCode;
 use App\Domain\Opportunities\Exceptions\EmailParseException;
-use App\Domain\Opportunities\Exceptions\RedirectResolutionException;
 use Carbon\CarbonImmutable;
 use Throwable;
 use ZBateson\MailMimeParser\Header\AddressHeader;
@@ -21,8 +18,7 @@ use ZBateson\MailMimeParser\MailMimeParser;
 final class UpworkJobAlertParser implements OpportunityEmailParser
 {
     public function __construct(
-        private readonly MailMimeParser $mimeParser = new MailMimeParser,
-        private readonly ?RedirectDestinationResolver $redirectDestinationResolver = null,
+        private readonly MailMimeParser $mimeParser = new MailMimeParser
     ) {}
 
     public function parse(string $rawEmail): ParsedOpportunity
@@ -40,8 +36,9 @@ final class UpworkJobAlertParser implements OpportunityEmailParser
         $this->assertSupportedSubject($message);
 
         $plainText = $this->extractPlainTextBody($message);
-        [$sourceJobUrl, $externalJobId, $canonicalUrl] = $this->resolveJobIdentity($plainText);
-        $title = $this->extractTitle($plainText, $sourceJobUrl);
+        $jobUrl = $this->extractJobUrl($plainText);
+        $title = $this->extractTitle($plainText, $jobUrl);
+        [$externalJobId, $canonicalUrl] = $this->normalizeJobUrl($jobUrl);
         [$hourlyMin, $hourlyMax, $estimatedDuration] = $this->extractHourlyTerms($plainText);
         $postedOn = $this->extractPostedOn($plainText, $message);
         $excerpt = $this->extractExcerpt($plainText);
@@ -156,67 +153,6 @@ final class UpworkJobAlertParser implements OpportunityEmailParser
         }
 
         throw new EmailParseException(EmailParseErrorCode::MissingJobId);
-    }
-
-    /**
-     * @return array{0: string, 1: string, 2: string}
-     */
-    private function resolveJobIdentity(string $plainText): array
-    {
-        try {
-            $jobUrl = $this->extractJobUrl($plainText);
-            [$externalJobId, $canonicalUrl] = $this->normalizeJobUrl($jobUrl);
-
-            return [$jobUrl, $externalJobId, $canonicalUrl];
-        } catch (EmailParseException $exception) {
-            if ($exception->errorCode !== EmailParseErrorCode::MissingJobId
-                || ! (bool) config('opportunity_sources.upwork.redirect_resolution.enabled')) {
-                throw $exception;
-            }
-        }
-
-        $trackingUrl = $this->extractTrackingUrl($plainText);
-
-        if ($trackingUrl === null || $this->redirectDestinationResolver === null) {
-            throw new EmailParseException(EmailParseErrorCode::MissingJobId);
-        }
-
-        try {
-            $destination = $this->redirectDestinationResolver->resolve($trackingUrl);
-        } catch (RedirectResolutionException $exception) {
-            throw new EmailParseException(match ($exception->errorCode) {
-                RedirectResolutionErrorCode::UrlRejected => EmailParseErrorCode::RedirectUrlRejected,
-                RedirectResolutionErrorCode::AddressRejected => EmailParseErrorCode::RedirectAddressRejected,
-                RedirectResolutionErrorCode::Timeout => EmailParseErrorCode::RedirectTimeout,
-                RedirectResolutionErrorCode::ResponseInvalid => EmailParseErrorCode::RedirectResponseInvalid,
-                RedirectResolutionErrorCode::LimitExceeded => EmailParseErrorCode::RedirectLimitExceeded,
-                RedirectResolutionErrorCode::DestinationInvalid => EmailParseErrorCode::RedirectDestinationInvalid,
-            });
-        }
-
-        return [$trackingUrl, $destination->externalJobId, $destination->canonicalUrl];
-    }
-
-    private function extractTrackingUrl(string $plainText): ?string
-    {
-        if (! preg_match_all('/https?:\/\/\S+/i', $plainText, $matches)) {
-            return null;
-        }
-
-        $trackingHost = (string) config('opportunity_sources.upwork.redirect_resolution.initial_host');
-
-        foreach ($matches[0] as $candidateUrl) {
-            $candidateUrl = rtrim($candidateUrl, ").,;:>\"'");
-            $parts = parse_url($candidateUrl);
-
-            if (is_array($parts)
-                && ($parts['scheme'] ?? null) === 'https'
-                && ($parts['host'] ?? null) === $trackingHost) {
-                return $candidateUrl;
-            }
-        }
-
-        return null;
     }
 
     /**
