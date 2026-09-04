@@ -256,7 +256,7 @@ final class WebklexImapMailboxClient implements MailboxClient
     private function searchCriteria(MailboxCursor $cursor, int $uidValidity): string
     {
         $criteria = [
-            'FROM '.$this->quoteSearchValue($this->configuration->candidateFrom),
+            $this->candidateFromSearchCriteria(),
             'SUBJECT '.$this->quoteSearchValue($this->configuration->candidateSubjectPrefix),
         ];
 
@@ -269,6 +269,18 @@ final class WebklexImapMailboxClient implements MailboxClient
         }
 
         return implode(' ', $criteria);
+    }
+
+    private function candidateFromSearchCriteria(): string
+    {
+        $addresses = $this->configuration->candidateFromAddresses();
+        $criteria = 'FROM '.$this->quoteSearchValue(array_shift($addresses));
+
+        foreach ($addresses as $address) {
+            $criteria = 'OR '.$criteria.' FROM '.$this->quoteSearchValue($address);
+        }
+
+        return $criteria;
     }
 
     private function quoteSearchValue(string $value): string

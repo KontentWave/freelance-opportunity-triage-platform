@@ -58,6 +58,8 @@ Migrations live in `database/migrations` with timestamps `2026_08_27_145314` thr
 Sanitized fixtures live under `tests/Fixtures/Emails/upwork`:
 
 - `hourly-client-success.eml`
+- `hourly-current-sanitized.eml`
+- `hourly-current-template.eml`
 - `hourly-operations-coordinator.eml`
 - `hourly-unknown-rate.eml`
 
@@ -65,7 +67,7 @@ These fixtures intentionally preserve MIME structure and may include synthetic r
 
 ### Supported Input Contract
 
-The current parser supports the observed Upwork hourly email template only.
+The current parser supports the legacy hourly template and the current direct-link hourly template observed from `donotreply@upwork.com`.
 
 Required characteristics:
 
@@ -74,6 +76,8 @@ Required characteristics:
 - A non-empty `text/plain` MIME part must be present.
 - The plain-text body must contain at least one HTTPS Upwork job URL on `www.upwork.com` whose path matches `/jobs/~<digits>`.
 - Hourly terms must match `Hourly: $<min> - $<max>`.
+- Current direct-link alerts may use compact integer or decimal rates and inline terms, such as `Hourly: $<min>-$<max> · Est. time: <duration>`.
+- Redirect-only alerts without an offline `/jobs/~<digits>` identifier are quarantined as `missing_job_id`; the parser never follows tracking links.
 
 Implemented normalization rules:
 
@@ -191,6 +195,10 @@ Implemented behavior:
 File: `tests/Unit/Infrastructure/Email/UpworkJobAlertParserTest.php`
 
 - `it_parses_each_supported_hourly_fixture`
+- `it_parses_the_current_direct_link_hourly_template_without_tracking_values`
+- `it_parses_indented_hourly_terms_from_the_current_template`
+- `it_classifies_the_current_fixed_label_as_an_unsupported_contract_type`
+- `it_rejects_a_redirect_only_alert_without_resolving_tracking_links`
 - `it_converts_a_zero_rate_range_to_unknown`
 - `it_decodes_html_entities_and_normalizes_whitespace`
 - `it_extracts_visible_skills_and_the_hidden_skill_count`
@@ -213,6 +221,7 @@ File: `tests/Feature/ImportOpportunityEmailTest.php`
 - `it_updates_the_same_job_received_under_a_new_message_id`
 - `it_allows_the_same_external_job_id_in_different_workspaces`
 - `it_quarantines_invalid_input_without_storing_raw_content`
+- `it_reprocesses_an_existing_quarantine_after_parser_compatibility_improves`
 - `it_rolls_back_partial_opportunity_and_skill_writes`
 - `it_never_persists_tracking_parameters_or_recipient_addresses`
 
@@ -279,9 +288,9 @@ No remaining application-scope gaps were found inside the agreed Phase 1 scope.
 
 ## Phase 2: Secure Scheduled Mailbox Intake
 
-**Document role:** Draft implementation specification for the current phase only
-**Current status:** IMAP adapter implemented; application workflow ready
-**Last updated:** 2026-08-30
+**Document role:** Audited implementation specification for the current phase only
+**Current status:** Direct-link-only controlled staging poll passed; 24-hour soak pending
+**Last updated:** 2026-09-04
 **Behavior specification:** `.github/docs/features/import_job_alerts_from_mailbox.feature`
 
 ### Action
@@ -303,11 +312,12 @@ Phase 2 adds transport and operations around the completed Phase 1 import bounda
 - Bounded retry state for temporary per-message failures.
 - Safe quarantine/permanent-failure state for non-retryable inputs.
 - A scheduled Artisan poll command, a connectivity-check command, and a health command.
+- Direct canonical `/jobs/~<digits>` alert intake; redirect-only alerts quarantine as `email.missing_job_id` without an Upwork HTTP request.
 - MariaDB-backed tests, static analysis, dependency/security checks, and a 24-hour staging soak.
 
 ### Explicitly Excluded
 
-- Upwork HTTP requests, API calls, scraping, browser automation, Cloudflare bypassing, or proposal automation.
+- All Upwork HTTP requests, API calls, scraping, browser automation, Cloudflare bypassing, crawler impersonation, or proposal automation.
 - Gmail OAuth consent flows, IMAP IDLE, queues, daemons, WebSockets, or a permanent Node.js worker.
 - Reading a personal mailbox outside the configured dedicated folder.
 - Deleting, moving, flagging, or marking source messages as read.
@@ -365,7 +375,7 @@ Create `config/opportunity_mailbox.php` and document these keys in `.env.example
 | `OPPORTUNITY_MAILBOX_USERNAME`                 |                 blank | Secret-adjacent; never logged or printed.                                          |
 | `OPPORTUNITY_MAILBOX_PASSWORD`                 |                 blank | Secret; never committed, persisted, logged, printed, or included in fixtures.      |
 | `OPPORTUNITY_MAILBOX_FOLDER`                   |                 blank | Required when enabled; must select a dedicated folder only.                        |
-| `OPPORTUNITY_MAILBOX_CANDIDATE_FROM`           | `upwork@t.upwork.com` | Envelope pre-filter only; the Phase 1 parser remains authoritative.                |
+| `OPPORTUNITY_MAILBOX_CANDIDATE_FROM`           | `upwork@t.upwork.com` | Comma-separated exact envelope sender allowlist; Phase 1 remains authoritative.    |
 | `OPPORTUNITY_MAILBOX_CANDIDATE_SUBJECT_PREFIX` |      `New job alert:` | Envelope pre-filter only.                                                          |
 | `OPPORTUNITY_MAILBOX_BATCH_SIZE`               |                  `25` | Clamp to 1–100.                                                                    |
 | `OPPORTUNITY_MAILBOX_INITIAL_LOOKBACK_HOURS`   |                  `24` | Clamp to 1–168; used only without a valid checkpoint or after UIDVALIDITY changes. |
@@ -571,6 +581,7 @@ File: `tests/Unit/Domain/Mailbox/MailboxConfigurationTest.php`
 - `it_rejects_missing_required_configuration_when_mailbox_intake_is_enabled`
 - `it_rejects_insecure_transport_or_disabled_certificate_validation_outside_tests`
 - `it_clamps_batch_retry_and_lookback_limits`
+- `it_parses_an_exact_candidate_sender_allowlist`
 - `it_performs_no_probe_when_mailbox_intake_is_disabled`
 
 #### IMAP adapter unit/contract tests
@@ -579,13 +590,14 @@ File: `tests/Unit/Infrastructure/Email/WebklexImapMailboxClientTest.php`
 
 - `it_uses_uid_sequence_peek_fetching_and_certificate_validation`
 - `it_discovers_only_matching_candidate_envelopes_in_ascending_uid_order`
+- `it_discovers_candidate_envelopes_from_each_allowlisted_sender`
 - `it_uses_a_bounded_lookback_after_uidvalidity_changes`
 - `it_returns_complete_raw_rfc822_bytes`
 - `it_rejects_an_oversized_message_before_fetching_its_body`
 - `it_translates_authentication_connection_and_folder_errors_to_stable_codes`
 - `it_never_enables_protocol_debug_logging_or_writes_message_flags`
 
-#### Polling workflow feature tests
+#### Polling workflow feature tests — implemented
 
 File: `tests/Feature/PollOpportunityMailboxTest.php`
 
@@ -593,6 +605,7 @@ File: `tests/Feature/PollOpportunityMailboxTest.php`
 - `it_records_discovery_before_processing_and_never_advances_past_an_unrecorded_uid`
 - `it_skips_a_remote_uid_already_finalized_in_the_same_uidvalidity_namespace`
 - `it_rescans_a_bounded_window_after_uidvalidity_changes_without_duplicate_opportunities`
+- `it_does_not_fetch_a_retry_from_an_invalidated_uidvalidity_namespace`
 - `it_retries_a_temporary_fetch_failure_and_imports_exactly_once`
 - `it_reconciles_a_committed_quarantine_after_a_ledger_update_failure`
 - `it_marks_a_message_permanently_failed_after_the_third_temporary_failure`
@@ -602,7 +615,9 @@ File: `tests/Feature/PollOpportunityMailboxTest.php`
 - `it_never_persists_raw_email_headers_bodies_recipients_or_credentials`
 - `it_never_logs_raw_exceptions_or_secrets`
 
-#### Command and schedule tests
+These 13 MariaDB-backed tests use `Tests\Support\Fakes\FakeMailboxClient` and perform no external network access.
+
+#### Command tests — implemented
 
 File: `tests/Feature/OpportunityMailboxCommandTest.php`
 
@@ -611,6 +626,10 @@ File: `tests/Feature/OpportunityMailboxCommandTest.php`
 - `it_prints_only_safe_poll_counters_and_uses_documented_exit_codes`
 - `it_reports_healthy_degraded_unhealthy_and_never_run_states_from_persisted_data`
 - `it_emits_safe_machine_readable_health_json`
+
+All five command behaviors are implemented with MariaDB-backed tests.
+
+#### Schedule tests — implemented
 
 File: `tests/Feature/OpportunityMailboxScheduleTest.php`
 
@@ -678,9 +697,11 @@ Before Phase 2 is complete:
 3. Install the provider cron and verify scheduled timestamps through persisted `mailbox_runs`, not by exposing mail data in logs.
 4. Let staging poll for 24 hours with real authorized alerts.
 5. Reconcile candidate UIDs against ledger rows and confirm no candidate message loss, no duplicate opportunity, no overdue retry, and no secret/raw-content leakage.
-6. Run `opportunity:mailbox-health --json` and confirm `healthy` at the end of the soak.
+6. Run `opportunity:mailbox-health --json` and confirm there are no transport, retry, or delivery failures. A `degraded` result caused only by expected `email.missing_job_id` or `email.unsupported_contract_type` quarantines is acceptable because redirect-only and fixed-price alerts are explicitly outside the supported parser scope.
 
 The soak evidence should contain counts, timestamps, commit SHA, and CI URL only.
+
+Controlled staging verification on 2026-09-04 at commit `32ff898` imported five direct-link alerts and safely quarantined nine redirect-only alerts as `email.missing_job_id` plus one fixed-price alert as `email.unsupported_contract_type`. All 15 discovered messages were processed with no retry or permanent failure. No historical quarantine was replayed or mutated.
 
 ### Risks and Mitigations
 
@@ -692,6 +713,8 @@ The soak evidence should contain counts, timestamps, commit SHA, and CI URL only
 | Checkpoint advances before durable discovery                           | Ledger insert and checkpoint update share one transaction; explicit rollback test.                                                                    |
 | Temporary failures create an infinite hot loop                         | Persist attempts and next-attempt timestamps; fixed bounded retry schedule.                                                                           |
 | A template change silently drops alerts                                | Envelope filter remains broad enough for configured alerts; raw messages still pass Phase 1 validation and quarantine; health degrades on quarantine. |
+| Redirect-only alerts omit an offline canonical job identifier          | Quarantine as `email.missing_job_id`, persist no tracking value, and report reduced source coverage in soak evidence.                                 |
+| Fixed-price alerts enter the candidate folder                          | Quarantine as `email.unsupported_contract_type`; fixed-price normalization remains explicitly outside Phase 2.                                        |
 | Secrets or personal mail appear in diagnostics                         | Dedicated folder, minimal schema, stable codes, no protocol debug, and adversarial output/log tests.                                                  |
 | Large backlog exceeds hosting limits                                   | Initial lookback, batch cap, sequential fetching, and short scheduler runs.                                                                           |
 
@@ -714,7 +737,7 @@ The soak evidence should contain counts, timestamps, commit SHA, and CI URL only
 
 - All mapped PHPUnit tests and the complete existing suite pass on MariaDB 11.4.
 - PHPStan, Pint, Composer validation/audit, coverage gates, secret scan, and protected required checks are green.
-- The live compatibility proof and 24-hour staging soak meet every exit criterion.
+- The accepted IMAP compatibility proof and 24-hour staging soak meet every exit criterion; redirect HTTP compatibility is not required.
 - No raw mail, personal mailbox data, secrets, or unsafe exception text is retained or exposed.
 - ADR-004 and the mailbox runbook are committed.
 - `project_sheet.md` is updated from draft to the audited as-built implementation.

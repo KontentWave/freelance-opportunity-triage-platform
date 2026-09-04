@@ -36,8 +36,8 @@ final class UpworkJobAlertParser implements OpportunityEmailParser
         $this->assertSupportedSubject($message);
 
         $plainText = $this->extractPlainTextBody($message);
-        $title = $this->extractTitle($plainText);
         $jobUrl = $this->extractJobUrl($plainText);
+        $title = $this->extractTitle($plainText, $jobUrl);
         [$externalJobId, $canonicalUrl] = $this->normalizeJobUrl($jobUrl);
         [$hourlyMin, $hourlyMax, $estimatedDuration] = $this->extractHourlyTerms($plainText);
         $postedOn = $this->extractPostedOn($plainText, $message);
@@ -186,9 +186,25 @@ final class UpworkJobAlertParser implements OpportunityEmailParser
         ];
     }
 
-    private function extractTitle(string $plainText): string
+    private function extractTitle(string $plainText, string $jobUrl): string
     {
         $lines = preg_split('/\R/', $plainText) ?: [];
+
+        foreach ($lines as $line) {
+            $jobUrlPosition = strpos($line, $jobUrl);
+
+            if ($jobUrlPosition === false) {
+                continue;
+            }
+
+            $candidate = $this->normalizeWhitespace($this->decodeEntities(
+                rtrim(substr($line, 0, $jobUrlPosition), ": \t"),
+            ));
+
+            if ($candidate !== '') {
+                return substr($candidate, 0, 255);
+            }
+        }
 
         foreach ($lines as $line) {
             $candidate = $this->normalizeWhitespace($this->decodeEntities(trim($line)));
@@ -210,7 +226,7 @@ final class UpworkJobAlertParser implements OpportunityEmailParser
         $excerptLines = [];
 
         foreach ($lines as $index => $line) {
-            if ($termsIndex === null && preg_match('/^Est\.\s*time:/i', $line) === 1) {
+            if ($termsIndex === null && preg_match('/(?:^|[·•])\h*Est\.\s*time:/i', $line) === 1) {
                 $termsIndex = $index;
 
                 continue;
@@ -234,7 +250,11 @@ final class UpworkJobAlertParser implements OpportunityEmailParser
                 break;
             }
 
-            $excerptLines[] = $trimmedLine;
+            $excerptLines[] = (string) preg_replace(
+                '/\h+more:\h+https?:\/\/\S+$/i',
+                '',
+                $trimmedLine,
+            );
         }
 
         if ($excerptLines === []) {
@@ -276,7 +296,8 @@ final class UpworkJobAlertParser implements OpportunityEmailParser
                 continue;
             }
 
-            $normalizedSkill = $this->normalizeWhitespace($this->decodeEntities($trimmedLine));
+            $skillName = (string) preg_replace('/:\h+https?:\/\/\S+$/i', '', $trimmedLine);
+            $normalizedSkill = $this->normalizeWhitespace($this->decodeEntities($skillName));
 
             if ($normalizedSkill === '') {
                 continue;
@@ -337,6 +358,24 @@ final class UpworkJobAlertParser implements OpportunityEmailParser
         $clientSpendApproximate = false;
         $clientCountry = null;
 
+        if (preg_match(
+            '/^Payment verified\h*[·•]\h*(\d(?:\.\d{1,2})?)\h+stars\h*[·•]\h*\$(\d+(?:\.\d+)?)\h*([KMB])?\h+spent\h*[·•]\h*(.+)$/miu',
+            $plainText,
+            $summaryMatches,
+        ) === 1) {
+            $paymentVerified = true;
+            $clientRating = number_format((float) $summaryMatches[1], 2, '.', '');
+            [$clientSpendUsd, $clientSpendApproximate] = $this->normalizeUsdAmount(
+                $summaryMatches[2],
+                strtoupper($summaryMatches[3]),
+            );
+            $clientCountry = substr(
+                $this->normalizeWhitespace($this->decodeEntities(trim($summaryMatches[4]))),
+                0,
+                100,
+            );
+        }
+
         if (preg_match('/^Rating:\s*(\d(?:\.\d{1,2})?)\s+of\s+5$/mi', $plainText, $matches) === 1) {
             $clientRating = number_format((float) $matches[1], 2, '.', '');
         }
@@ -359,16 +398,20 @@ final class UpworkJobAlertParser implements OpportunityEmailParser
      */
     private function extractHourlyTerms(string $plainText): array
     {
-        if (preg_match('/^Fixed-price:/mi', $plainText) === 1) {
+        if (preg_match('/^\h*(?:Fixed-price|Fixed):/mi', $plainText) === 1) {
             throw new EmailParseException(EmailParseErrorCode::UnsupportedContractType);
         }
 
-        if (preg_match('/^Hourly:\s*\$(\d+\.\d{2})\s*-\s*\$(\d+\.\d{2})$/mi', $plainText, $hourlyMatches) !== 1) {
+        if (preg_match(
+            '/^\h*Hourly:\h*(?:\R\h*)?\$(\d+(?:\.\d{1,2})?)\h*-\h*\$(\d+(?:\.\d{1,2})?)/mi',
+            $plainText,
+            $hourlyMatches,
+        ) !== 1) {
             throw new EmailParseException(EmailParseErrorCode::MalformedTerms);
         }
 
-        $hourlyMin = $hourlyMatches[1];
-        $hourlyMax = $hourlyMatches[2];
+        $hourlyMin = number_format((float) $hourlyMatches[1], 2, '.', '');
+        $hourlyMax = number_format((float) $hourlyMatches[2], 2, '.', '');
 
         if ($hourlyMin === '0.00' && $hourlyMax === '0.00') {
             $hourlyMin = null;
@@ -377,7 +420,7 @@ final class UpworkJobAlertParser implements OpportunityEmailParser
 
         $estimatedDuration = null;
 
-        if (preg_match('/^Est\.\s*time:\s*(.+)$/mi', $plainText, $durationMatches) === 1) {
+        if (preg_match('/(?:^|[·•])\h*Est\.\s*time:\s*([^·•\r\n]+)/mi', $plainText, $durationMatches) === 1) {
             $estimatedDuration = substr(
                 $this->normalizeWhitespace($this->decodeEntities(trim($durationMatches[1]))),
                 0,
