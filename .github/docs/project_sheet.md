@@ -58,6 +58,7 @@ Migrations live in `database/migrations` with timestamps `2026_08_27_145314` thr
 Sanitized fixtures live under `tests/Fixtures/Emails/upwork`:
 
 - `hourly-client-success.eml`
+- `hourly-current-sanitized.eml`
 - `hourly-current-template.eml`
 - `hourly-operations-coordinator.eml`
 - `hourly-unknown-rate.eml`
@@ -195,6 +196,7 @@ File: `tests/Unit/Infrastructure/Email/UpworkJobAlertParserTest.php`
 
 - `it_parses_each_supported_hourly_fixture`
 - `it_parses_the_current_direct_link_hourly_template_without_tracking_values`
+- `it_parses_indented_hourly_terms_from_the_current_template`
 - `it_classifies_the_current_fixed_label_as_an_unsupported_contract_type`
 - `it_rejects_a_redirect_only_alert_without_resolving_tracking_links`
 - `it_converts_a_zero_rate_range_to_unknown`

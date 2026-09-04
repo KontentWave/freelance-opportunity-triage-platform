@@ -22,6 +22,7 @@ final class UpworkJobAlertParserTest extends TestCase
 
         foreach ([
             'hourly-client-success.eml',
+            'hourly-current-sanitized.eml',
             'hourly-operations-coordinator.eml',
             'hourly-unknown-rate.eml',
             'hourly-current-template.eml',
@@ -58,6 +59,18 @@ final class UpworkJobAlertParserTest extends TestCase
         $this->assertTrue($parsed->clientSpendApproximate);
         $this->assertSame('Exampleland', $parsed->clientCountry);
         $this->assertStringNotContainsString('utm_', json_encode($parsed, JSON_THROW_ON_ERROR));
+    }
+
+    #[Test]
+    public function it_parses_indented_hourly_terms_from_the_current_template(): void
+    {
+        $parsed = (new UpworkJobAlertParser)->parse($this->fixture('hourly-current-sanitized.eml'));
+
+        $this->assertSame('Synthetic Current Role', $parsed->title);
+        $this->assertNull($parsed->hourlyMin);
+        $this->assertNull($parsed->hourlyMax);
+        $this->assertSame('3 to 6 months', $parsed->estimatedDuration);
+        $this->assertSame('299999999999999999999', $parsed->externalJobId);
     }
 
     #[Test]

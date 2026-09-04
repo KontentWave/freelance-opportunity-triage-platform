@@ -1,0 +1,42 @@
+Message-ID: <hourly-live-sanitized@example.test>
+Date: Fri, 04 Sep 2026 09:45:49 +0000
+From: Upwork Notification <donotreply@upwork.com>
+Subject: New job alert: Synthetic Current Role
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="fixture-current-sanitized-boundary"
+
+--fixture-current-sanitized-boundary
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+New job alert
+
+Hi Example,
+
+This job was just posted and matches your alert settings.
+
+----------
+
+Synthetic Current Role: https://www.upwork.com/jobs/~299999999999999999999
+
+  Hourly: $0.00 - $0.00 =C2=B7 Est. time: 3 to 6 months =C2=B7 Posted Fri, =
+Sep 04
+
+Synthetic description for parser compatibility testing...
+
+Skills:
+Workflow Testing
+Quality Assurance
++2 more
+
+Payment verified =C2=B7 4.9 stars =C2=B7 $100 spent =C2=B7 Exampleland
+
+    ----------
+
+View job details: https://www.upwork.com/jobs/~299999999999999999999
+--fixture-current-sanitized-boundary
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<html><body>synthetic</body></html>
+--fixture-current-sanitized-boundary--

@@ -398,12 +398,12 @@ final class UpworkJobAlertParser implements OpportunityEmailParser
      */
     private function extractHourlyTerms(string $plainText): array
     {
-        if (preg_match('/^(?:Fixed-price|Fixed):/mi', $plainText) === 1) {
+        if (preg_match('/^\h*(?:Fixed-price|Fixed):/mi', $plainText) === 1) {
             throw new EmailParseException(EmailParseErrorCode::UnsupportedContractType);
         }
 
         if (preg_match(
-            '/^Hourly:\h*(?:\R\h*)?\$(\d+(?:\.\d{1,2})?)\h*-\h*\$(\d+(?:\.\d{1,2})?)/mi',
+            '/^\h*Hourly:\h*(?:\R\h*)?\$(\d+(?:\.\d{1,2})?)\h*-\h*\$(\d+(?:\.\d{1,2})?)/mi',
             $plainText,
             $hourlyMatches,
         ) !== 1) {
