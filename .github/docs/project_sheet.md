@@ -289,8 +289,8 @@ No remaining application-scope gaps were found inside the agreed Phase 1 scope.
 ## Phase 2: Secure Scheduled Mailbox Intake
 
 **Document role:** Audited implementation specification for the current phase only
-**Current status:** Direct-link-only controlled staging poll passed; 24-hour soak pending
-**Last updated:** 2026-09-04
+**Current status:** Completed; direct-link-only scheduled mailbox intake verified on the target host
+**Last updated:** 2026-09-06
 **Behavior specification:** `.github/docs/features/import_job_alerts_from_mailbox.feature`
 
 ### Action
@@ -702,6 +702,14 @@ Before Phase 2 is complete:
 The soak evidence should contain counts, timestamps, commit SHA, and CI URL only.
 
 Controlled staging verification on 2026-09-04 at commit `32ff898` imported five direct-link alerts and safely quarantined nine redirect-only alerts as `email.missing_job_id` plus one fixed-price alert as `email.unsupported_contract_type`. All 15 discovered messages were processed with no retry or permanent failure. No historical quarantine was replayed or mutated.
+
+The first soak interval did not produce mailbox runs because the existing provider cron targeted another application location and used the host's default PHP 8.5 runtime. The cron entry was corrected to target this deployment with the verified PHP 8.4 binary, and the 24-hour clock was restarted rather than accepting the inactive interval.
+
+The corrected soak ran from 2026-09-05 18:09:13 UTC through 2026-09-06 18:35:02 UTC on commit `4cdeb1a`. It produced 294 polls with a maximum observed gap of 301 seconds. Twelve discovered messages were all processed: seven direct-link alerts imported and five unsupported alerts quarantined under only the accepted codes (`email.missing_job_id`: two; `email.unsupported_contract_type`: three). There were no duplicates, pending messages, retries, overdue retries, or permanent failures.
+
+Completion review found that health selected the oldest terminal quarantine across all history, allowing a pre-fix parser quarantine to keep later clean polls degraded. Commit `43f1ee5` scopes quarantine health to the latest completed run, while permanent failures and retry states remain global and actionable. The complete MariaDB suite passed 91 tests with 747 assertions; PHPStan, Pint, Composer validation/audit, coverage gates, and all protected checks passed in [CI run 34052269465](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/34052269465). The deployed final health is `healthy`.
+
+The production adapter continued to fetch raw messages with `BODY.PEEK[]` and contains no flag, move, or delete operation. The prior target-host PEEK proof established unchanged source flags, and the corrected soak exercised that same reviewed adapter path.
 
 ### Risks and Mitigations
 

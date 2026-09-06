@@ -203,7 +203,7 @@ Rollback must not delete imported opportunities or mutate source mailbox message
 
 ## 24-Hour Staging Soak
 
-The soak is a separate deployment verification step and is not completed by this runbook. The failed redirect `HEAD` compatibility proof does not block the direct-link-only soak; redirect-only alerts are expected `email.missing_job_id` quarantines.
+The soak is a separate deployment verification step. The failed redirect `HEAD` compatibility proof does not block a direct-link-only soak; redirect-only alerts are expected `email.missing_job_id` quarantines.
 
 Before starting:
 
@@ -240,3 +240,9 @@ Allowed soak evidence contains only:
 - `PASS`, `FAIL`, or `BLOCKED`
 
 If any criterion fails, record only a stable code or safe reason category, disable intake, and return to project and quality review.
+
+### Accepted Phase 2 Evidence
+
+The corrected Phase 2 soak ran from 2026-09-05 18:09:13 UTC through 2026-09-06 18:35:02 UTC. It produced 294 polls with a maximum observed gap of 301 seconds. Twelve messages were discovered and processed, seven imported, and five quarantined under only `email.missing_job_id` or `email.unsupported_contract_type`. No duplicate opportunity identity, pending message, retry, overdue retry, or permanent failure remained. Final health was `healthy` on commit `43f1ee5`; [CI run 34052269465](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/34052269465) passed all required checks.
+
+An earlier interval with zero runs is not accepted soak evidence. Its cron entry targeted another location and the wrong PHP runtime. Future deployments must reconfirm that exactly one provider scheduler entry targets this application and the verified PHP binary before starting the soak clock.

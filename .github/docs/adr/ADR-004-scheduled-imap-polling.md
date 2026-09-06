@@ -217,6 +217,16 @@ The project will not add a `GET` fallback, impersonate an approved crawler or br
 
 The failed redirect compatibility proof no longer blocks mailbox connectivity verification, one controlled poll, provider cron activation, or the 24-hour staging soak. Soak evidence must distinguish expected `email.missing_job_id` quarantines from transport or delivery failures and must not expose message content or tracking values.
 
+### Target-Host Soak Result: 2026-09-06
+
+The first attempted interval produced no mailbox runs because the existing provider cron targeted another application location and used default PHP 8.5 instead of the verified PHP 8.4 runtime. This interval was rejected. The scheduler entry was corrected without changing application policy, and the full 24-hour clock restarted.
+
+The corrected interval ran on reviewed commit `4cdeb1a` from 2026-09-05 18:09:13 UTC through 2026-09-06 18:35:02 UTC. Safe aggregate evidence recorded 294 runs with a maximum 301-second gap. All 12 discovered messages were processed: seven imported and five quarantined under only the accepted direct-link-only scope codes (`email.missing_job_id`: two; `email.unsupported_contract_type`: three). No duplicate opportunity identity, pending message, retry, overdue retry, or permanent failure remained.
+
+Completion review identified one health-reporting defect: a terminal quarantine from before the corrected soak could keep health degraded after later clean runs. Commit `43f1ee5` limits quarantine reporting to the latest completed run; permanent failures and pending or overdue retries remain global health inputs. Local validation passed 91 tests with 747 assertions plus PHPStan, Pint, and Composer checks. Protected `Quality`, `Tests / MariaDB 11.4`, and `Secret scan` checks passed in [CI run 34052269465](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/34052269465). The target was deployed at `43f1ee5` with final health `healthy`.
+
+The reviewed adapter uses `BODY.PEEK[]` and has no flag, move, or delete operation. Together with the accepted target-host PEEK compatibility proof, the soak exercised the non-mutating mailbox path. Phase 2 is complete for direct-link-only intake.
+
 ## Alternatives Considered
 
 ### Permanent Node.js mail worker

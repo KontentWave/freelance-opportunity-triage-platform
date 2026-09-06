@@ -1,6 +1,6 @@
 # Project Roadmap — Freelance Opportunity Triage Platform
 
-**Status:** Vision approved; Phase 1 completed with clean CI evidence; Phase 2 direct-link-only controlled poll passed and staging soak is pending; optional Tester Skill deferred until after MVP
+**Status:** Vision approved; Phases 1 and 2 completed with clean CI and target-host soak evidence; Phase 3 specification is next; optional Tester Skill deferred until after MVP
 **Primary user:** An independent freelancer reviewing opportunities from authorized job-alert emails  
 **Working title:** To be decided; do not use Upwork trademarks in product branding
 
@@ -108,7 +108,7 @@ Node.js is not a separate production service by default. A Node-based mail worke
 - `Ignore a duplicate job alert`
 - `Quarantine an unsupported or malformed email`
 
-### Phase 2 — Secure Scheduled Mailbox Intake
+### Phase 2 — Secure Scheduled Mailbox Intake (Completed)
 
 **Hypothesis:** The hosting provider can fetch new alerts securely and reliably without a permanent background worker.
 
