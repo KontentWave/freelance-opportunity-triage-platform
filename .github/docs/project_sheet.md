@@ -490,13 +490,14 @@ Implement `App\Application\Mailbox\PollOpportunityMailbox::execute(string $works
 6. Discover candidate UIDs in ascending order after the checkpoint. On first use or UIDVALIDITY change, search only the configured lookback window. A UIDVALIDITY change is recorded as a safe warning and relies on Phase 1 idempotency during the bounded rescan.
 7. In one database transaction, insert ledger rows with `pending` status using `insert-or-ignore`, then advance the checkpoint only to the highest UID represented by a committed ledger row. Never advance a checkpoint for an unrecorded candidate.
 8. Select due `pending` or `retry_wait` rows in ascending UID order and process sequentially. Do not hold all raw messages in memory.
-9. Reject a server-reported message larger than 1,048,576 bytes without fetching its body; mark it `quarantined` with `mailbox.message_too_large`.
-10. Fetch complete raw RFC822 bytes using UID sequencing and PEEK semantics. Confirm the returned byte length is within the same limit.
-11. Call `ImportOpportunityEmail::execute($workspaceId, $rawEmail)` exactly once for that processing attempt and immediately release the raw string after the call.
-12. Map `imported`, `updated`, `duplicate`, and `quarantined` to the ledger. If a retry receives `duplicate` with no opportunity ID because a prior attempt already committed a quarantine before the ledger update failed, resolve the existing `email_imports` row by workspace and content hash and preserve its quarantine code. Persist only the returned opportunity ID and safe error code.
-13. For a retryable per-message transport or unexpected import failure, increment `attempt_count` and set `retry_wait` with delays of 5 minutes after attempt 1 and 15 minutes after attempt 2. After attempt 3, set `permanently_failed` with `mailbox.retry_exhausted`.
-14. Continue the batch after a quarantined or retryable message. A connection-level failure ends the run without advancing uncommitted discovery state.
-15. Close the IMAP connection in `finally`, finalize safe counters/status, and release the lock.
+9. Treat a non-positive reported size on a reconstructed pending or retry reference as unknown. Before body retrieval, request only UID and RFC822.SIZE metadata for that UID. Require the response to identify the requested UID and contain a positive integer size; otherwise fail the attempt with `mailbox.message_fetch_failed` without requesting the body.
+10. Reject a server-reported message larger than 1,048,576 bytes without fetching its body; mark it `quarantined` with `mailbox.message_too_large`.
+11. Fetch complete raw RFC822 bytes using UID sequencing and PEEK semantics. Confirm the returned byte length is within the same limit.
+12. Call `ImportOpportunityEmail::execute($workspaceId, $rawEmail)` exactly once for that processing attempt and immediately release the raw string after the call.
+13. Map `imported`, `updated`, `duplicate`, and `quarantined` to the ledger. If a retry receives `duplicate` with no opportunity ID because a prior attempt already committed a quarantine before the ledger update failed, resolve the existing `email_imports` row by workspace and content hash and preserve its quarantine code. Persist only the returned opportunity ID and safe error code.
+14. For a retryable per-message transport or unexpected import failure, increment `attempt_count` and set `retry_wait` with delays of 5 minutes after attempt 1 and 15 minutes after attempt 2. After attempt 3, set `permanently_failed` with `mailbox.retry_exhausted`.
+15. Continue the batch after a quarantined or retryable message. A connection-level failure ends the run without advancing uncommitted discovery state.
+16. Close the IMAP connection in `finally`, finalize safe counters/status, and release the lock.
 
 A run is:
 
@@ -594,6 +595,9 @@ File: `tests/Unit/Infrastructure/Email/WebklexImapMailboxClientTest.php`
 - `it_uses_a_bounded_lookback_after_uidvalidity_changes`
 - `it_returns_complete_raw_rfc822_bytes`
 - `it_rejects_an_oversized_message_before_fetching_its_body`
+- `it_fetches_size_metadata_before_fetching_an_unknown_size_message`
+- `it_rejects_an_unknown_size_oversized_message_before_fetching_its_body`
+- `it_fails_safely_without_fetching_a_body_when_size_metadata_is_invalid`
 - `it_translates_authentication_connection_and_folder_errors_to_stable_codes`
 - `it_never_enables_protocol_debug_logging_or_writes_message_flags`
 
@@ -607,6 +611,8 @@ File: `tests/Feature/PollOpportunityMailboxTest.php`
 - `it_rescans_a_bounded_window_after_uidvalidity_changes_without_duplicate_opportunities`
 - `it_does_not_fetch_a_retry_from_an_invalidated_uidvalidity_namespace`
 - `it_retries_a_temporary_fetch_failure_and_imports_exactly_once`
+- `it_quarantines_an_oversized_pending_message_discovered_earlier_and_continues_the_batch`
+- `it_reports_an_unknown_size_metadata_failure_safely_without_importing`
 - `it_reconciles_a_committed_quarantine_after_a_ledger_update_failure`
 - `it_marks_a_message_permanently_failed_after_the_third_temporary_failure`
 - `it_quarantines_an_unsupported_candidate_and_continues_the_batch`
@@ -615,7 +621,7 @@ File: `tests/Feature/PollOpportunityMailboxTest.php`
 - `it_never_persists_raw_email_headers_bodies_recipients_or_credentials`
 - `it_never_logs_raw_exceptions_or_secrets`
 
-These 13 MariaDB-backed tests use `Tests\Support\Fakes\FakeMailboxClient` and perform no external network access.
+These 15 MariaDB-backed tests use `Tests\Support\Fakes\FakeMailboxClient` and perform no external network access. The adapter contract tests separately exercise `WebklexImapMailboxClient` with a fake IMAP protocol.
 
 #### Command tests — implemented
 
@@ -649,14 +655,17 @@ File: `tests/Feature/MailboxSchemaTest.php`
 
 #### Behavior traceability
 
-| Gherkin scenario                                                    | Primary PHPUnit case                                                           |
-| ------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| Import a newly received alert on the scheduled poll                 | `it_imports_a_new_candidate_alert_and_advances_its_checkpoint`                 |
-| Ignore a candidate already completed by an earlier poll             | `it_skips_a_remote_uid_already_finalized_in_the_same_uidvalidity_namespace`    |
-| Retry a temporary fetch failure without duplicating the opportunity | `it_retries_a_temporary_fetch_failure_and_imports_exactly_once`                |
-| Quarantine an unsupported candidate and continue the batch          | `it_quarantines_an_unsupported_candidate_and_continues_the_batch`              |
-| Report mailbox setup failures without leaking secrets               | `it_reports_a_safe_connectivity_failure_without_credentials_or_server_details` |
-| Make an exhausted delivery failure actionable                       | `it_marks_a_message_permanently_failed_after_the_third_temporary_failure`      |
+| Gherkin scenario                                                    | Primary PHPUnit case                                                                                                                                              |
+| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Import a newly received alert on the scheduled poll                 | `it_imports_a_new_candidate_alert_and_advances_its_checkpoint`                                                                                                    |
+| Ignore a candidate already completed by an earlier poll             | `it_skips_a_remote_uid_already_finalized_in_the_same_uidvalidity_namespace`                                                                                       |
+| Retry a temporary fetch failure without duplicating the opportunity | `it_retries_a_temporary_fetch_failure_and_imports_exactly_once`                                                                                                   |
+| Quarantine an oversized pending message before body retrieval       | `it_quarantines_an_oversized_pending_message_discovered_earlier_and_continues_the_batch`; `it_rejects_an_unknown_size_oversized_message_before_fetching_its_body` |
+| Import a retry whose reconstructed reference has unknown size       | `it_retries_a_temporary_fetch_failure_and_imports_exactly_once`; `it_fetches_size_metadata_before_fetching_an_unknown_size_message`                               |
+| Fail safely when required size metadata is missing or invalid       | `it_fails_safely_without_fetching_a_body_when_size_metadata_is_invalid`; `it_reports_an_unknown_size_metadata_failure_safely_without_importing`                   |
+| Quarantine an unsupported candidate and continue the batch          | `it_quarantines_an_unsupported_candidate_and_continues_the_batch`                                                                                                 |
+| Report mailbox setup failures without leaking secrets               | `it_reports_a_safe_connectivity_failure_without_credentials_or_server_details`                                                                                    |
+| Make an exhausted delivery failure actionable                       | `it_marks_a_message_permanently_failed_after_the_third_temporary_failure`                                                                                         |
 
 The repository does not currently execute Gherkin directly. Phase 2 keeps the `.feature` file as the behavior contract and makes the mapped PHPUnit feature tests the executable source of truth; adding Behat is outside this phase.
 
@@ -664,7 +673,7 @@ The repository does not currently execute Gherkin directly. Phase 2 keeps the `.
 
 - Process at most 25 messages per default poll and never more than 100.
 - Fetch and import sequentially so only one raw message is retained in memory.
-- Enforce the existing 1 MiB maximum before MIME parsing and, where the server reports size, before body retrieval.
+- Enforce the existing 1 MiB maximum before MIME parsing and before body retrieval. Resolve an unknown reconstructed size through a UID-based metadata-only request, and do not retrieve the body when valid size metadata is unavailable.
 - Use bounded connection/read timeouts; no single poll should occupy the overlap lock for more than 10 minutes.
 - Commit discovered ledger rows before advancing the checkpoint.
 - Never retry a Phase 1 typed quarantine result.

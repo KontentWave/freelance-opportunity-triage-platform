@@ -40,6 +40,9 @@ final class FakeMailboxClient implements MailboxClient
     /** @var list<int> */
     public array $fetchedUids = [];
 
+    /** @var list<MailboxMessageReference> */
+    public array $fetchedReferences = [];
+
     public int $probeCallCount = 0;
 
     public int $closeCallCount = 0;
@@ -127,6 +130,7 @@ final class FakeMailboxClient implements MailboxClient
     public function fetchRaw(MailboxMessageReference $message, int $maximumBytes): string
     {
         $this->fetchedUids[] = $message->uid;
+        $this->fetchedReferences[] = $message;
         ($this->beforeFetch) && ($this->beforeFetch)($message);
 
         if (($this->fetchFailuresRemaining[$message->uid] ?? 0) > 0) {

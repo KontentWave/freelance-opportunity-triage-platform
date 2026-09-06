@@ -105,14 +105,10 @@ final class WebklexImapMailboxClient implements MailboxClient
 
         $messages = [];
         foreach ($uids as $uid) {
-            $values = $this->normalizeFetchValues($this->fetchValuesForUid($metadata, $uid));
-            $reportedSize = (int) ($values['RFC822.SIZE'] ?? 0);
-
-            if ($reportedSize < 1) {
-                throw new MailboxIntakeException(MailboxIntakeErrorCode::MessageFetchFailed);
-            }
-
-            $messages[] = new MailboxMessageReference($uid, $reportedSize);
+            $messages[] = new MailboxMessageReference(
+                $uid,
+                $this->reportedSizeForUid($metadata, $uid),
+            );
         }
 
         return new DiscoveredMailboxBatch(
@@ -129,6 +125,26 @@ final class WebklexImapMailboxClient implements MailboxClient
         }
 
         $protocol = $this->connectAndSelectFolder();
+
+        $reportedSize = $message->reportedSize;
+        if ($reportedSize <= 0) {
+            try {
+                $metadata = $protocol->fetch(
+                    ['UID', 'RFC822.SIZE'],
+                    [$message->uid],
+                    null,
+                    IMAP::ST_UID,
+                )->validatedData();
+            } catch (Throwable) {
+                throw new MailboxIntakeException(MailboxIntakeErrorCode::MessageFetchFailed);
+            }
+
+            $reportedSize = $this->reportedSizeForUid($metadata, $message->uid);
+        }
+
+        if ($reportedSize > $maximumBytes) {
+            throw new MailboxIntakeException(MailboxIntakeErrorCode::MessageTooLarge);
+        }
 
         try {
             $response = $protocol->fetch(
@@ -295,6 +311,36 @@ final class WebklexImapMailboxClient implements MailboxClient
         }
 
         return $response[$uid] ?? $response[(string) $uid] ?? null;
+    }
+
+    private function reportedSizeForUid(mixed $response, int $uid): int
+    {
+        $values = $this->normalizeFetchValues($this->fetchValuesForUid($response, $uid));
+        $responseUid = $this->positiveInteger($values['UID'] ?? null);
+        $reportedSize = $this->positiveInteger($values['RFC822.SIZE'] ?? null);
+
+        if ($responseUid !== $uid || $reportedSize === null) {
+            throw new MailboxIntakeException(MailboxIntakeErrorCode::MessageFetchFailed);
+        }
+
+        return $reportedSize;
+    }
+
+    private function positiveInteger(mixed $value): ?int
+    {
+        if (is_int($value)) {
+            return $value > 0 ? $value : null;
+        }
+
+        if (! is_string($value) || preg_match('/^[1-9][0-9]*$/D', $value) !== 1) {
+            return null;
+        }
+
+        $integer = filter_var($value, FILTER_VALIDATE_INT, [
+            'options' => ['min_range' => 1],
+        ]);
+
+        return is_int($integer) ? $integer : null;
     }
 
     /** @return array<string, mixed> */

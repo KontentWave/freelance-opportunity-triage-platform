@@ -268,6 +268,13 @@ final class PollOpportunityMailboxTest extends TestCase
         $this->assertSame(1, Opportunity::query()->count());
         $this->assertSame(1, EmailImport::query()->count());
         $this->assertSame([102, 102], $mailboxClient->fetchedUids);
+        $this->assertSame(
+            [strlen($rawEmail), 0],
+            array_map(
+                static fn (MailboxMessageReference $reference): int => $reference->reportedSize,
+                $mailboxClient->fetchedReferences,
+            ),
+        );
     }
 
     #[Test]
@@ -392,6 +399,105 @@ final class PollOpportunityMailboxTest extends TestCase
         $this->assertSame([105, 106], $mailboxClient->fetchedUids);
         $this->assertSame(106, MailboxCheckpoint::query()->firstOrFail()->last_discovered_uid);
         $this->assertSame(1, Opportunity::query()->count());
+    }
+
+    #[Test]
+    public function it_quarantines_an_oversized_pending_message_discovered_earlier_and_continues_the_batch(): void
+    {
+        $workspace = Workspace::factory()->create();
+        $rawEmail = $this->fixture('hourly-client-success.eml');
+        MailboxCheckpoint::query()->create([
+            'workspace_id' => $workspace->id,
+            'mailbox_key' => 'primary',
+            'uid_validity' => 9001,
+            'last_discovered_uid' => 112,
+        ]);
+
+        foreach ([111, 112] as $uid) {
+            MailboxMessage::query()->create([
+                'workspace_id' => $workspace->id,
+                'mailbox_key' => 'primary',
+                'uid_validity' => 9001,
+                'message_uid' => $uid,
+                'status' => MailboxMessageStatus::Pending,
+                'attempt_count' => 0,
+                'first_seen_at' => now()->subMinutes(5),
+            ]);
+        }
+
+        $mailboxClient = (new FakeMailboxClient)
+            ->queueDiscovery(new DiscoveredMailboxBatch(9001, [], 112))
+            ->failFetchWith(111, new MailboxIntakeException(MailboxIntakeErrorCode::MessageTooLarge))
+            ->withRawMessage(112, $rawEmail);
+        $this->configureMailbox($workspace->id);
+        $this->app->instance(MailboxClient::class, $mailboxClient);
+
+        $result = $this->app->make(PollOpportunityMailbox::class)->execute($workspace->id);
+
+        $this->assertSame(MailboxRunStatus::Partial, $result->status);
+        $this->assertSame(2, $result->processedCount);
+        $this->assertSame(1, $result->quarantinedCount);
+        $this->assertSame(1, $result->importedCount);
+        $this->assertSame([111, 112], $mailboxClient->fetchedUids);
+        $this->assertSame(
+            [0, 0],
+            array_map(
+                static fn (MailboxMessageReference $reference): int => $reference->reportedSize,
+                $mailboxClient->fetchedReferences,
+            ),
+        );
+        $this->assertDatabaseHas('mailbox_messages', [
+            'message_uid' => 111,
+            'status' => MailboxMessageStatus::Quarantined->value,
+            'error_code' => MailboxIntakeErrorCode::MessageTooLarge->value,
+        ]);
+        $this->assertDatabaseHas('mailbox_messages', [
+            'message_uid' => 112,
+            'status' => MailboxMessageStatus::Imported->value,
+        ]);
+        $this->assertSame(1, Opportunity::query()->count());
+        $this->assertSame(1, EmailImport::query()->count());
+    }
+
+    #[Test]
+    public function it_reports_an_unknown_size_metadata_failure_safely_without_importing(): void
+    {
+        $workspace = Workspace::factory()->create();
+        MailboxCheckpoint::query()->create([
+            'workspace_id' => $workspace->id,
+            'mailbox_key' => 'primary',
+            'uid_validity' => 9001,
+            'last_discovered_uid' => 113,
+        ]);
+        MailboxMessage::query()->create([
+            'workspace_id' => $workspace->id,
+            'mailbox_key' => 'primary',
+            'uid_validity' => 9001,
+            'message_uid' => 113,
+            'status' => MailboxMessageStatus::Pending,
+            'attempt_count' => 0,
+            'first_seen_at' => now()->subMinutes(5),
+        ]);
+        $mailboxClient = (new FakeMailboxClient)
+            ->queueDiscovery(new DiscoveredMailboxBatch(9001, [], 113))
+            ->failFetchWith(113, new MailboxIntakeException(MailboxIntakeErrorCode::MessageFetchFailed));
+        $this->configureMailbox($workspace->id);
+        $this->app->instance(MailboxClient::class, $mailboxClient);
+
+        $result = $this->app->make(PollOpportunityMailbox::class)->execute($workspace->id);
+
+        $this->assertSame(MailboxRunStatus::Partial, $result->status);
+        $this->assertSame(1, $result->retryScheduledCount);
+        $this->assertSame([113], $mailboxClient->fetchedUids);
+        $this->assertSame(0, $mailboxClient->fetchedReferences[0]->reportedSize);
+        $this->assertDatabaseHas('mailbox_messages', [
+            'message_uid' => 113,
+            'status' => MailboxMessageStatus::RetryWait->value,
+            'attempt_count' => 1,
+            'error_code' => MailboxIntakeErrorCode::MessageFetchFailed->value,
+        ]);
+        $this->assertSame(0, Opportunity::query()->count());
+        $this->assertSame(0, EmailImport::query()->count());
     }
 
     #[Test]

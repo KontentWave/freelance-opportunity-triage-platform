@@ -23,7 +23,7 @@ Hide IMAP operations behind a replaceable `MailboxClient` domain boundary. The p
 
 Use at-least-once delivery. Discover messages by UID within a UIDVALIDITY namespace, durably record delivery state before processing, and pass complete raw RFC822 bytes to the existing `ImportOpportunityEmail` action. Repeated delivery is expected and is resolved by the Phase 1 idempotency guards. The future mailbox ledger will provide operational delivery tracking, not replace Phase 1 duplicate protection.
 
-Retrieval must use PEEK semantics and must not change flags, move messages, delete messages, or access folders outside the configured dedicated folder. Certificate validation and protocol debug-log suppression are mandatory. Raw messages remain in memory only for the call to the Phase 1 importer and are not persisted or logged.
+Retrieval must use PEEK semantics and must not change flags, move messages, delete messages, or access folders outside the configured dedicated folder. A non-positive size on a reconstructed pending or retry reference is unknown: the adapter must first request UID and RFC822.SIZE metadata only, require a positive size for the requested UID, and reject oversized messages before requesting `BODY.PEEK[]`. Missing or invalid metadata fails with the stable message-fetch code and no body request. Certificate validation and protocol debug-log suppression are mandatory. Raw messages remain in memory only for the call to the Phase 1 importer and are not persisted or logged.
 
 ## Consequences
 
