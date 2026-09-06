@@ -213,6 +213,14 @@ final class OpportunityMailboxCommandTest extends TestCase
         } elseif ($scenario === 'quarantined') {
             $this->createRun($workspace, MailboxRunStatus::Succeeded, now()->subMinute());
             $this->createMessage($workspace, MailboxMessageStatus::Quarantined, 'email.missing_plain_text');
+        } elseif ($scenario === 'historical quarantine') {
+            $this->createMessage(
+                $workspace,
+                MailboxMessageStatus::Quarantined,
+                'email.malformed_terms',
+                processedAt: now()->subMinutes(10),
+            );
+            $this->createRun($workspace, MailboxRunStatus::Succeeded, now()->subMinute());
         } elseif ($scenario === 'future retry') {
             $this->createRun($workspace, MailboxRunStatus::Succeeded, now()->subMinute());
             $this->createMessage(
@@ -268,6 +276,7 @@ final class OpportunityMailboxCommandTest extends TestCase
         yield 'healthy' => ['healthy', 'healthy', 0];
         yield 'recent partial run' => ['partial', 'degraded', 1];
         yield 'quarantined work' => ['quarantined', 'degraded', 1];
+        yield 'successful run after historical quarantine' => ['historical quarantine', 'healthy', 0];
         yield 'future retry' => ['future retry', 'degraded', 1];
         yield 'failed run' => ['failed', 'unhealthy', 1];
         yield 'stale run' => ['stale', 'unhealthy', 1];
@@ -350,6 +359,7 @@ final class OpportunityMailboxCommandTest extends TestCase
         MailboxMessageStatus $status,
         string $errorCode,
         mixed $nextAttemptAt = null,
+        mixed $processedAt = null,
     ): MailboxMessage {
         return MailboxMessage::query()->create([
             'workspace_id' => $workspace->id,
@@ -361,7 +371,9 @@ final class OpportunityMailboxCommandTest extends TestCase
             'next_attempt_at' => $nextAttemptAt,
             'error_code' => $errorCode,
             'first_seen_at' => now()->subMinutes(2),
-            'processed_at' => $status === MailboxMessageStatus::RetryWait ? null : now()->subMinute(),
+            'processed_at' => $status === MailboxMessageStatus::RetryWait
+                ? null
+                : ($processedAt ?? now()->subMinute()),
         ]);
     }
 

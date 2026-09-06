@@ -99,7 +99,7 @@ final class OpportunityMailboxHealthCommand extends Command
             return $this->payload($latestRun, 'unhealthy', $latestRun->error_code);
         }
 
-        $quarantined = $this->message($workspaceId, $configuration, MailboxMessageStatus::Quarantined);
+        $quarantined = $this->quarantinedMessageFromRun($workspaceId, $configuration, $latestRun);
         $pendingRetry = $this->message($workspaceId, $configuration, MailboxMessageStatus::RetryWait);
 
         if ($latestRunStatus === MailboxRunStatus::Partial || $quarantined !== null || $pendingRetry !== null) {
@@ -117,6 +117,21 @@ final class OpportunityMailboxHealthCommand extends Command
         }
 
         return $this->payload($latestRun, 'healthy');
+    }
+
+    private function quarantinedMessageFromRun(
+        string $workspaceId,
+        MailboxConfiguration $configuration,
+        MailboxRun $run,
+    ): ?MailboxMessage {
+        return MailboxMessage::query()
+            ->where('workspace_id', $workspaceId)
+            ->where('mailbox_key', $configuration->mailboxKey)
+            ->where('status', MailboxMessageStatus::Quarantined)
+            ->whereBetween('processed_at', [$run->started_at, $run->finished_at])
+            ->orderBy('processed_at')
+            ->orderBy('id')
+            ->first();
     }
 
     private function message(
