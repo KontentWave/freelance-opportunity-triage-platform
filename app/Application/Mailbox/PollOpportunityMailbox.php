@@ -100,8 +100,32 @@ final class PollOpportunityMailbox
             $uidValidityChanged = $checkpoint->uid_validity !== null
                 && $checkpoint->uid_validity !== $batch->uidValidity;
 
-            DB::transaction(function () use ($batch, $checkpoint, $configuration, $workspaceId): void {
+            $invalidatedMessageCount = DB::transaction(function () use (
+                $batch,
+                $checkpoint,
+                $configuration,
+                $uidValidityChanged,
+                $workspaceId,
+            ): int {
                 $now = now();
+                $invalidatedMessageCount = 0;
+
+                if ($uidValidityChanged) {
+                    $invalidatedMessageCount = MailboxMessage::query()
+                        ->where('workspace_id', $workspaceId)
+                        ->where('mailbox_key', $configuration->mailboxKey)
+                        ->where('uid_validity', '!=', $batch->uidValidity)
+                        ->whereIn('status', [
+                            MailboxMessageStatus::Pending,
+                            MailboxMessageStatus::RetryWait,
+                        ])
+                        ->update([
+                            'status' => MailboxMessageStatus::PermanentlyFailed,
+                            'next_attempt_at' => null,
+                            'error_code' => MailboxIntakeErrorCode::UidValidityChanged->value,
+                            'processed_at' => $now,
+                        ]);
+                }
 
                 foreach ($batch->messages as $message) {
                     MailboxMessage::query()->insertOrIgnore([
@@ -138,6 +162,8 @@ final class PollOpportunityMailbox
                         ? ($checkpoint->uid_validity === $batch->uidValidity ? $checkpoint->last_discovered_uid : 0)
                         : (int) $recordedHighestUid,
                 ]);
+
+                return $invalidatedMessageCount;
             });
 
             $counters = [
@@ -148,7 +174,7 @@ final class PollOpportunityMailbox
                 'duplicate_count' => 0,
                 'quarantined_count' => 0,
                 'retry_scheduled_count' => 0,
-                'permanent_failure_count' => 0,
+                'permanent_failure_count' => $invalidatedMessageCount,
             ];
 
             $references = [];

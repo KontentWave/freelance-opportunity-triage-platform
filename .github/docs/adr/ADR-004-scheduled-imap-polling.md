@@ -1,8 +1,8 @@
 # ADR-004: Scheduled IMAP Polling
 
-- **Status:** Accepted; Phase 2 is direct-link-only
+- **Status:** Accepted architecture; recovery correction pending review and verification
 - **Date:** 2026-08-29
-- **Last amended:** 2026-09-04
+- **Last amended:** 2026-09-07
 - **Decision owners:** Project and quality engineering
 
 ## Context
@@ -22,6 +22,8 @@ Use a Laravel Artisan command invoked by Laravel's scheduler and the hosting pro
 Hide IMAP operations behind a replaceable `MailboxClient` domain boundary. The production adapter may use the core `webklex/php-imap` package, but application workflow and domain code must not depend directly on that package. Do not install `webklex/laravel-imap`.
 
 Use at-least-once delivery. Discover messages by UID within a UIDVALIDITY namespace, durably record delivery state before processing, and pass complete raw RFC822 bytes to the existing `ImportOpportunityEmail` action. Repeated delivery is expected and is resolved by the Phase 1 idempotency guards. The future mailbox ledger will provide operational delivery tracking, not replace Phase 1 duplicate protection.
+
+On a UIDVALIDITY transition, the same transaction that records the new namespace and advances its checkpoint permanently fails obsolete `pending` and `retry_wait` rows with `mailbox.uidvalidity_changed`. It clears their retry timestamps without incrementing attempts, preserves terminal history, and remains scoped to the workspace and mailbox key. The bounded new-namespace rescan continues, but an obsolete numeric UID is never fetched against the new namespace. These permanent failures remain globally unhealthy and require operator review.
 
 Retrieval must use PEEK semantics and must not change flags, move messages, delete messages, or access folders outside the configured dedicated folder. A non-positive size on a reconstructed pending or retry reference is unknown: the adapter must first request UID and RFC822.SIZE metadata only, require a positive size for the requested UID, and reject oversized messages before requesting `BODY.PEEK[]`. Missing or invalid metadata fails with the stable message-fetch code and no body request. Certificate validation and protocol debug-log suppression are mandatory. Raw messages remain in memory only for the call to the Phase 1 importer and are not persisted or logged.
 
@@ -122,7 +124,7 @@ The resolver must return only a canonical job ID and canonical URL. It must not 
 
 ### Quarantine-History Constraint
 
-Existing staging `email_imports`, mailbox message ledgers, mailbox runs, and their quarantine codes are historical evidence and must not be deleted, rewritten, or reset by this amendment or its implementation. Initially, an approved resolver would apply only to newly processed messages; existing terminal quarantines remain untouched. Any later recovery of previously quarantined messages requires a separate reviewed, append-only audit design because the current import action updates a matching quarantine record in place.
+Existing staging `email_imports`, mailbox message ledgers, mailbox runs, and their quarantine codes are historical evidence and must not be deleted, rewritten, or reset by this amendment or its implementation. A workspace-scoped Message-ID or content-hash match on a terminal quarantine returns its stored status and safe error code without invoking the parser or updating the row. There is no historical replay or automatic recovery. Any later recovery of previously quarantined messages requires a separate reviewed, append-only audit design.
 
 ### Required Fake and Adversarial Tests
 
@@ -225,7 +227,9 @@ The corrected interval ran on reviewed commit `4cdeb1a` from 2026-09-05 18:09:13
 
 Completion review identified one health-reporting defect: a terminal quarantine from before the corrected soak could keep health degraded after later clean runs. Commit `43f1ee5` limits quarantine reporting to the latest completed run; permanent failures and pending or overdue retries remain global health inputs. Local validation passed 91 tests with 747 assertions plus PHPStan, Pint, and Composer checks. Protected `Quality`, `Tests / MariaDB 11.4`, and `Secret scan` checks passed in [CI run 34052269465](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/34052269465). The target was deployed at `43f1ee5` with final health `healthy`.
 
-The reviewed adapter uses `BODY.PEEK[]` and has no flag, move, or delete operation. Together with the accepted target-host PEEK compatibility proof, the soak exercised the non-mutating mailbox path. Phase 2 is complete for direct-link-only intake.
+The reviewed adapter uses `BODY.PEEK[]` and has no flag, move, or delete operation. Together with the accepted target-host PEEK compatibility proof, the soak exercised the non-mutating mailbox path. At that review point, Phase 2 was recorded as complete for direct-link-only intake.
+
+The target-host soak and CI result above remain historical evidence for the named commits only. They do not validate the current UIDVALIDITY and quarantine-history recovery correction, so Phase 2 completion is reopened pending review, protected CI, and any required target-host verification of the corrected commit.
 
 ## Alternatives Considered
 

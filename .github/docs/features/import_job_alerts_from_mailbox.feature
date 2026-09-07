@@ -33,6 +33,18 @@ Feature: Import job alerts from a dedicated mailbox
 
   Rule: Temporary delivery failures are bounded and never lose or duplicate work
 
+    @critical @recovery @health
+    Scenario: Finalize obsolete unfinished work when UIDVALIDITY changes
+      Given the checkpoint and unfinished ledger rows use UIDVALIDITY 9001
+      And another workspace and existing terminal rows also have mailbox history
+      And the mailbox now reports UIDVALIDITY 9002 with a candidate reusing an obsolete numeric UID
+      When the scheduled mailbox poll runs
+      Then obsolete pending and retry rows are "permanently_failed" with error code "mailbox.uidvalidity_changed"
+      And their retry timestamps are cleared without increasing their attempt counts
+      And existing terminal history and the other workspace are unchanged
+      And only the candidate in UIDVALIDITY 9002 is fetched during the bounded rescan
+      And mailbox health is "unhealthy" until the permanent failures receive operator review
+
     @critical @retry
     Scenario: Retry a temporary fetch failure without duplicating the opportunity
       Given candidate message UID 102 is durably recorded in the message ledger
@@ -61,6 +73,21 @@ Feature: Import job alerts from a dedicated mailbox
       And the health output contains no raw exception or mailbox credential
 
   Rule: Unsupported input and mailbox failures are isolated and safely observable
+
+    @critical @idempotency @history
+    Scenario Outline: Preserve a historical quarantine on ordinary redelivery
+      Given a terminal quarantined email import exists in the workspace
+      And a redelivery matches its "<identity>"
+      When the email import is attempted again
+      Then the parser is not invoked
+      And the stored quarantine status and error code are returned
+      And the historical import row remains byte-for-byte unchanged
+      And a matching quarantine in another workspace does not block that workspace's import
+
+      Examples:
+        | identity     |
+        | Message-ID   |
+        | content hash |
 
     @critical @security
     Scenario: Quarantine an oversized pending message discovered by an earlier poll and continue

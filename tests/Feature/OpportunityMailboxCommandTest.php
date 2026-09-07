@@ -250,6 +250,15 @@ final class OpportunityMailboxCommandTest extends TestCase
                 MailboxMessageStatus::PermanentlyFailed,
                 MailboxIntakeErrorCode::RetryExhausted->value,
             );
+        } elseif ($scenario === 'invalidated namespace') {
+            $this->createRun($workspace, MailboxRunStatus::Partial, now()->subMinute(), [
+                'error_code' => MailboxIntakeErrorCode::UidValidityChanged->value,
+            ]);
+            $this->createMessage(
+                $workspace,
+                MailboxMessageStatus::PermanentlyFailed,
+                MailboxIntakeErrorCode::UidValidityChanged->value,
+            );
         } elseif ($scenario === 'invalid configuration') {
             config()->set('opportunity_mailbox.enabled', false);
         }
@@ -282,6 +291,7 @@ final class OpportunityMailboxCommandTest extends TestCase
         yield 'stale run' => ['stale', 'unhealthy', 1];
         yield 'overdue retry' => ['overdue retry', 'unhealthy', 1];
         yield 'permanent failure' => ['permanent failure', 'unhealthy', 1];
+        yield 'invalidated namespace' => ['invalidated namespace', 'unhealthy', 1];
         yield 'invalid configuration' => ['invalid configuration', 'unhealthy', 1];
     }
 

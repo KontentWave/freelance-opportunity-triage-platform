@@ -9,12 +9,12 @@ use App\Domain\Opportunities\Enums\ContractType;
 use App\Domain\Opportunities\Enums\EmailImportStatus;
 use App\Domain\Opportunities\Enums\EmailParseErrorCode;
 use App\Domain\Opportunities\Enums\OpportunityProvider;
-use App\Domain\Opportunities\Exceptions\EmailParseException;
 use App\Models\EmailImport;
 use App\Models\Opportunity;
 use App\Models\Workspace;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -172,56 +172,84 @@ final class ImportOpportunityEmailTest extends TestCase
     }
 
     #[Test]
-    public function it_reprocesses_an_existing_quarantine_after_parser_compatibility_improves(): void
-    {
+    #[DataProvider('quarantineIdentityMatches')]
+    public function it_preserves_an_existing_quarantine_without_reparsing(
+        bool $matchMessageId,
+        bool $matchContentHash,
+    ): void {
+        $this->travelTo('2026-08-30 12:00:00');
         $workspace = Workspace::factory()->create();
         $parser = new class implements OpportunityEmailParser
         {
-            public bool $supportsMessage = false;
+            public int $parseCallCount = 0;
 
             public function parse(string $rawEmail): ParsedOpportunity
             {
-                if (! $this->supportsMessage) {
-                    throw new EmailParseException(EmailParseErrorCode::MalformedTerms);
-                }
+                $this->parseCallCount++;
 
-                return new ParsedOpportunity(
-                    provider: OpportunityProvider::UpworkEmail,
-                    sourceMessageId: 'fixture-recovered@example.test',
-                    externalJobId: '200000000000000000098',
-                    canonicalUrl: 'https://www.upwork.com/jobs/~200000000000000000098',
-                    title: 'Recovered Fixture',
-                    contractType: ContractType::Hourly,
-                    hourlyMin: '15.00',
-                    hourlyMax: '25.00',
-                    currency: 'USD',
-                    estimatedDuration: 'Less than 1 month',
-                    postedOn: null,
-                    excerpt: 'Synthetic recovery fixture.',
-                    skills: ['Quality Assurance'],
-                    hiddenSkillCount: 0,
-                    paymentVerified: true,
-                    clientRating: '4.80',
-                    clientSpendUsd: '63000.00',
-                    clientSpendApproximate: true,
-                    clientCountry: 'Exampleland',
-                    templateFingerprint: 'upwork-alert-hourly-v1',
-                );
+                throw new \RuntimeException('Historical quarantine must not be reparsed.');
             }
         };
         $action = new ImportOpportunityEmail($parser);
         $rawEmail = $this->fixture('hourly-current-template.eml');
+        $emailImport = EmailImport::query()->create([
+            'workspace_id' => $workspace->id,
+            'opportunity_id' => null,
+            'message_id' => $matchMessageId
+                ? 'fixture-hourly-current-template@example.test'
+                : 'different-message@example.test',
+            'content_sha256' => $matchContentHash ? hash('sha256', $rawEmail) : str_repeat('a', 64),
+            'status' => EmailImportStatus::Quarantined,
+            'error_code' => EmailParseErrorCode::MalformedTerms,
+            'imported_at' => now(),
+        ]);
+        $attributesBeforeRedelivery = $emailImport->fresh()->getRawOriginal();
+        $this->travel(5)->minutes();
 
-        $quarantinedResult = $action->execute($workspace->id, $rawEmail);
-        $parser->supportsMessage = true;
-        $recoveredResult = $action->execute($workspace->id, $rawEmail);
+        $result = $action->execute($workspace->id, $rawEmail);
 
-        $this->assertSame(EmailImportStatus::Quarantined, $quarantinedResult->status);
-        $this->assertSame(EmailImportStatus::Imported, $recoveredResult->status);
+        $this->assertSame(EmailImportStatus::Quarantined, $result->status);
+        $this->assertSame(EmailParseErrorCode::MalformedTerms, $result->errorCode);
+        $this->assertNull($result->opportunityId);
+        $this->assertSame(0, $parser->parseCallCount);
         $this->assertSame(1, EmailImport::query()->count());
+        $this->assertSame(0, Opportunity::query()->count());
+        $this->assertSame($attributesBeforeRedelivery, $emailImport->fresh()->getRawOriginal());
+    }
+
+    /** @return iterable<string, array{bool, bool}> */
+    public static function quarantineIdentityMatches(): iterable
+    {
+        yield 'Message-ID' => [true, false];
+        yield 'content hash' => [false, true];
+    }
+
+    #[Test]
+    public function it_keeps_quarantine_deduplication_scoped_to_the_workspace(): void
+    {
+        $firstWorkspace = Workspace::factory()->create();
+        $secondWorkspace = Workspace::factory()->create();
+        $rawEmail = $this->fixture('hourly-client-success.eml');
+        EmailImport::query()->create([
+            'workspace_id' => $firstWorkspace->id,
+            'opportunity_id' => null,
+            'message_id' => 'fixture-hourly-client-success-1@example.test',
+            'content_sha256' => hash('sha256', $rawEmail),
+            'status' => EmailImportStatus::Quarantined,
+            'error_code' => EmailParseErrorCode::MalformedTerms,
+            'imported_at' => now(),
+        ]);
+
+        $result = app(ImportOpportunityEmail::class)->execute($secondWorkspace->id, $rawEmail);
+
+        $this->assertSame(EmailImportStatus::Imported, $result->status);
+        $this->assertSame(2, EmailImport::query()->count());
         $this->assertSame(1, Opportunity::query()->count());
-        $this->assertSame('imported', EmailImport::query()->firstOrFail()->status);
-        $this->assertSame($recoveredResult->opportunityId, EmailImport::query()->firstOrFail()->opportunity_id);
+        $this->assertDatabaseHas('email_imports', [
+            'workspace_id' => $firstWorkspace->id,
+            'status' => EmailImportStatus::Quarantined->value,
+            'error_code' => EmailParseErrorCode::MalformedTerms->value,
+        ]);
     }
 
     #[Test]

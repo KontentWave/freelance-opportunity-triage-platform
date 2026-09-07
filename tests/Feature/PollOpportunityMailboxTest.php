@@ -186,17 +186,28 @@ final class PollOpportunityMailboxTest extends TestCase
     }
 
     #[Test]
-    public function it_does_not_fetch_a_retry_from_an_invalidated_uidvalidity_namespace(): void
+    public function it_finalizes_unfinished_obsolete_namespaces_and_processes_the_new_namespace(): void
     {
         $this->travelTo('2026-08-30 12:00:00');
         $workspace = Workspace::factory()->create();
+        $otherWorkspace = Workspace::factory()->create();
+        $rawEmail = $this->fixture('hourly-client-success.eml');
         MailboxCheckpoint::query()->create([
             'workspace_id' => $workspace->id,
             'mailbox_key' => 'primary',
             'uid_validity' => 9001,
             'last_discovered_uid' => 102,
         ]);
-        MailboxMessage::query()->create([
+        $pendingMessage = MailboxMessage::query()->create([
+            'workspace_id' => $workspace->id,
+            'mailbox_key' => 'primary',
+            'uid_validity' => 9001,
+            'message_uid' => 1,
+            'status' => MailboxMessageStatus::Pending,
+            'attempt_count' => 0,
+            'first_seen_at' => now()->subMinutes(10),
+        ]);
+        $retryMessage = MailboxMessage::query()->create([
             'workspace_id' => $workspace->id,
             'mailbox_key' => 'primary',
             'uid_validity' => 9001,
@@ -207,9 +218,33 @@ final class PollOpportunityMailboxTest extends TestCase
             'error_code' => MailboxIntakeErrorCode::MessageFetchFailed->value,
             'first_seen_at' => now()->subMinutes(5),
         ]);
-        $mailboxClient = (new FakeMailboxClient)->queueDiscovery(
-            new DiscoveredMailboxBatch(9002, [], 0),
-        );
+        $terminalMessage = MailboxMessage::query()->create([
+            'workspace_id' => $workspace->id,
+            'mailbox_key' => 'primary',
+            'uid_validity' => 9000,
+            'message_uid' => 77,
+            'status' => MailboxMessageStatus::Imported,
+            'attempt_count' => 1,
+            'first_seen_at' => now()->subHour(),
+            'processed_at' => now()->subMinutes(30),
+        ]);
+        $otherWorkspaceMessage = MailboxMessage::query()->create([
+            'workspace_id' => $otherWorkspace->id,
+            'mailbox_key' => 'primary',
+            'uid_validity' => 9001,
+            'message_uid' => 1,
+            'status' => MailboxMessageStatus::Pending,
+            'attempt_count' => 0,
+            'first_seen_at' => now()->subMinutes(10),
+        ]);
+        $terminalAttributes = $terminalMessage->fresh()->getRawOriginal();
+        $mailboxClient = (new FakeMailboxClient)
+            ->queueDiscovery(new DiscoveredMailboxBatch(
+                uidValidity: 9002,
+                messages: [new MailboxMessageReference(uid: 1, reportedSize: strlen($rawEmail))],
+                highestDiscoveredUid: 1,
+            ))
+            ->withRawMessage(1, $rawEmail);
         $this->configureMailbox($workspace->id);
         $this->app->instance(MailboxClient::class, $mailboxClient);
 
@@ -217,15 +252,31 @@ final class PollOpportunityMailboxTest extends TestCase
 
         $this->assertSame(MailboxRunStatus::Partial, $result->status);
         $this->assertSame(MailboxIntakeErrorCode::UidValidityChanged, $result->errorCode);
-        $this->assertSame(0, $result->processedCount);
-        $this->assertSame([], $mailboxClient->fetchedUids);
+        $this->assertSame(1, $result->processedCount);
+        $this->assertSame(1, $result->importedCount);
+        $this->assertSame(2, $result->permanentFailureCount);
+        $this->assertSame([1], $mailboxClient->fetchedUids);
+
+        foreach ([$pendingMessage, $retryMessage] as $obsoleteMessage) {
+            $obsoleteMessage->refresh();
+            $this->assertSame(MailboxMessageStatus::PermanentlyFailed, $obsoleteMessage->status);
+            $this->assertNull($obsoleteMessage->next_attempt_at);
+            $this->assertSame(MailboxIntakeErrorCode::UidValidityChanged->value, $obsoleteMessage->error_code);
+            $this->assertNotNull($obsoleteMessage->processed_at);
+        }
+
+        $this->assertSame(0, $pendingMessage->attempt_count);
+        $this->assertSame(1, $retryMessage->attempt_count);
+        $this->assertSame($terminalAttributes, $terminalMessage->fresh()->getRawOriginal());
+        $this->assertSame(MailboxMessageStatus::Pending, $otherWorkspaceMessage->fresh()->status);
         $this->assertDatabaseHas('mailbox_messages', [
             'workspace_id' => $workspace->id,
-            'uid_validity' => 9001,
-            'message_uid' => 102,
-            'status' => MailboxMessageStatus::RetryWait->value,
+            'uid_validity' => 9002,
+            'message_uid' => 1,
+            'status' => MailboxMessageStatus::Imported->value,
             'attempt_count' => 1,
         ]);
+        $this->assertSame(1, Opportunity::query()->count());
     }
 
     #[Test]
@@ -278,7 +329,7 @@ final class PollOpportunityMailboxTest extends TestCase
     }
 
     #[Test]
-    public function it_reconciles_a_committed_quarantine_after_a_ledger_update_failure(): void
+    public function it_preserves_a_committed_quarantine_after_a_ledger_update_failure(): void
     {
         $this->travelTo('2026-08-30 12:00:00');
         $workspace = Workspace::factory()->create();
@@ -308,7 +359,9 @@ final class PollOpportunityMailboxTest extends TestCase
         $this->assertSame(MailboxRunStatus::Partial, $firstResult->status);
         $this->assertSame(1, $firstResult->retryScheduledCount);
         $this->assertSame(1, EmailImport::query()->count());
-        $this->assertSame('quarantined', EmailImport::query()->firstOrFail()->status);
+        $emailImport = EmailImport::query()->firstOrFail();
+        $this->assertSame('quarantined', $emailImport->status);
+        $quarantineAttributes = $emailImport->getRawOriginal();
 
         $this->travel(5)->minutes();
         $secondResult = $action->execute($workspace->id);
@@ -319,6 +372,7 @@ final class PollOpportunityMailboxTest extends TestCase
         $this->assertSame(MailboxMessageStatus::Quarantined, $message->status);
         $this->assertSame('email.missing_plain_text', $message->error_code);
         $this->assertSame(1, EmailImport::query()->count());
+        $this->assertSame($quarantineAttributes, $emailImport->fresh()->getRawOriginal());
         $this->assertSame(0, Opportunity::query()->count());
     }
 

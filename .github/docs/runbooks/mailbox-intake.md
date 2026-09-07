@@ -153,23 +153,25 @@ Do not query or export complete database rows for incident evidence.
 
 ## Stable Error Response
 
-| Error code                        | Operational response                                                                                                   |
-| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `mailbox.configuration_invalid`   | Disable intake and correct protected configuration or workspace ownership.                                             |
-| `mailbox.insecure_transport`      | Disable intake; restore `ssl` or `tls` and certificate validation.                                                     |
-| `mailbox.authentication_failed`   | Disable intake; rotate or correct credentials through the secret manager.                                              |
-| `mailbox.connection_failed`       | Check provider networking and mailbox availability without recording endpoints or raw exceptions.                      |
-| `mailbox.folder_unavailable`      | Disable intake; verify the dedicated folder through an authorized mail client.                                         |
-| `mailbox.uidvalidity_changed`     | Monitor the bounded rescan and duplicate counter; Phase 1 idempotency remains authoritative.                           |
-| `mailbox.message_too_large`       | Leave the source message unchanged; the ledger quarantine is terminal.                                                 |
-| `mailbox.message_fetch_failed`    | Monitor the bounded retry schedule.                                                                                    |
-| `mailbox.import_failed`           | Monitor retries; investigate application behavior using safe codes and counters only.                                  |
-| `mailbox.retry_exhausted`         | Treat as actionable failure; preserve the ledger and source message for reviewed recovery.                             |
-| `email.missing_job_id`            | Expected for redirect-only alerts in the direct-link-only scope; do not retry or follow the tracking link.             |
-| `email.unsupported_contract_type` | Expected for fixed-price alerts, which are outside Phase 2; do not retry automatically.                                |
-| Other `email.*`                   | Typed Phase 1 quarantine; review parser compatibility using a separately sanitized fixture before continuing the soak. |
+| Error code                        | Operational response                                                                                                                                                                                                                   |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mailbox.configuration_invalid`   | Disable intake and correct protected configuration or workspace ownership.                                                                                                                                                             |
+| `mailbox.insecure_transport`      | Disable intake; restore `ssl` or `tls` and certificate validation.                                                                                                                                                                     |
+| `mailbox.authentication_failed`   | Disable intake; rotate or correct credentials through the secret manager.                                                                                                                                                              |
+| `mailbox.connection_failed`       | Check provider networking and mailbox availability without recording endpoints or raw exceptions.                                                                                                                                      |
+| `mailbox.folder_unavailable`      | Disable intake; verify the dedicated folder through an authorized mail client.                                                                                                                                                         |
+| `mailbox.uidvalidity_changed`     | Review obsolete unfinished rows now permanently failed by the atomic namespace transition. They remain unhealthy; do not replay them or reinterpret equal numeric UIDs in the new namespace. Monitor the bounded new-namespace rescan. |
+| `mailbox.message_too_large`       | Leave the source message unchanged; the ledger quarantine is terminal.                                                                                                                                                                 |
+| `mailbox.message_fetch_failed`    | Monitor the bounded retry schedule.                                                                                                                                                                                                    |
+| `mailbox.import_failed`           | Monitor retries; investigate application behavior using safe codes and counters only.                                                                                                                                                  |
+| `mailbox.retry_exhausted`         | Treat as actionable failure; preserve the ledger and source message for reviewed recovery.                                                                                                                                             |
+| `email.missing_job_id`            | Expected for redirect-only alerts in the direct-link-only scope; do not retry or follow the tracking link.                                                                                                                             |
+| `email.unsupported_contract_type` | Expected for fixed-price alerts, which are outside Phase 2; do not retry automatically.                                                                                                                                                |
+| Other `email.*`                   | Typed Phase 1 quarantine; review parser compatibility using a separately sanitized fixture before continuing the soak.                                                                                                                 |
 
 Never add raw exception messages to logs to diagnose these codes.
+
+Historical `email_imports` quarantines are terminal. Ordinary redelivery by Message-ID or content hash returns the stored quarantine status and code without reparsing or rewriting the row. Do not replay or automatically recover these records; any recovery procedure requires a separately reviewed append-only audit design.
 
 Alerts that expose only tracking redirects and no direct `/jobs/~<digits>` URL are expected to quarantine as `email.missing_job_id`. Do not retry them, follow the tracking URL, enable a `GET` fallback, impersonate crawler or browser traffic, bypass Cloudflare, scrape, or add browser automation. Review only safe aggregate counters; never record tracking values.
 
@@ -246,3 +248,5 @@ If any criterion fails, record only a stable code or safe reason category, disab
 The corrected Phase 2 soak ran from 2026-09-05 18:09:13 UTC through 2026-09-06 18:35:02 UTC. It produced 294 polls with a maximum observed gap of 301 seconds. Twelve messages were discovered and processed, seven imported, and five quarantined under only `email.missing_job_id` or `email.unsupported_contract_type`. No duplicate opportunity identity, pending message, retry, overdue retry, or permanent failure remained. Final health was `healthy` on commit `43f1ee5`; [CI run 34052269465](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/34052269465) passed all required checks.
 
 An earlier interval with zero runs is not accepted soak evidence. Its cron entry targeted another location and the wrong PHP runtime. Future deployments must reconfirm that exactly one provider scheduler entry targets this application and the verified PHP binary before starting the soak clock.
+
+The accepted soak and CI result above are historical evidence for the named commits only. They do not validate the current UIDVALIDITY and quarantine-history recovery correction; keep Phase 2 completion open until that correction passes review, protected CI, and any required target-host verification.

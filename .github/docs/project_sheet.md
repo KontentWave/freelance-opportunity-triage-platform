@@ -135,7 +135,8 @@ Implemented behavior:
 
 - Calculates `sha256` of the raw email before parsing.
 - Extracts a safe `Message-ID` fallback directly from the raw message for duplicate detection and quarantine records.
-- Returns `duplicate` when an existing `email_imports` row matches the workspace by message ID or content hash.
+- Returns `duplicate` when an existing successful `email_imports` row matches the workspace by message ID or content hash.
+- Returns the stored `quarantined` status and safe error code without reparsing or updating when either identity matches a historical quarantine in the workspace.
 - Parses outside the database transaction.
 - Creates or updates one opportunity inside a transaction.
 - Replaces visible skills atomically by deleting and recreating the ordered skill rows.
@@ -221,7 +222,8 @@ File: `tests/Feature/ImportOpportunityEmailTest.php`
 - `it_updates_the_same_job_received_under_a_new_message_id`
 - `it_allows_the_same_external_job_id_in_different_workspaces`
 - `it_quarantines_invalid_input_without_storing_raw_content`
-- `it_reprocesses_an_existing_quarantine_after_parser_compatibility_improves`
+- `it_preserves_an_existing_quarantine_without_reparsing`
+- `it_keeps_quarantine_deduplication_scoped_to_the_workspace`
 - `it_rolls_back_partial_opportunity_and_skill_writes`
 - `it_never_persists_tracking_parameters_or_recipient_addresses`
 
@@ -289,8 +291,8 @@ No remaining application-scope gaps were found inside the agreed Phase 1 scope.
 ## Phase 2: Secure Scheduled Mailbox Intake
 
 **Document role:** Audited implementation specification for the current phase only
-**Current status:** Completed; direct-link-only scheduled mailbox intake verified on the target host
-**Last updated:** 2026-09-06
+**Current status:** Recovery correction implemented locally; review, CI, and target-host verification pending
+**Last updated:** 2026-09-07
 **Behavior specification:** `.github/docs/features/import_job_alerts_from_mailbox.feature`
 
 ### Action
@@ -487,14 +489,14 @@ Implement `App\Application\Mailbox\PollOpportunityMailbox::execute(string $works
 3. Create a `running` mailbox-run record.
 4. Load or create the workspace/mailbox checkpoint.
 5. Connect, select the configured folder, and obtain current UIDVALIDITY.
-6. Discover candidate UIDs in ascending order after the checkpoint. On first use or UIDVALIDITY change, search only the configured lookback window. A UIDVALIDITY change is recorded as a safe warning and relies on Phase 1 idempotency during the bounded rescan.
-7. In one database transaction, insert ledger rows with `pending` status using `insert-or-ignore`, then advance the checkpoint only to the highest UID represented by a committed ledger row. Never advance a checkpoint for an unrecorded candidate.
+6. Discover candidate UIDs in ascending order after the checkpoint. On first use or UIDVALIDITY change, search only the configured lookback window. A UIDVALIDITY change is recorded as a safe warning and starts a bounded rescan in the new namespace.
+7. In one database transaction, permanently fail every `pending` or `retry_wait` row in obsolete UIDVALIDITY namespaces with `mailbox.uidvalidity_changed`, clear its retry timestamp, preserve its attempt count and all terminal history, insert new-namespace ledger rows with `pending` status using `insert-or-ignore`, and advance the checkpoint only to the highest UID represented by a committed ledger row. Scope every operation to the workspace and mailbox key. Never fetch an obsolete UID against the new namespace, even when its numeric UID is reused.
 8. Select due `pending` or `retry_wait` rows in ascending UID order and process sequentially. Do not hold all raw messages in memory.
 9. Treat a non-positive reported size on a reconstructed pending or retry reference as unknown. Before body retrieval, request only UID and RFC822.SIZE metadata for that UID. Require the response to identify the requested UID and contain a positive integer size; otherwise fail the attempt with `mailbox.message_fetch_failed` without requesting the body.
 10. Reject a server-reported message larger than 1,048,576 bytes without fetching its body; mark it `quarantined` with `mailbox.message_too_large`.
 11. Fetch complete raw RFC822 bytes using UID sequencing and PEEK semantics. Confirm the returned byte length is within the same limit.
 12. Call `ImportOpportunityEmail::execute($workspaceId, $rawEmail)` exactly once for that processing attempt and immediately release the raw string after the call.
-13. Map `imported`, `updated`, `duplicate`, and `quarantined` to the ledger. If a retry receives `duplicate` with no opportunity ID because a prior attempt already committed a quarantine before the ledger update failed, resolve the existing `email_imports` row by workspace and content hash and preserve its quarantine code. Persist only the returned opportunity ID and safe error code.
+13. Map `imported`, `updated`, `duplicate`, and `quarantined` to the ledger. A workspace-scoped Message-ID or content-hash match on a historical quarantine returns its stored terminal status and safe code without invoking the parser or updating the import row. There is no historical replay or automatic recovery; any future recovery requires a separately reviewed append-only design. Persist only the returned opportunity ID and safe error code.
 14. For a retryable per-message transport or unexpected import failure, increment `attempt_count` and set `retry_wait` with delays of 5 minutes after attempt 1 and 15 minutes after attempt 2. After attempt 3, set `permanently_failed` with `mailbox.retry_exhausted`.
 15. Continue the batch after a quarantined or retryable message. A connection-level failure ends the run without advancing uncommitted discovery state.
 16. Close the IMAP connection in `finally`, finalize safe counters/status, and release the lock.
@@ -609,11 +611,11 @@ File: `tests/Feature/PollOpportunityMailboxTest.php`
 - `it_records_discovery_before_processing_and_never_advances_past_an_unrecorded_uid`
 - `it_skips_a_remote_uid_already_finalized_in_the_same_uidvalidity_namespace`
 - `it_rescans_a_bounded_window_after_uidvalidity_changes_without_duplicate_opportunities`
-- `it_does_not_fetch_a_retry_from_an_invalidated_uidvalidity_namespace`
+- `it_finalizes_unfinished_obsolete_namespaces_and_processes_the_new_namespace`
 - `it_retries_a_temporary_fetch_failure_and_imports_exactly_once`
 - `it_quarantines_an_oversized_pending_message_discovered_earlier_and_continues_the_batch`
 - `it_reports_an_unknown_size_metadata_failure_safely_without_importing`
-- `it_reconciles_a_committed_quarantine_after_a_ledger_update_failure`
+- `it_preserves_a_committed_quarantine_after_a_ledger_update_failure`
 - `it_marks_a_message_permanently_failed_after_the_third_temporary_failure`
 - `it_quarantines_an_unsupported_candidate_and_continues_the_batch`
 - `it_does_not_advance_the_checkpoint_after_a_connection_level_failure`
@@ -663,6 +665,8 @@ File: `tests/Feature/MailboxSchemaTest.php`
 | Quarantine an oversized pending message before body retrieval       | `it_quarantines_an_oversized_pending_message_discovered_earlier_and_continues_the_batch`; `it_rejects_an_unknown_size_oversized_message_before_fetching_its_body` |
 | Import a retry whose reconstructed reference has unknown size       | `it_retries_a_temporary_fetch_failure_and_imports_exactly_once`; `it_fetches_size_metadata_before_fetching_an_unknown_size_message`                               |
 | Fail safely when required size metadata is missing or invalid       | `it_fails_safely_without_fetching_a_body_when_size_metadata_is_invalid`; `it_reports_an_unknown_size_metadata_failure_safely_without_importing`                   |
+| Finalize unfinished work when UIDVALIDITY changes                   | `it_finalizes_unfinished_obsolete_namespaces_and_processes_the_new_namespace`; `it_reports_healthy_degraded_unhealthy_and_never_run_states_from_persisted_data`   |
+| Preserve a historical quarantine on ordinary redelivery             | `it_preserves_an_existing_quarantine_without_reparsing`; `it_preserves_a_committed_quarantine_after_a_ledger_update_failure`                                      |
 | Quarantine an unsupported candidate and continue the batch          | `it_quarantines_an_unsupported_candidate_and_continues_the_batch`                                                                                                 |
 | Report mailbox setup failures without leaking secrets               | `it_reports_a_safe_connectivity_failure_without_credentials_or_server_details`                                                                                    |
 | Make an exhausted delivery failure actionable                       | `it_marks_a_message_permanently_failed_after_the_third_temporary_failure`                                                                                         |
@@ -717,6 +721,8 @@ The first soak interval did not produce mailbox runs because the existing provid
 The corrected soak ran from 2026-09-05 18:09:13 UTC through 2026-09-06 18:35:02 UTC on commit `4cdeb1a`. It produced 294 polls with a maximum observed gap of 301 seconds. Twelve discovered messages were all processed: seven direct-link alerts imported and five unsupported alerts quarantined under only the accepted codes (`email.missing_job_id`: two; `email.unsupported_contract_type`: three). There were no duplicates, pending messages, retries, overdue retries, or permanent failures.
 
 Completion review found that health selected the oldest terminal quarantine across all history, allowing a pre-fix parser quarantine to keep later clean polls degraded. Commit `43f1ee5` scopes quarantine health to the latest completed run, while permanent failures and retry states remain global and actionable. The complete MariaDB suite passed 91 tests with 747 assertions; PHPStan, Pint, Composer validation/audit, coverage gates, and all protected checks passed in [CI run 34052269465](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/34052269465). The deployed final health is `healthy`.
+
+This soak and CI record are historical evidence for the commits named above. They do not validate the current UIDVALIDITY and quarantine-history recovery correction. Phase 2 completion is reopened until this correction passes review, protected CI, and any required target-host verification.
 
 The production adapter continued to fetch raw messages with `BODY.PEEK[]` and contains no flag, move, or delete operation. The prior target-host PEEK proof established unchanged source flags, and the corrected soak exercised that same reviewed adapter path.
 
