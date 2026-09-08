@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Application\Mailbox\PollOpportunityMailbox;
 use App\Domain\Mailbox\Contracts\MailboxClient;
+use App\Domain\Mailbox\Contracts\MonotonicClock;
 use App\Domain\Mailbox\Data\DiscoveredMailboxBatch;
 use App\Domain\Mailbox\Data\MailboxMessageReference;
 use App\Domain\Mailbox\Enums\MailboxIntakeErrorCode;
@@ -22,6 +23,7 @@ use Illuminate\Support\Facades\Log;
 use PHPUnit\Framework\Attributes\Test;
 use RuntimeException;
 use Tests\Support\Fakes\FakeMailboxClient;
+use Tests\Support\Fakes\FakeMonotonicClock;
 use Tests\TestCase;
 
 final class PollOpportunityMailboxTest extends TestCase
@@ -578,6 +580,143 @@ final class PollOpportunityMailboxTest extends TestCase
         $this->assertSame(77, MailboxCheckpoint::query()->firstOrFail()->last_discovered_uid);
         $this->assertSame(0, MailboxMessage::query()->count());
         $this->assertSame(1, $mailboxClient->closeCallCount);
+    }
+
+    #[Test]
+    public function it_fails_without_committing_discovery_when_the_poll_budget_is_exhausted(): void
+    {
+        $workspace = Workspace::factory()->create();
+        $clock = new FakeMonotonicClock;
+        MailboxCheckpoint::query()->create([
+            'workspace_id' => $workspace->id,
+            'mailbox_key' => 'primary',
+            'uid_validity' => 9001,
+            'last_discovered_uid' => 77,
+        ]);
+        $mailboxClient = (new FakeMailboxClient)
+            ->beforeDiscovery(static function () use ($clock): void {
+                $clock->advance(481);
+            })
+            ->queueDiscovery(new DiscoveredMailboxBatch(
+                uidValidity: 9001,
+                messages: [new MailboxMessageReference(uid: 78, reportedSize: 1024)],
+                highestDiscoveredUid: 78,
+            ));
+        $this->configureMailbox($workspace->id);
+        $this->app->instance(MonotonicClock::class, $clock);
+        $this->app->instance(MailboxClient::class, $mailboxClient);
+
+        $result = $this->app->make(PollOpportunityMailbox::class)->execute($workspace->id);
+
+        $this->assertSame(MailboxRunStatus::Failed, $result->status);
+        $this->assertSame(MailboxIntakeErrorCode::PollBudgetExhausted, $result->errorCode);
+        $this->assertSame(77, MailboxCheckpoint::query()->firstOrFail()->last_discovered_uid);
+        $this->assertSame(0, MailboxMessage::query()->count());
+        $this->assertSame(1, $mailboxClient->closeCallCount);
+    }
+
+    #[Test]
+    public function it_does_not_create_an_initial_checkpoint_when_discovery_exhausts_the_budget(): void
+    {
+        $workspace = Workspace::factory()->create();
+        $clock = new FakeMonotonicClock;
+        $mailboxClient = (new FakeMailboxClient)
+            ->beforeDiscovery(static function () use ($clock): void {
+                $clock->advance(481);
+            })
+            ->queueDiscovery(new DiscoveredMailboxBatch(9001, [], 0));
+        $this->configureMailbox($workspace->id);
+        $this->app->instance(MonotonicClock::class, $clock);
+        $this->app->instance(MailboxClient::class, $mailboxClient);
+
+        $result = $this->app->make(PollOpportunityMailbox::class)->execute($workspace->id);
+
+        $this->assertSame(MailboxRunStatus::Failed, $result->status);
+        $this->assertSame(MailboxIntakeErrorCode::PollBudgetExhausted, $result->errorCode);
+        $this->assertSame(0, MailboxCheckpoint::query()->count());
+        $this->assertSame(0, MailboxMessage::query()->count());
+    }
+
+    #[Test]
+    public function it_leaves_an_interrupted_message_unattempted_when_retrieval_exhausts_the_budget(): void
+    {
+        $workspace = Workspace::factory()->create();
+        $clock = new FakeMonotonicClock;
+        $rawEmail = $this->fixture('hourly-client-success.eml');
+        $mailboxClient = (new FakeMailboxClient)
+            ->queueDiscovery(new DiscoveredMailboxBatch(
+                uidValidity: 9001,
+                messages: [new MailboxMessageReference(uid: 101, reportedSize: strlen($rawEmail))],
+                highestDiscoveredUid: 101,
+            ))
+            ->withRawMessage(101, $rawEmail)
+            ->beforeFetch(static function () use ($clock): void {
+                $clock->advance(481);
+            });
+        $this->configureMailbox($workspace->id);
+        $this->app->instance(MonotonicClock::class, $clock);
+        $this->app->instance(MailboxClient::class, $mailboxClient);
+
+        $result = $this->app->make(PollOpportunityMailbox::class)->execute($workspace->id);
+        $message = MailboxMessage::query()->firstOrFail();
+
+        $this->assertSame(MailboxRunStatus::Partial, $result->status);
+        $this->assertSame(MailboxIntakeErrorCode::PollBudgetExhausted, $result->errorCode);
+        $this->assertSame(1, $result->discoveredCount);
+        $this->assertSame(0, $result->processedCount);
+        $this->assertSame(MailboxMessageStatus::Pending, $message->status);
+        $this->assertSame(0, $message->attempt_count);
+        $this->assertSame(0, Opportunity::query()->count());
+    }
+
+    #[Test]
+    public function it_stops_between_messages_and_continues_without_duplicates_on_the_next_poll(): void
+    {
+        $workspace = Workspace::factory()->create();
+        $clock = new FakeMonotonicClock;
+        $rawEmail = $this->fixture('hourly-client-success.eml');
+        $mailboxClient = (new FakeMailboxClient)
+            ->queueDiscovery(new DiscoveredMailboxBatch(
+                uidValidity: 9001,
+                messages: [
+                    new MailboxMessageReference(uid: 101, reportedSize: strlen($rawEmail)),
+                    new MailboxMessageReference(uid: 102, reportedSize: strlen($rawEmail)),
+                ],
+                highestDiscoveredUid: 102,
+            ))
+            ->queueDiscovery(new DiscoveredMailboxBatch(9001, [], 102))
+            ->withRawMessage(101, $rawEmail)
+            ->withRawMessage(102, $rawEmail);
+        MailboxMessage::updated(static function (MailboxMessage $message) use ($clock): void {
+            $status = $message->getAttribute('status');
+            if ($message->message_uid === 101
+                && $status instanceof MailboxMessageStatus
+                && $status === MailboxMessageStatus::Imported) {
+                $clock->advance(481);
+            }
+        });
+        $this->configureMailbox($workspace->id);
+        $this->app->instance(MonotonicClock::class, $clock);
+        $this->app->instance(MailboxClient::class, $mailboxClient);
+        $action = $this->app->make(PollOpportunityMailbox::class);
+
+        $firstResult = $action->execute($workspace->id);
+        $secondResult = $action->execute($workspace->id);
+
+        $this->assertSame(MailboxRunStatus::Partial, $firstResult->status);
+        $this->assertSame(MailboxIntakeErrorCode::PollBudgetExhausted, $firstResult->errorCode);
+        $this->assertSame(1, $firstResult->processedCount);
+        $this->assertSame(1, $firstResult->importedCount);
+        $this->assertSame(MailboxRunStatus::Succeeded, $secondResult->status);
+        $this->assertSame(1, $secondResult->processedCount);
+        $this->assertSame(1, $secondResult->duplicateCount);
+        $this->assertSame([101, 102], $mailboxClient->fetchedUids);
+        $this->assertSame(1, Opportunity::query()->count());
+        $this->assertSame(1, EmailImport::query()->count());
+        $this->assertSame(
+            [1, 1],
+            MailboxMessage::query()->orderBy('message_uid')->pluck('attempt_count')->all(),
+        );
     }
 
     #[Test]

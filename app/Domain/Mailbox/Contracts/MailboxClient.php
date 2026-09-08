@@ -5,10 +5,13 @@ namespace App\Domain\Mailbox\Contracts;
 use App\Domain\Mailbox\Data\DiscoveredMailboxBatch;
 use App\Domain\Mailbox\Data\MailboxCursor;
 use App\Domain\Mailbox\Data\MailboxMessageReference;
+use App\Domain\Mailbox\Data\MailboxPollBudget;
 use App\Domain\Mailbox\Data\MailboxProbeResult;
 
 interface MailboxClient
 {
+    public function usePollBudget(MailboxPollBudget $budget): void;
+
     public function probe(): MailboxProbeResult;
 
     public function discover(MailboxCursor $cursor, int $limit): DiscoveredMailboxBatch;

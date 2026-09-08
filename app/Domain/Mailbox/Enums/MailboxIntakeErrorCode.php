@@ -13,5 +13,6 @@ enum MailboxIntakeErrorCode: string
     case MessageTooLarge = 'mailbox.message_too_large';
     case MessageFetchFailed = 'mailbox.message_fetch_failed';
     case ImportFailed = 'mailbox.import_failed';
+    case PollBudgetExhausted = 'mailbox.poll_budget_exhausted';
     case RetryExhausted = 'mailbox.retry_exhausted';
 }

@@ -114,6 +114,8 @@ Use the provider's supported absolute PHP and application paths in its protected
 
 Laravel schedules `opportunity:poll-mailbox` every five minutes with a 10-minute overlap lock. Do not add a second direct cron entry for the poll command. Do not use `runInBackground()`, a queue worker, IMAP IDLE, or a permanent process.
 
+Each poll has an absolute 480-second monotonic work budget. Finalization and cleanup use reserved time inside the unchanged 10-minute lock; live IMAP reads/writes and MariaDB waits are retimed to the remaining allowance. A server that sends occasional bytes cannot extend the deadline. When cleanup allowance is exhausted, the client resets its local stream instead of waiting for graceful logout.
+
 A deployment may safely confirm registration without contacting IMAP:
 
 ```shell
@@ -164,6 +166,7 @@ Do not query or export complete database rows for incident evidence.
 | `mailbox.message_too_large`       | Leave the source message unchanged; the ledger quarantine is terminal.                                                                                                                                                                 |
 | `mailbox.message_fetch_failed`    | Monitor the bounded retry schedule.                                                                                                                                                                                                    |
 | `mailbox.import_failed`           | Monitor retries; investigate application behavior using safe codes and counters only.                                                                                                                                                  |
+| `mailbox.poll_budget_exhausted`   | A failed run did not commit discovery; a partial run retained committed discovery and left interrupted work pending without attempt inflation. Monitor the next poll and investigate repeated slow IMAP or database operations.        |
 | `mailbox.retry_exhausted`         | Treat as actionable failure; preserve the ledger and source message for reviewed recovery.                                                                                                                                             |
 | `email.missing_job_id`            | Expected for redirect-only alerts in the direct-link-only scope; do not retry or follow the tracking link.                                                                                                                             |
 | `email.unsupported_contract_type` | Expected for fixed-price alerts, which are outside Phase 2; do not retry automatically.                                                                                                                                                |
@@ -250,3 +253,5 @@ The corrected Phase 2 soak ran from 2026-09-05 18:09:13 UTC through 2026-09-06 1
 An earlier interval with zero runs is not accepted soak evidence. Its cron entry targeted another location and the wrong PHP runtime. Future deployments must reconfirm that exactly one provider scheduler entry targets this application and the verified PHP binary before starting the soak clock.
 
 The accepted soak and CI result above remain historical evidence for the named commits only. The UIDVALIDITY and quarantine-history recovery correction was reviewed and merged in PR #3 at commit `49a5a3b`. Protected `Quality`, `Tests / MariaDB 11.4`, and `Secret scan` checks passed in [CI run 34154391079](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/34154391079). On 2026-09-08, the exact merge commit was deployed with PHP 8.4 and a clean worktree. The safe connectivity check and one controlled poll succeeded with zero discovered messages, retries, or permanent failures. The next provider-scheduled run completed at 18:30:01 UTC with the same zero-failure counters, and persisted health remained `healthy`. No historical quarantine was replayed and no Upwork HTTP request was made.
+
+These records predate the monotonic polling-deadline correction. Do not treat them as closure evidence for the corrected implementation; protected CI and target-host verification must be recorded before Phase 2 is closed again.

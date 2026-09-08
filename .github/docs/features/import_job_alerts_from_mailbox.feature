@@ -33,6 +33,28 @@ Feature: Import job alerts from a dedicated mailbox
 
   Rule: Temporary delivery failures are bounded and never lose or duplicate work
 
+    @critical @deadline @recovery
+    Scenario: Exhaust the poll budget before discovery commits
+      Given mailbox discovery does not return before the 480-second work deadline
+      When the scheduled mailbox poll runs
+      Then the mailbox run status is "failed"
+      And its error code is "mailbox.poll_budget_exhausted"
+      And no checkpoint or message ledger change is committed
+      And cleanup finishes before the 10-minute overlap lock expires
+
+    @critical @deadline @idempotency
+    Scenario: Continue safely after the poll budget expires between messages
+      Given two candidate messages are durably discovered
+      And the first message is imported before the 480-second work deadline
+      And the work deadline expires before the second message starts
+      When the scheduled mailbox poll finishes
+      Then the mailbox run status is "partial"
+      And its error code is "mailbox.poll_budget_exhausted"
+      And the first message has one completed attempt
+      And the second message remains pending with no attempt
+      When the next scheduled mailbox poll runs
+      Then processing continues without a duplicate opportunity
+
     @critical @recovery @health
     Scenario: Finalize obsolete unfinished work when UIDVALIDITY changes
       Given the checkpoint and unfinished ledger rows use UIDVALIDITY 9001

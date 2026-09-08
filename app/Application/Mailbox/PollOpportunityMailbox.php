@@ -5,9 +5,11 @@ namespace App\Application\Mailbox;
 use App\Application\Mailbox\Data\MailboxRunResult;
 use App\Application\Opportunities\ImportOpportunityEmail;
 use App\Domain\Mailbox\Contracts\MailboxClient;
+use App\Domain\Mailbox\Contracts\MonotonicClock;
 use App\Domain\Mailbox\Data\MailboxConfiguration;
 use App\Domain\Mailbox\Data\MailboxCursor;
 use App\Domain\Mailbox\Data\MailboxMessageReference;
+use App\Domain\Mailbox\Data\MailboxPollBudget;
 use App\Domain\Mailbox\Enums\MailboxIntakeErrorCode;
 use App\Domain\Mailbox\Enums\MailboxMessageStatus;
 use App\Domain\Mailbox\Enums\MailboxRunStatus;
@@ -35,6 +37,7 @@ final class PollOpportunityMailbox
     public function __construct(
         private readonly Application $application,
         private readonly ImportOpportunityEmail $importOpportunityEmail,
+        private readonly MonotonicClock $clock,
     ) {}
 
     public function execute(string $workspaceId): MailboxRunResult
@@ -60,10 +63,16 @@ final class PollOpportunityMailbox
             return $this->emptyResult(MailboxRunStatus::SkippedOverlap);
         }
 
+        $budget = MailboxPollBudget::start($this->clock);
         $client = null;
         $run = null;
+        $discoveryCommitted = false;
+        $counters = $this->emptyCounters();
+        $databaseWaitLimits = null;
 
         try {
+            $databaseWaitLimits = $this->databaseWaitLimits();
+            $this->applyDatabaseWaitLimits($budget->remainingWorkSeconds());
             $run = MailboxRun::query()->create([
                 'workspace_id' => $workspaceId,
                 'mailbox_key' => $configuration->mailboxKey,
@@ -78,26 +87,27 @@ final class PollOpportunityMailbox
                 'retry_scheduled_count' => 0,
                 'permanent_failure_count' => 0,
             ]);
-            $checkpoint = MailboxCheckpoint::query()->firstOrCreate(
-                [
-                    'workspace_id' => $workspaceId,
-                    'mailbox_key' => $configuration->mailboxKey,
-                ],
-                [
-                    'uid_validity' => null,
-                    'last_discovered_uid' => 0,
-                ],
-            );
+            $budget->throwIfWorkExhausted();
+            $checkpoint = MailboxCheckpoint::query()
+                ->where('workspace_id', $workspaceId)
+                ->where('mailbox_key', $configuration->mailboxKey)
+                ->first();
+            $budget->throwIfWorkExhausted();
             $cursor = new MailboxCursor(
-                uidValidity: $checkpoint->uid_validity,
-                lastDiscoveredUid: $checkpoint->last_discovered_uid,
-                initialLookbackAt: $checkpoint->uid_validity === null || $checkpoint->uid_validity < 1
+                uidValidity: $checkpoint?->uid_validity,
+                lastDiscoveredUid: $checkpoint === null ? 0 : $checkpoint->last_discovered_uid,
+                initialLookbackAt: $checkpoint === null
+                    || $checkpoint->uid_validity === null
+                    || $checkpoint->uid_validity < 1
                     ? CarbonImmutable::now('UTC')->subHours($configuration->initialLookbackHours)
                     : null,
             );
             $client = $this->application->make(MailboxClient::class);
+            $client->usePollBudget($budget);
             $batch = $client->discover($cursor, $configuration->batchSize);
-            $uidValidityChanged = $checkpoint->uid_validity !== null
+            $budget->throwIfWorkExhausted();
+            $uidValidityChanged = $checkpoint !== null
+                && $checkpoint->uid_validity !== null
                 && $checkpoint->uid_validity !== $batch->uidValidity;
 
             $invalidatedMessageCount = DB::transaction(function () use (
@@ -105,10 +115,22 @@ final class PollOpportunityMailbox
                 $checkpoint,
                 $configuration,
                 $uidValidityChanged,
+                $budget,
                 $workspaceId,
             ): int {
+                $budget->throwIfWorkExhausted();
                 $now = now();
                 $invalidatedMessageCount = 0;
+                $checkpoint ??= MailboxCheckpoint::query()->firstOrCreate(
+                    [
+                        'workspace_id' => $workspaceId,
+                        'mailbox_key' => $configuration->mailboxKey,
+                    ],
+                    [
+                        'uid_validity' => null,
+                        'last_discovered_uid' => 0,
+                    ],
+                );
 
                 if ($uidValidityChanged) {
                     $invalidatedMessageCount = MailboxMessage::query()
@@ -128,6 +150,7 @@ final class PollOpportunityMailbox
                 }
 
                 foreach ($batch->messages as $message) {
+                    $budget->throwIfWorkExhausted();
                     MailboxMessage::query()->insertOrIgnore([
                         'id' => (string) Str::ulid(),
                         'workspace_id' => $workspaceId,
@@ -162,9 +185,11 @@ final class PollOpportunityMailbox
                         ? ($checkpoint->uid_validity === $batch->uidValidity ? $checkpoint->last_discovered_uid : 0)
                         : (int) $recordedHighestUid,
                 ]);
+                $budget->throwIfWorkExhausted();
 
                 return $invalidatedMessageCount;
             });
+            $discoveryCommitted = true;
 
             $counters = [
                 'discovered_count' => count($batch->messages),
@@ -182,6 +207,7 @@ final class PollOpportunityMailbox
                 $references[$batch->uidValidity.':'.$reference->uid] = $reference;
             }
 
+            $this->applyDatabaseWaitLimits($budget->remainingWorkSeconds());
             $dueMessages = MailboxMessage::query()
                 ->where('workspace_id', $workspaceId)
                 ->where('mailbox_key', $configuration->mailboxKey)
@@ -199,6 +225,8 @@ final class PollOpportunityMailbox
                 ->get();
 
             foreach ($dueMessages as $message) {
+                $budget->throwIfWorkExhausted();
+                $this->applyDatabaseWaitLimits($budget->remainingWorkSeconds());
                 $reference = $references[$message->uid_validity.':'.$message->message_uid]
                     ?? new MailboxMessageReference($message->message_uid, 0);
                 $outcome = $this->processMessage(
@@ -207,6 +235,7 @@ final class PollOpportunityMailbox
                     $client,
                     $configuration,
                     $workspaceId,
+                    $budget,
                 );
                 $counters['processed_count']++;
                 $counter = match ($outcome) {
@@ -223,6 +252,7 @@ final class PollOpportunityMailbox
                 || $counters['permanent_failure_count'] > 0
                 ? MailboxRunStatus::Partial
                 : MailboxRunStatus::Succeeded;
+            $this->applyDatabaseWaitLimits($budget->remainingWorkSeconds());
             $run->update([
                 ...$counters,
                 'status' => $status,
@@ -234,8 +264,21 @@ final class PollOpportunityMailbox
 
             return $this->resultFromRun($run);
         } catch (MailboxIntakeException $exception) {
+            $this->applyDatabaseWaitLimits($budget->remainingFinalizationSeconds());
+            if ($exception->errorCode === MailboxIntakeErrorCode::PollBudgetExhausted
+                && $discoveryCommitted) {
+                return $this->finalizeRun(
+                    $run,
+                    $counters,
+                    MailboxRunStatus::Partial,
+                    MailboxIntakeErrorCode::PollBudgetExhausted,
+                );
+            }
+
             return $this->failRun($run, $exception->errorCode);
         } catch (Throwable) {
+            $this->applyDatabaseWaitLimits($budget->remainingFinalizationSeconds());
+
             return $this->failRun($run, MailboxIntakeErrorCode::ImportFailed);
         } finally {
             try {
@@ -243,7 +286,16 @@ final class PollOpportunityMailbox
             } catch (Throwable) {
             }
 
+            try {
+                $this->applyDatabaseWaitLimits($budget->remainingLockSeconds());
+            } catch (Throwable) {
+            }
+
             $this->releaseLock($lock);
+
+            if ($databaseWaitLimits !== null) {
+                $this->restoreDatabaseWaitLimits($databaseWaitLimits);
+            }
         }
     }
 
@@ -278,6 +330,38 @@ final class PollOpportunityMailbox
         );
     }
 
+    /** @return array<string, int> */
+    private function emptyCounters(): array
+    {
+        return [
+            'discovered_count' => 0,
+            'processed_count' => 0,
+            'imported_count' => 0,
+            'updated_count' => 0,
+            'duplicate_count' => 0,
+            'quarantined_count' => 0,
+            'retry_scheduled_count' => 0,
+            'permanent_failure_count' => 0,
+        ];
+    }
+
+    /** @param array<string, int> $counters */
+    private function finalizeRun(
+        MailboxRun $run,
+        array $counters,
+        MailboxRunStatus $status,
+        ?MailboxIntakeErrorCode $errorCode,
+    ): MailboxRunResult {
+        $run->update([
+            ...$counters,
+            'status' => $status,
+            'finished_at' => now(),
+            'error_code' => $errorCode?->value,
+        ]);
+
+        return $this->resultFromRun($run);
+    }
+
     private function emptyResult(
         MailboxRunStatus $status,
         ?MailboxIntakeErrorCode $errorCode = null,
@@ -304,12 +388,49 @@ final class PollOpportunityMailbox
         }
     }
 
+    /** @return array{max_statement_time: float, innodb_lock_wait_timeout: int} */
+    private function databaseWaitLimits(): array
+    {
+        $limits = DB::selectOne(
+            'SELECT @@SESSION.max_statement_time AS max_statement_time, '
+            .'@@SESSION.innodb_lock_wait_timeout AS innodb_lock_wait_timeout',
+        );
+
+        return [
+            'max_statement_time' => (float) $limits->max_statement_time,
+            'innodb_lock_wait_timeout' => (int) $limits->innodb_lock_wait_timeout,
+        ];
+    }
+
+    private function applyDatabaseWaitLimits(float $remainingSeconds): void
+    {
+        DB::statement(
+            'SET SESSION max_statement_time = CAST(? AS DECIMAL(10, 3))',
+            [number_format(max(0.001, $remainingSeconds), 3, '.', '')],
+        );
+        DB::statement('SET SESSION innodb_lock_wait_timeout = ?', [max(1, (int) ceil($remainingSeconds))]);
+    }
+
+    /** @param array{max_statement_time: float, innodb_lock_wait_timeout: int} $limits */
+    private function restoreDatabaseWaitLimits(array $limits): void
+    {
+        try {
+            DB::statement(
+                'SET SESSION max_statement_time = CAST(? AS DECIMAL(10, 3))',
+                [number_format($limits['max_statement_time'], 3, '.', '')],
+            );
+            DB::statement('SET SESSION innodb_lock_wait_timeout = ?', [$limits['innodb_lock_wait_timeout']]);
+        } catch (Throwable) {
+        }
+    }
+
     private function processMessage(
         MailboxMessage $message,
         MailboxMessageReference $reference,
         MailboxClient $client,
         MailboxConfiguration $configuration,
         string $workspaceId,
+        MailboxPollBudget $budget,
     ): MailboxMessageStatus {
         if ($reference->reportedSize > self::MAXIMUM_MESSAGE_BYTES) {
             return $this->quarantineMessage($message, MailboxIntakeErrorCode::MessageTooLarge->value);
@@ -317,6 +438,7 @@ final class PollOpportunityMailbox
 
         try {
             $rawEmail = $client->fetchRaw($reference, self::MAXIMUM_MESSAGE_BYTES);
+            $budget->throwIfWorkExhausted();
 
             if (strlen($rawEmail) > self::MAXIMUM_MESSAGE_BYTES) {
                 unset($rawEmail);
@@ -331,6 +453,7 @@ final class PollOpportunityMailbox
             } finally {
                 unset($rawEmail);
             }
+            $budget->throwIfWorkExhausted();
 
             $status = MailboxMessageStatus::from($importResult->status->value);
             $errorCode = $importResult->status === EmailImportStatus::Quarantined
@@ -361,6 +484,10 @@ final class PollOpportunityMailbox
 
             return $status;
         } catch (MailboxIntakeException $exception) {
+            if ($exception->errorCode === MailboxIntakeErrorCode::PollBudgetExhausted) {
+                throw $exception;
+            }
+
             $message->refresh();
 
             if ($exception->errorCode === MailboxIntakeErrorCode::MessageTooLarge) {

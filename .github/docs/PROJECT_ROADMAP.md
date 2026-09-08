@@ -1,6 +1,6 @@
 # Project Roadmap — Freelance Opportunity Triage Platform
 
-**Status:** Vision approved; Phases 1 and 2 completed with clean CI and target-host soak evidence; Phase 3 specification is next; optional Tester Skill deferred until after MVP
+**Status:** Vision approved; Phase 1 completed; Phase 2 deadline correction awaiting closure review; optional Tester Skill deferred until after MVP
 **Primary user:** An independent freelancer reviewing opportunities from authorized job-alert emails  
 **Working title:** To be decided; do not use Upwork trademarks in product branding
 
@@ -108,7 +108,7 @@ Node.js is not a separate production service by default. A Node-based mail worke
 - `Ignore a duplicate job alert`
 - `Quarantine an unsupported or malformed email`
 
-### Phase 2 — Secure Scheduled Mailbox Intake (Completed)
+### Phase 2 — Secure Scheduled Mailbox Intake (Awaiting Closure Review)
 
 **Hypothesis:** The hosting provider can fetch new alerts securely and reliably without a permanent background worker.
 
@@ -120,6 +120,7 @@ Node.js is not a separate production service by default. A Node-based mail worke
 - Use at-least-once processing with idempotency, bounded retries, and failure quarantine.
 - Record operational metadata without storing unnecessary mailbox headers or credentials.
 - Run through the provider's scheduler/cron and expose a health result.
+- Enforce a shared 480-second monotonic work budget across application logic, blocking IMAP operations, and MariaDB waits, with finalization and cleanup reserved inside the 600-second locks.
 
 **Exit criteria:**
 
@@ -127,6 +128,7 @@ Node.js is not a separate production service by default. A Node-based mail worke
 - A 24-hour staging soak imports alerts without duplicates or message loss.
 - Temporary IMAP failures recover automatically; permanent failures are visible and actionable.
 - Production secrets are absent from source control, logs, fixtures, and screenshots.
+- Deadline regressions, protected CI, and target-host verification pass for the corrected implementation.
 
 **Candidate BDD features:**
 
@@ -258,8 +260,6 @@ A phase is complete only when its acceptance scenarios pass, unit/integration te
 
 ## Immediate Next Decision
 
-Define the Phase 2 specification before additional implementation work. Keep `.github/docs/project_sheet.md` scoped to the completed Phase 1 system until a Phase 2 spec is explicitly approved.
-
-Revisit this roadmap after the Phase 2 specification is agreed; do not expose later-phase implementation detail to the tactical coding context.
+Complete Phase 2 closure review for the polling-deadline correction. Preserve the prior soak and deployment records as historical evidence for their named commits, and require protected CI plus target-host verification before restoring the completed status or starting Phase 3 implementation.
 
 The optional Tester Skill remains deferred and must not expand the Phase 1 `project_sheet.md` or MVP scope.
