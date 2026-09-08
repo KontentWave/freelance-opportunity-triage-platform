@@ -7,6 +7,7 @@ use App\Domain\Mailbox\Data\DiscoveredMailboxBatch;
 use App\Domain\Mailbox\Data\MailboxConfiguration;
 use App\Domain\Mailbox\Data\MailboxCursor;
 use App\Domain\Mailbox\Data\MailboxMessageReference;
+use App\Domain\Mailbox\Data\MailboxPollBudget;
 use App\Domain\Mailbox\Data\MailboxProbeResult;
 use App\Domain\Mailbox\Enums\MailboxIntakeErrorCode;
 use App\Domain\Mailbox\Exceptions\MailboxIntakeException;
@@ -26,6 +27,8 @@ final class WebklexImapMailboxClient implements MailboxClient
 
     private ?int $uidValidity = null;
 
+    private ?MailboxPollBudget $pollBudget = null;
+
     /** @param null|Closure(bool, string): ImapProtocol $protocolFactory */
     public function __construct(
         private readonly MailboxConfiguration $configuration,
@@ -36,6 +39,11 @@ final class WebklexImapMailboxClient implements MailboxClient
                 $validateCert,
                 $encryption,
             );
+    }
+
+    public function usePollBudget(MailboxPollBudget $budget): void
+    {
+        $this->pollBudget = $budget;
     }
 
     public function probe(): MailboxProbeResult
@@ -59,7 +67,9 @@ final class WebklexImapMailboxClient implements MailboxClient
                 [$this->searchCriteria($cursor, $uidValidity)],
                 IMAP::ST_UID,
             )->validatedData();
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
+            $this->throwIfPollBudgetExhausted($exception);
+
             throw new MailboxIntakeException(MailboxIntakeErrorCode::ConnectionFailed);
         }
 
@@ -99,7 +109,9 @@ final class WebklexImapMailboxClient implements MailboxClient
                 null,
                 IMAP::ST_UID,
             )->validatedData();
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
+            $this->throwIfPollBudgetExhausted($exception);
+
             throw new MailboxIntakeException(MailboxIntakeErrorCode::MessageFetchFailed);
         }
 
@@ -135,7 +147,9 @@ final class WebklexImapMailboxClient implements MailboxClient
                     null,
                     IMAP::ST_UID,
                 )->validatedData();
-            } catch (Throwable) {
+            } catch (Throwable $exception) {
+                $this->throwIfPollBudgetExhausted($exception);
+
                 throw new MailboxIntakeException(MailboxIntakeErrorCode::MessageFetchFailed);
             }
 
@@ -153,7 +167,9 @@ final class WebklexImapMailboxClient implements MailboxClient
                 null,
                 IMAP::ST_UID,
             )->validatedData();
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
+            $this->throwIfPollBudgetExhausted($exception);
+
             throw new MailboxIntakeException(MailboxIntakeErrorCode::MessageFetchFailed);
         }
 
@@ -178,8 +194,20 @@ final class WebklexImapMailboxClient implements MailboxClient
         }
 
         try {
-            $this->protocol->logout();
+            if ($this->pollBudget !== null && $this->pollBudget->remainingCleanupSeconds() <= 0.0) {
+                $this->protocol->reset();
+            } else {
+                if ($this->pollBudget !== null && $this->protocol instanceof DeadlineAwareImapProtocol) {
+                    $this->protocol->useDeadline(
+                        $this->pollBudget->clock(),
+                        $this->pollBudget->cleanupDeadline(),
+                    );
+                }
+
+                $this->protocol->logout();
+            }
         } catch (Throwable) {
+            $this->protocol->reset();
         } finally {
             $this->protocol = null;
             $this->uidValidity = null;
@@ -201,13 +229,24 @@ final class WebklexImapMailboxClient implements MailboxClient
                 $this->configuration->validateCert,
                 $this->protocolEncryption(),
             );
+            if ($this->pollBudget !== null && $protocol instanceof DeadlineAwareImapProtocol) {
+                $protocol->usePollBudget($this->pollBudget);
+            }
             $protocol->disableDebug();
             $protocol->disableUidCache();
             $protocol->connect(
                 (string) $this->configuration->host,
                 $this->configuration->port,
             );
-        } catch (Throwable) {
+        } catch (MailboxIntakeException $exception) {
+            if (isset($protocol)) {
+                $protocol->reset();
+            }
+
+            throw $exception;
+        } catch (Throwable $exception) {
+            $this->throwIfPollBudgetExhausted($exception);
+
             if (isset($protocol)) {
                 $this->logout($protocol);
             }
@@ -220,7 +259,9 @@ final class WebklexImapMailboxClient implements MailboxClient
                 (string) $this->configuration->username,
                 (string) $this->configuration->password,
             )->validate();
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
+            $this->throwIfPollBudgetExhausted($exception, $protocol);
+
             $this->logout($protocol);
 
             throw new MailboxIntakeException(MailboxIntakeErrorCode::AuthenticationFailed);
@@ -230,7 +271,9 @@ final class WebklexImapMailboxClient implements MailboxClient
             $folder = $protocol->examineFolder((string) $this->configuration->folder);
             $folder->validate();
             $this->uidValidity = (int) ($folder->array()['uidvalidity'] ?? 0);
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
+            $this->throwIfPollBudgetExhausted($exception, $protocol);
+
             $this->logout($protocol);
 
             throw new MailboxIntakeException(MailboxIntakeErrorCode::FolderUnavailable);
@@ -243,11 +286,14 @@ final class WebklexImapMailboxClient implements MailboxClient
 
     private function makeProtocol(bool $validateCert, string $encryption): ImapProtocol
     {
-        $protocol = new ImapProtocol(
+        $protocol = new DeadlineAwareImapProtocol(
             Config::make(['options' => ['debug' => false, 'uid_cache' => false]]),
             $validateCert,
             $encryption,
         );
+        if ($this->pollBudget !== null) {
+            $protocol->usePollBudget($this->pollBudget);
+        }
         $protocol->setConnectionTimeout(30);
         $protocol->setSslOptions([]);
 
@@ -267,6 +313,22 @@ final class WebklexImapMailboxClient implements MailboxClient
             $protocol->logout();
         } catch (Throwable) {
         }
+    }
+
+    private function throwIfPollBudgetExhausted(
+        Throwable $exception,
+        ?ImapProtocol $protocol = null,
+    ): void {
+        do {
+            if ($exception instanceof MailboxIntakeException
+                && $exception->errorCode === MailboxIntakeErrorCode::PollBudgetExhausted) {
+                $protocol?->reset();
+
+                throw $exception;
+            }
+
+            $exception = $exception->getPrevious();
+        } while ($exception !== null);
     }
 
     private function searchCriteria(MailboxCursor $cursor, int $uidValidity): string

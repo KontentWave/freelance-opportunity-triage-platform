@@ -1,6 +1,6 @@
 # ADR-004: Scheduled IMAP Polling
 
-- **Status:** Accepted; Phase 2 recovery correction verified
+- **Status:** Accepted; polling-deadline amendment awaiting closure verification
 - **Date:** 2026-08-29
 - **Last amended:** 2026-09-08
 - **Decision owners:** Project and quality engineering
@@ -26,6 +26,10 @@ Use at-least-once delivery. Discover messages by UID within a UIDVALIDITY namesp
 On a UIDVALIDITY transition, the same transaction that records the new namespace and advances its checkpoint permanently fails obsolete `pending` and `retry_wait` rows with `mailbox.uidvalidity_changed`. It clears their retry timestamps without incrementing attempts, preserves terminal history, and remains scoped to the workspace and mailbox key. The bounded new-namespace rescan continues, but an obsolete numeric UID is never fetched against the new namespace. These permanent failures remain globally unhealthy and require operator review.
 
 Retrieval must use PEEK semantics and must not change flags, move messages, delete messages, or access folders outside the configured dedicated folder. A non-positive size on a reconstructed pending or retry reference is unknown: the adapter must first request UID and RFC822.SIZE metadata only, require a positive size for the requested UID, and reject oversized messages before requesting `BODY.PEEK[]`. Missing or invalid metadata fails with the stable message-fetch code and no body request. Certificate validation and protocol debug-log suppression are mandatory. Raw messages remain in memory only for the call to the Phase 1 importer and are not persisted or logged.
+
+One monotonic budget starts immediately after acquiring either 600-second lock. Work stops at 480 seconds, leaving 60 seconds for run finalization, 30 seconds for cleanup, and a 30-second lock-release margin. The deadline is propagated through `MailboxClient` into an application-owned Webklex protocol subclass. It checks time and retimes the live socket before every blocking read and write, including connect greetings, authentication, folder selection, search, fetch, and logout; this prevents a slow-drip server from defeating an inactivity timeout. MariaDB session statement and lock-wait limits shrink with the active phase and are restored before lock release.
+
+Budget exhaustion before committed discovery fails with `mailbox.poll_budget_exhausted` and leaves checkpoint and ledger state unchanged. Exhaustion afterward produces a partial run with committed counters; an interrupted message remains pending without attempt inflation. Graceful logout is attempted only within the cleanup allowance, after which cleanup resets the local stream without network I/O. At-least-once importer idempotency remains authoritative if an import committed just before its ledger update was interrupted.
 
 ## Consequences
 
@@ -230,6 +234,10 @@ Completion review identified one health-reporting defect: a terminal quarantine 
 The reviewed adapter uses `BODY.PEEK[]` and has no flag, move, or delete operation. Together with the accepted target-host PEEK compatibility proof, the soak exercised the non-mutating mailbox path. At that review point, Phase 2 was recorded as complete for direct-link-only intake.
 
 The target-host soak and CI result above remain historical evidence for the named commits only. The UIDVALIDITY and quarantine-history recovery correction was reviewed and merged in PR #3 at commit `49a5a3b`. Protected `Quality`, `Tests / MariaDB 11.4`, and `Secret scan` checks passed in [CI run 34154391079](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/34154391079). On 2026-09-08, the exact merge commit was deployed with PHP 8.4 and a clean worktree. The safe connectivity check and one controlled poll succeeded with zero discovered messages, retries, or permanent failures. The next provider-scheduled run completed at 18:30:01 UTC with the same zero-failure counters, and persisted health remained `healthy`. This verification did not trigger a live UIDVALIDITY transition, replay a historical quarantine, or contact Upwork over HTTP; those recovery semantics are covered by the reviewed MariaDB test suite.
+
+### Polling-Deadline Review
+
+The evidence above remains historical for its named commits. A later review found that the static 30-second socket inactivity timeout did not impose an absolute poll deadline and that slow-drip IMAP responses, database waits, or graceful logout could outlive the lock. The monotonic budget amendment addresses that blocker without changing either 600-second lock, but Phase 2 remains awaiting protected CI and target-host closure verification for the amended implementation.
 
 ## Alternatives Considered
 

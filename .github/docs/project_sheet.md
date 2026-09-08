@@ -291,7 +291,7 @@ No remaining application-scope gaps were found inside the agreed Phase 1 scope.
 ## Phase 2: Secure Scheduled Mailbox Intake
 
 **Document role:** Audited implementation specification for the current phase only
-**Current status:** Completed; recovery correction reviewed, CI-validated, and verified on the target host
+**Current status:** Deadline correction implemented locally; awaiting closure review, protected CI, and target-host verification
 **Last updated:** 2026-09-08
 **Behavior specification:** `.github/docs/features/import_job_alerts_from_mailbox.feature`
 
@@ -486,26 +486,29 @@ Implement `App\Application\Mailbox\PollOpportunityMailbox::execute(string $works
 
 1. Validate enabled configuration and workspace ownership before any connection.
 2. Acquire an atomic lock named from workspace ID and non-secret mailbox key with a 10-minute expiry. A second poll exits safely as `skipped_overlap` without connecting.
-3. Create a `running` mailbox-run record.
-4. Load or create the workspace/mailbox checkpoint.
-5. Connect, select the configured folder, and obtain current UIDVALIDITY.
-6. Discover candidate UIDs in ascending order after the checkpoint. On first use or UIDVALIDITY change, search only the configured lookback window. A UIDVALIDITY change is recorded as a safe warning and starts a bounded rescan in the new namespace.
-7. In one database transaction, permanently fail every `pending` or `retry_wait` row in obsolete UIDVALIDITY namespaces with `mailbox.uidvalidity_changed`, clear its retry timestamp, preserve its attempt count and all terminal history, insert new-namespace ledger rows with `pending` status using `insert-or-ignore`, and advance the checkpoint only to the highest UID represented by a committed ledger row. Scope every operation to the workspace and mailbox key. Never fetch an obsolete UID against the new namespace, even when its numeric UID is reused.
-8. Select due `pending` or `retry_wait` rows in ascending UID order and process sequentially. Do not hold all raw messages in memory.
-9. Treat a non-positive reported size on a reconstructed pending or retry reference as unknown. Before body retrieval, request only UID and RFC822.SIZE metadata for that UID. Require the response to identify the requested UID and contain a positive integer size; otherwise fail the attempt with `mailbox.message_fetch_failed` without requesting the body.
-10. Reject a server-reported message larger than 1,048,576 bytes without fetching its body; mark it `quarantined` with `mailbox.message_too_large`.
-11. Fetch complete raw RFC822 bytes using UID sequencing and PEEK semantics. Confirm the returned byte length is within the same limit.
-12. Call `ImportOpportunityEmail::execute($workspaceId, $rawEmail)` exactly once for that processing attempt and immediately release the raw string after the call.
-13. Map `imported`, `updated`, `duplicate`, and `quarantined` to the ledger. A workspace-scoped Message-ID or content-hash match on a historical quarantine returns its stored terminal status and safe code without invoking the parser or updating the import row. There is no historical replay or automatic recovery; any future recovery requires a separately reviewed append-only design. Persist only the returned opportunity ID and safe error code.
-14. For a retryable per-message transport or unexpected import failure, increment `attempt_count` and set `retry_wait` with delays of 5 minutes after attempt 1 and 15 minutes after attempt 2. After attempt 3, set `permanently_failed` with `mailbox.retry_exhausted`.
-15. Continue the batch after a quarantined or retryable message. A connection-level failure ends the run without advancing uncommitted discovery state.
-16. Close the IMAP connection in `finally`, finalize safe counters/status, and release the lock.
+3. Start one monotonic poll budget immediately after lock acquisition: 480 seconds for work, 60 seconds reserved for finalization, 30 seconds for cleanup, and a final 30-second lock-release margin.
+4. Create a `running` mailbox-run record.
+5. Load or create the workspace/mailbox checkpoint.
+6. Connect, select the configured folder, and obtain current UIDVALIDITY.
+7. Discover candidate UIDs in ascending order after the checkpoint. On first use or UIDVALIDITY change, search only the configured lookback window. A UIDVALIDITY change is recorded as a safe warning and starts a bounded rescan in the new namespace.
+8. In one database transaction, permanently fail every `pending` or `retry_wait` row in obsolete UIDVALIDITY namespaces with `mailbox.uidvalidity_changed`, clear its retry timestamp, preserve its attempt count and all terminal history, insert new-namespace ledger rows with `pending` status using `insert-or-ignore`, and advance the checkpoint only to the highest UID represented by a committed ledger row. Scope every operation to the workspace and mailbox key. Never fetch an obsolete UID against the new namespace, even when its numeric UID is reused.
+9. Select due `pending` or `retry_wait` rows in ascending UID order and process sequentially. Do not hold all raw messages in memory.
+10. Treat a non-positive reported size on a reconstructed pending or retry reference as unknown. Before body retrieval, request only UID and RFC822.SIZE metadata for that UID. Require the response to identify the requested UID and contain a positive integer size; otherwise fail the attempt with `mailbox.message_fetch_failed` without requesting the body.
+11. Reject a server-reported message larger than 1,048,576 bytes without fetching its body; mark it `quarantined` with `mailbox.message_too_large`.
+12. Fetch complete raw RFC822 bytes using UID sequencing and PEEK semantics. Confirm the returned byte length is within the same limit.
+13. Call `ImportOpportunityEmail::execute($workspaceId, $rawEmail)` exactly once for that processing attempt and immediately release the raw string after the call.
+14. Map `imported`, `updated`, `duplicate`, and `quarantined` to the ledger. A workspace-scoped Message-ID or content-hash match on a historical quarantine returns its stored terminal status and safe code without invoking the parser or updating the import row. There is no historical replay or automatic recovery; any future recovery requires a separately reviewed append-only design. Persist only the returned opportunity ID and safe error code.
+15. For a retryable per-message transport or unexpected import failure, increment `attempt_count` and set `retry_wait` with delays of 5 minutes after attempt 1 and 15 minutes after attempt 2. After attempt 3, set `permanently_failed` with `mailbox.retry_exhausted`.
+16. Continue the batch after a quarantined or retryable message. A connection-level failure ends the run without advancing uncommitted discovery state.
+17. Before and after discovery, each message, and each blocking transport operation, enforce the shared work deadline. Retime the live IMAP stream to the remaining allowance before each read or write so slow-drip responses cannot extend the absolute deadline. Apply shrinking MariaDB statement and lock-wait limits for the active phase.
+18. If the budget expires before discovery commits, roll back discovery and fail the run with `mailbox.poll_budget_exhausted`. If it expires after discovery commits, leave interrupted work pending without increasing its attempt count and finalize the run as `partial` with accurate committed counters and the same stable code.
+19. Bound finalization and cleanup within their reserved windows. Once graceful IMAP logout cannot fit, reset the local stream without another network round trip, release the lock before its 600-second expiry, and restore database session limits.
 
 A run is:
 
 - `succeeded` when discovery completed and no message was quarantined, deferred, or permanently failed;
-- `partial` when discovery completed but UIDVALIDITY changed or at least one message was quarantined, deferred, or permanently failed;
-- `failed` when configuration, connection, authentication, TLS, folder selection, or the run-level transaction prevents safe discovery.
+- `partial` when discovery completed but UIDVALIDITY changed, the work budget expired, or at least one message was quarantined, deferred, or permanently failed;
+- `failed` when configuration, connection, authentication, TLS, folder selection, the work budget, or the run-level transaction prevents safe discovery.
 
 No command may delete, move, mark read/unread, or otherwise modify a source message.
 
@@ -678,7 +681,8 @@ The repository does not currently execute Gherkin directly. Phase 2 keeps the `.
 - Process at most 25 messages per default poll and never more than 100.
 - Fetch and import sequentially so only one raw message is retained in memory.
 - Enforce the existing 1 MiB maximum before MIME parsing and before body retrieval. Resolve an unknown reconstructed size through a UID-based metadata-only request, and do not retrieve the body when valid size metadata is unavailable.
-- Use bounded connection/read timeouts; no single poll should occupy the overlap lock for more than 10 minutes.
+- Enforce one monotonic 480-second work deadline through application, IMAP connect/read/write, and MariaDB waits; inactivity timeouts alone are insufficient.
+- Reserve bounded finalization and cleanup windows and a 30-second release margin inside the unchanged 10-minute overlap locks.
 - Commit discovered ledger rows before advancing the checkpoint.
 - Never retry a Phase 1 typed quarantine result.
 - A normal empty or single-message poll should complete within 60 seconds on staging.
@@ -725,6 +729,8 @@ Completion review found that health selected the oldest terminal quarantine acro
 This soak and CI record remain historical evidence for the commits named above. The UIDVALIDITY and quarantine-history recovery correction was reviewed and merged in PR #3 at commit `49a5a3b`. Protected `Quality`, `Tests / MariaDB 11.4`, and `Secret scan` checks passed in [CI run 34154391079](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/34154391079). On 2026-09-08, the exact merge commit was deployed with PHP 8.4 and a clean worktree. The safe connectivity check and one controlled poll succeeded with zero discovered messages, retries, or permanent failures. The next provider-scheduled run completed at 18:30:01 UTC with the same zero-failure counters, and persisted health remained `healthy`. No historical quarantine was replayed and no Upwork HTTP request was made.
 
 The production adapter continued to fetch raw messages with `BODY.PEEK[]` and contains no flag, move, or delete operation. The prior target-host PEEK proof established unchanged source flags, and the corrected soak exercised that same reviewed adapter path.
+
+The later deadline review found that static socket inactivity timeouts did not bound a slow-drip IMAP response and that database waits or graceful logout could outlive the 600-second locks. The monotonic deadline correction supersedes the completion claim for newer commits. The evidence above remains valid history for its named commits, but Phase 2 now awaits closure review, protected CI, and target-host verification of the corrected implementation.
 
 ### Risks and Mitigations
 

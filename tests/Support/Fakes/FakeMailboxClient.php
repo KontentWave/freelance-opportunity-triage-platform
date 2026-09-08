@@ -6,6 +6,7 @@ use App\Domain\Mailbox\Contracts\MailboxClient;
 use App\Domain\Mailbox\Data\DiscoveredMailboxBatch;
 use App\Domain\Mailbox\Data\MailboxCursor;
 use App\Domain\Mailbox\Data\MailboxMessageReference;
+use App\Domain\Mailbox\Data\MailboxPollBudget;
 use App\Domain\Mailbox\Data\MailboxProbeResult;
 use App\Domain\Mailbox\Enums\MailboxIntakeErrorCode;
 use App\Domain\Mailbox\Exceptions\MailboxIntakeException;
@@ -22,6 +23,8 @@ final class FakeMailboxClient implements MailboxClient
     private array $rawMessages = [];
 
     private ?Closure $beforeFetch = null;
+
+    private ?Closure $beforeDiscovery = null;
 
     /** @var array<int, int> */
     private array $fetchFailuresRemaining = [];
@@ -47,6 +50,13 @@ final class FakeMailboxClient implements MailboxClient
 
     public int $closeCallCount = 0;
 
+    public ?MailboxPollBudget $pollBudget = null;
+
+    public function usePollBudget(MailboxPollBudget $budget): void
+    {
+        $this->pollBudget = $budget;
+    }
+
     public function queueDiscovery(DiscoveredMailboxBatch $batch): self
     {
         $this->discoveryBatches[] = $batch;
@@ -71,6 +81,13 @@ final class FakeMailboxClient implements MailboxClient
     public function beforeFetch(Closure $callback): self
     {
         $this->beforeFetch = $callback;
+
+        return $this;
+    }
+
+    public function beforeDiscovery(Closure $callback): self
+    {
+        $this->beforeDiscovery = $callback;
 
         return $this;
     }
@@ -113,6 +130,7 @@ final class FakeMailboxClient implements MailboxClient
     {
         $this->discoveryCursors[] = $cursor;
         $this->discoveryLimits[] = $limit;
+        ($this->beforeDiscovery) && ($this->beforeDiscovery)();
 
         $batch = array_shift($this->discoveryBatches);
 

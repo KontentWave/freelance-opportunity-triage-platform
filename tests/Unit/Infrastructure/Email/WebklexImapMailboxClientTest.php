@@ -5,14 +5,18 @@ namespace Tests\Unit\Infrastructure\Email;
 use App\Domain\Mailbox\Data\MailboxConfiguration;
 use App\Domain\Mailbox\Data\MailboxCursor;
 use App\Domain\Mailbox\Data\MailboxMessageReference;
+use App\Domain\Mailbox\Data\MailboxPollBudget;
 use App\Domain\Mailbox\Enums\MailboxIntakeErrorCode;
 use App\Domain\Mailbox\Exceptions\MailboxIntakeException;
+use App\Infrastructure\Email\DeadlineAwareImapProtocol;
 use App\Infrastructure\Email\WebklexImapMailboxClient;
 use Carbon\CarbonImmutable;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
+use Tests\Support\Fakes\FakeMonotonicClock;
 use Tests\TestCase;
+use Webklex\PHPIMAP\Config;
 use Webklex\PHPIMAP\Connection\Protocols\ImapProtocol;
 use Webklex\PHPIMAP\Connection\Protocols\Response;
 use Webklex\PHPIMAP\IMAP;
@@ -311,6 +315,115 @@ final class WebklexImapMailboxClientTest extends TestCase
 
         $client = $this->client($protocol);
         $client->fetchRaw(new MailboxMessageReference(101, 72), 1_048_576);
+        $client->close();
+
+        $this->addToAssertionCount(1);
+    }
+
+    #[Test]
+    public function it_enforces_the_absolute_deadline_while_a_response_drips_bytes(): void
+    {
+        $clock = new FakeMonotonicClock;
+        $protocol = new class($clock) extends DeadlineAwareImapProtocol
+        {
+            /** @var list<float> */
+            public array $appliedTimeouts = [];
+
+            /** @var list<string> */
+            private array $bytes = ['a', 'b', 'c', "\n"];
+
+            public function __construct(private readonly FakeMonotonicClock $clock)
+            {
+                parent::__construct(Config::make([]), true, 'ssl');
+                $this->stream = fopen('php://temp', 'r+');
+            }
+
+            protected function applyTimeoutToStream(float $remainingSeconds): void
+            {
+                $this->appliedTimeouts[] = $remainingSeconds;
+            }
+
+            protected function readByte(): string|false
+            {
+                $this->clock->advance(0.4);
+
+                return array_shift($this->bytes) ?? false;
+            }
+
+            protected function streamTimedOut(): bool
+            {
+                return false;
+            }
+        };
+        $protocol->useDeadline($clock, 1.0);
+
+        try {
+            $protocol->nextLine(Response::empty());
+            $this->fail('Expected the absolute poll deadline to interrupt the response.');
+        } catch (MailboxIntakeException $exception) {
+            $this->assertSame(MailboxIntakeErrorCode::PollBudgetExhausted, $exception->errorCode);
+            $this->assertCount(3, $protocol->appliedTimeouts);
+            $this->assertEqualsWithDelta(1.0, $protocol->appliedTimeouts[0], 0.001);
+            $this->assertEqualsWithDelta(0.6, $protocol->appliedTimeouts[1], 0.001);
+            $this->assertEqualsWithDelta(0.2, $protocol->appliedTimeouts[2], 0.001);
+        }
+    }
+
+    #[Test]
+    public function it_enforces_the_absolute_deadline_during_a_blocked_write(): void
+    {
+        $clock = new FakeMonotonicClock;
+        $protocol = new class($clock) extends DeadlineAwareImapProtocol
+        {
+            public function __construct(private readonly FakeMonotonicClock $clock)
+            {
+                parent::__construct(Config::make([]), true, 'ssl');
+                $this->stream = fopen('php://temp', 'r+');
+            }
+
+            protected function applyTimeoutToStream(float $remainingSeconds): void {}
+
+            protected function writeBytes(string $data): int
+            {
+                $this->clock->advance(1.1);
+
+                return strlen($data);
+            }
+
+            protected function streamTimedOut(): bool
+            {
+                return false;
+            }
+        };
+        $protocol->useDeadline($clock, 1.0);
+
+        $this->expectException(MailboxIntakeException::class);
+        $this->expectExceptionMessage(MailboxIntakeErrorCode::PollBudgetExhausted->value);
+
+        $protocol->write(Response::empty(), 'NOOP');
+    }
+
+    #[Test]
+    public function it_skips_network_logout_when_the_cleanup_deadline_is_exhausted(): void
+    {
+        $clock = new FakeMonotonicClock;
+        $protocol = $this->createMock(DeadlineAwareImapProtocol::class);
+        $protocol->method('connect')->willReturn(true);
+        $protocol->method('login')->willReturn($this->response(true));
+        $protocol->method('examineFolder')->willReturn($this->response(['uidvalidity' => 9001]));
+        $protocol->expects($this->never())->method('logout');
+        $protocol->expects($this->once())->method('reset');
+        $client = new WebklexImapMailboxClient(
+            $this->configuration(),
+            static fn (bool $validateCert, string $encryption): ImapProtocol => $protocol,
+        );
+        $client->usePollBudget(MailboxPollBudget::start($clock));
+        $client->discover(
+            new MailboxCursor(9001, 100, CarbonImmutable::parse('2026-08-29 00:00:00 UTC')),
+            25,
+        );
+        $clock->advance(571);
+
         $client->close();
 
         $this->addToAssertionCount(1);
