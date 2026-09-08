@@ -291,8 +291,8 @@ No remaining application-scope gaps were found inside the agreed Phase 1 scope.
 ## Phase 2: Secure Scheduled Mailbox Intake
 
 **Document role:** Audited implementation specification for the current phase only
-**Current status:** Recovery correction implemented locally; review, CI, and target-host verification pending
-**Last updated:** 2026-09-07
+**Current status:** Completed; recovery correction reviewed, CI-validated, and verified on the target host
+**Last updated:** 2026-09-08
 **Behavior specification:** `.github/docs/features/import_job_alerts_from_mailbox.feature`
 
 ### Action
@@ -722,7 +722,7 @@ The corrected soak ran from 2026-09-05 18:09:13 UTC through 2026-09-06 18:35:02 
 
 Completion review found that health selected the oldest terminal quarantine across all history, allowing a pre-fix parser quarantine to keep later clean polls degraded. Commit `43f1ee5` scopes quarantine health to the latest completed run, while permanent failures and retry states remain global and actionable. The complete MariaDB suite passed 91 tests with 747 assertions; PHPStan, Pint, Composer validation/audit, coverage gates, and all protected checks passed in [CI run 34052269465](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/34052269465). The deployed final health is `healthy`.
 
-This soak and CI record are historical evidence for the commits named above. They do not validate the current UIDVALIDITY and quarantine-history recovery correction. Phase 2 completion is reopened until this correction passes review, protected CI, and any required target-host verification.
+This soak and CI record remain historical evidence for the commits named above. The UIDVALIDITY and quarantine-history recovery correction was reviewed and merged in PR #3 at commit `49a5a3b`. Protected `Quality`, `Tests / MariaDB 11.4`, and `Secret scan` checks passed in [CI run 34154391079](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/34154391079). On 2026-09-08, the exact merge commit was deployed with PHP 8.4 and a clean worktree. The safe connectivity check and one controlled poll succeeded with zero discovered messages, retries, or permanent failures. The next provider-scheduled run completed at 18:30:01 UTC with the same zero-failure counters, and persisted health remained `healthy`. No historical quarantine was replayed and no Upwork HTTP request was made.
 
 The production adapter continued to fetch raw messages with `BODY.PEEK[]` and contains no flag, move, or delete operation. The prior target-host PEEK proof established unchanged source flags, and the corrected soak exercised that same reviewed adapter path.
 
