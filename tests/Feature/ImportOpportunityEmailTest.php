@@ -14,6 +14,7 @@ use App\Models\Opportunity;
 use App\Models\Workspace;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -143,6 +144,112 @@ final class ImportOpportunityEmailTest extends TestCase
         $this->assertStringNotContainsString('owner@example.test', $serializedImport);
         $this->assertStringNotContainsString('tracking-token', $serializedImport);
         $this->assertStringNotContainsString('Lead   client onboarding', $serializedImport);
+    }
+
+    #[Test]
+    public function it_quarantines_a_redirect_only_alert_without_storing_the_tracking_token(): void
+    {
+        $workspace = Workspace::factory()->create();
+        $rawEmail = preg_replace(
+            '#https://www\.upwork\.com/jobs/~\d+[^\s]*#',
+            'https://link.t.upwork.com/ls/click?synthetic-token',
+            $this->fixture('hourly-current-template.eml'),
+        );
+
+        $this->assertIsString($rawEmail);
+
+        $result = app(ImportOpportunityEmail::class)->execute($workspace->id, $rawEmail);
+        $emailImport = EmailImport::query()->firstOrFail();
+
+        $this->assertSame(EmailImportStatus::Quarantined, $result->status);
+        $this->assertSame(EmailParseErrorCode::MissingJobId, $result->errorCode);
+        $this->assertSame(0, Opportunity::query()->count());
+        $this->assertSame(EmailParseErrorCode::MissingJobId->value, $emailImport->error_code);
+        $this->assertStringNotContainsString(
+            'synthetic-token',
+            json_encode($emailImport->getAttributes(), JSON_THROW_ON_ERROR),
+        );
+    }
+
+    #[Test]
+    #[DataProvider('quarantineIdentityMatches')]
+    public function it_preserves_an_existing_quarantine_without_reparsing(
+        bool $matchMessageId,
+        bool $matchContentHash,
+    ): void {
+        $this->travelTo('2026-08-30 12:00:00');
+        $workspace = Workspace::factory()->create();
+        $parser = new class implements OpportunityEmailParser
+        {
+            public int $parseCallCount = 0;
+
+            public function parse(string $rawEmail): ParsedOpportunity
+            {
+                $this->parseCallCount++;
+
+                throw new \RuntimeException('Historical quarantine must not be reparsed.');
+            }
+        };
+        $action = new ImportOpportunityEmail($parser);
+        $rawEmail = $this->fixture('hourly-current-template.eml');
+        $emailImport = EmailImport::query()->create([
+            'workspace_id' => $workspace->id,
+            'opportunity_id' => null,
+            'message_id' => $matchMessageId
+                ? 'fixture-hourly-current-template@example.test'
+                : 'different-message@example.test',
+            'content_sha256' => $matchContentHash ? hash('sha256', $rawEmail) : str_repeat('a', 64),
+            'status' => EmailImportStatus::Quarantined,
+            'error_code' => EmailParseErrorCode::MalformedTerms,
+            'imported_at' => now(),
+        ]);
+        $attributesBeforeRedelivery = $emailImport->fresh()->getRawOriginal();
+        $this->travel(5)->minutes();
+
+        $result = $action->execute($workspace->id, $rawEmail);
+
+        $this->assertSame(EmailImportStatus::Quarantined, $result->status);
+        $this->assertSame(EmailParseErrorCode::MalformedTerms, $result->errorCode);
+        $this->assertNull($result->opportunityId);
+        $this->assertSame(0, $parser->parseCallCount);
+        $this->assertSame(1, EmailImport::query()->count());
+        $this->assertSame(0, Opportunity::query()->count());
+        $this->assertSame($attributesBeforeRedelivery, $emailImport->fresh()->getRawOriginal());
+    }
+
+    /** @return iterable<string, array{bool, bool}> */
+    public static function quarantineIdentityMatches(): iterable
+    {
+        yield 'Message-ID' => [true, false];
+        yield 'content hash' => [false, true];
+    }
+
+    #[Test]
+    public function it_keeps_quarantine_deduplication_scoped_to_the_workspace(): void
+    {
+        $firstWorkspace = Workspace::factory()->create();
+        $secondWorkspace = Workspace::factory()->create();
+        $rawEmail = $this->fixture('hourly-client-success.eml');
+        EmailImport::query()->create([
+            'workspace_id' => $firstWorkspace->id,
+            'opportunity_id' => null,
+            'message_id' => 'fixture-hourly-client-success-1@example.test',
+            'content_sha256' => hash('sha256', $rawEmail),
+            'status' => EmailImportStatus::Quarantined,
+            'error_code' => EmailParseErrorCode::MalformedTerms,
+            'imported_at' => now(),
+        ]);
+
+        $result = app(ImportOpportunityEmail::class)->execute($secondWorkspace->id, $rawEmail);
+
+        $this->assertSame(EmailImportStatus::Imported, $result->status);
+        $this->assertSame(2, EmailImport::query()->count());
+        $this->assertSame(1, Opportunity::query()->count());
+        $this->assertDatabaseHas('email_imports', [
+            'workspace_id' => $firstWorkspace->id,
+            'status' => EmailImportStatus::Quarantined->value,
+            'error_code' => EmailParseErrorCode::MalformedTerms->value,
+        ]);
     }
 
     #[Test]

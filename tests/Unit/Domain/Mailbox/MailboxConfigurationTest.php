@@ -68,6 +68,20 @@ final class MailboxConfigurationTest extends TestCase
     }
 
     #[Test]
+    public function it_parses_an_exact_candidate_sender_allowlist(): void
+    {
+        $configuration = MailboxConfiguration::fromArray([
+            ...$this->enabledValues(),
+            'candidate_from' => 'upwork@t.upwork.com, donotreply@upwork.com',
+        ], isTesting: false);
+
+        $this->assertSame([
+            'upwork@t.upwork.com',
+            'donotreply@upwork.com',
+        ], $configuration->candidateFromAddresses());
+    }
+
+    #[Test]
     public function it_performs_no_probe_when_mailbox_intake_is_disabled(): void
     {
         config()->set('opportunity_mailbox', [

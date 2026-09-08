@@ -1,0 +1,40 @@
+Message-ID: <fixture-hourly-current-template@example.test>
+Date: Tue, 01 Sep 2026 09:45:49 +0000
+From: Upwork Notification <donotreply@upwork.com>
+To: owner@example.test
+Subject: New job alert: Synthetic QA Role
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="fixture-current-boundary"
+
+--fixture-current-boundary
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+New job alert
+
+Hi Example,
+
+This job was just posted and matches your alert settings.
+
+----------
+
+Synthetic QA Role: https://www.upwork.com/jobs/~200000000000000000004?link=3Dtitle&utm_source=3Dfixture
+
+Hourly: $15-$25 =C2=B7 Est. time: Less than 1 month =C2=B7 Posted Tue, Sep 01
+
+Test a synthetic application without using production data... more: https://www.upwork.com/jobs/~200000000000000000004?link=3Dmore&utm_source=3Dfixture
+
+Skills:
+Quality Assurance: https://www.upwork.com/s/emails/nx/search/jobs/?utm_source=3Dfixture
+Software Testing: https://www.upwork.com/s/emails/nx/search/jobs/?utm_source=3Dfixture
+
+Payment verified =C2=B7 4.8 stars =C2=B7 $63K spent =C2=B7 Exampleland
+
+View job details: https://www.upwork.com/jobs/~200000000000000000004?utm_source=3Dfixture
+
+--fixture-current-boundary
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<html><body>synthetic</body></html>
+--fixture-current-boundary--

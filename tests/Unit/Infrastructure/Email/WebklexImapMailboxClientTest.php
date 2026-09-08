@@ -9,6 +9,7 @@ use App\Domain\Mailbox\Enums\MailboxIntakeErrorCode;
 use App\Domain\Mailbox\Exceptions\MailboxIntakeException;
 use App\Infrastructure\Email\WebklexImapMailboxClient;
 use Carbon\CarbonImmutable;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use Tests\TestCase;
@@ -92,6 +93,38 @@ final class WebklexImapMailboxClientTest extends TestCase
     }
 
     #[Test]
+    public function it_discovers_candidate_envelopes_from_each_allowlisted_sender(): void
+    {
+        $protocol = $this->readyProtocol();
+        $protocol->method('examineFolder')->willReturn($this->response(['uidvalidity' => 9001]));
+        $protocol->expects($this->once())->method('search')
+            ->with(
+                $this->callback(function (array $criteria): bool {
+                    $query = $criteria[0] ?? '';
+
+                    return str_contains(
+                        $query,
+                        'OR FROM "upwork@t.upwork.com" FROM "donotreply@upwork.com"',
+                    );
+                }),
+                IMAP::ST_UID,
+            )
+            ->willReturn($this->response([]));
+
+        $client = new WebklexImapMailboxClient(
+            $this->configuration([
+                'candidate_from' => 'upwork@t.upwork.com,donotreply@upwork.com',
+            ]),
+            static fn (bool $validateCert, string $encryption): ImapProtocol => $protocol,
+        );
+
+        $client->discover(
+            new MailboxCursor(9001, 100, CarbonImmutable::parse('2026-08-29 00:00:00 UTC')),
+            25,
+        );
+    }
+
+    #[Test]
     public function it_uses_a_bounded_lookback_after_uidvalidity_changes(): void
     {
         $protocol = $this->readyProtocol();
@@ -160,6 +193,74 @@ final class WebklexImapMailboxClientTest extends TestCase
     }
 
     #[Test]
+    public function it_fetches_size_metadata_before_fetching_an_unknown_size_message(): void
+    {
+        $protocol = $this->readyProtocol();
+        $protocol->method('examineFolder')->willReturn($this->response(['uidvalidity' => 9001]));
+        $fetchRequests = [];
+        $protocol->expects($this->exactly(2))->method('fetch')
+            ->willReturnCallback(function (array $items, array $uids, mixed $sequence, int $options) use (&$fetchRequests): Response {
+                $fetchRequests[] = $items;
+                $this->assertSame([101], $uids);
+                $this->assertNull($sequence);
+                $this->assertSame(IMAP::ST_UID, $options);
+
+                return count($fetchRequests) === 1
+                    ? $this->response([101 => ['UID' => 101, 'RFC822.SIZE' => 72]])
+                    : $this->response([101 => ['UID' => 101, 'BODY[]' => $this->rawMessage()]]);
+            });
+
+        $rawMessage = $this->client($protocol)->fetchRaw(
+            new MailboxMessageReference(101, 0),
+            1_048_576,
+        );
+
+        $this->assertSame([
+            ['UID', 'RFC822.SIZE'],
+            ['UID', 'RFC822.SIZE', 'BODY.PEEK[]'],
+        ], $fetchRequests);
+        $this->assertSame($this->rawMessage(), $rawMessage);
+    }
+
+    #[Test]
+    public function it_rejects_an_unknown_size_oversized_message_before_fetching_its_body(): void
+    {
+        $protocol = $this->readyProtocol();
+        $protocol->method('examineFolder')->willReturn($this->response(['uidvalidity' => 9001]));
+        $protocol->expects($this->once())->method('fetch')
+            ->with(['UID', 'RFC822.SIZE'], [101], null, IMAP::ST_UID)
+            ->willReturn($this->response([
+                101 => ['UID' => 101, 'RFC822.SIZE' => 1_048_577],
+            ]));
+
+        try {
+            $this->client($protocol)->fetchRaw(new MailboxMessageReference(101, 0), 1_048_576);
+            $this->fail('Expected a MailboxIntakeException to be thrown.');
+        } catch (MailboxIntakeException $exception) {
+            $this->assertSame(MailboxIntakeErrorCode::MessageTooLarge, $exception->errorCode);
+        }
+    }
+
+    #[Test]
+    #[DataProvider('invalidSizeMetadata')]
+    public function it_fails_safely_without_fetching_a_body_when_size_metadata_is_invalid(array $metadata): void
+    {
+        $protocol = $this->readyProtocol();
+        $protocol->method('examineFolder')->willReturn($this->response(['uidvalidity' => 9001]));
+        $protocol->expects($this->once())->method('fetch')
+            ->with(['UID', 'RFC822.SIZE'], [101], null, IMAP::ST_UID)
+            ->willReturn($this->response($metadata));
+
+        try {
+            $this->client($protocol)->fetchRaw(new MailboxMessageReference(101, 0), 1_048_576);
+            $this->fail('Expected a MailboxIntakeException to be thrown.');
+        } catch (MailboxIntakeException $exception) {
+            $this->assertSame(MailboxIntakeErrorCode::MessageFetchFailed, $exception->errorCode);
+            $this->assertSame(MailboxIntakeErrorCode::MessageFetchFailed->value, $exception->getMessage());
+        }
+    }
+
+    #[Test]
     public function it_translates_authentication_connection_and_folder_errors_to_stable_codes(): void
     {
         foreach ([
@@ -221,6 +322,15 @@ final class WebklexImapMailboxClientTest extends TestCase
             $this->configuration(),
             static fn (bool $validateCert, string $encryption): ImapProtocol => $protocol,
         );
+    }
+
+    /** @return iterable<string, array{array<mixed>}> */
+    public static function invalidSizeMetadata(): iterable
+    {
+        yield 'requested UID is missing' => [[]];
+        yield 'size is missing' => [[101 => ['UID' => 101]]];
+        yield 'size is zero' => [[101 => ['UID' => 101, 'RFC822.SIZE' => 0]]];
+        yield 'size is not numeric' => [[101 => ['UID' => 101, 'RFC822.SIZE' => 'invalid']]];
     }
 
     /** @return ImapProtocol&MockObject */

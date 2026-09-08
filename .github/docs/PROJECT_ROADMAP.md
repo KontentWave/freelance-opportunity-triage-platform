@@ -1,6 +1,6 @@
 # Project Roadmap — Freelance Opportunity Triage Platform
 
-**Status:** Vision approved; Phase 1 completed with clean CI evidence; Phase 2 awaiting specification; optional Tester Skill deferred until after MVP  
+**Status:** Vision approved; Phases 1 and 2 completed with clean CI and target-host soak evidence; Phase 3 specification is next; optional Tester Skill deferred until after MVP
 **Primary user:** An independent freelancer reviewing opportunities from authorized job-alert emails  
 **Working title:** To be decided; do not use Upwork trademarks in product branding
 
@@ -108,7 +108,7 @@ Node.js is not a separate production service by default. A Node-based mail worke
 - `Ignore a duplicate job alert`
 - `Quarantine an unsupported or malformed email`
 
-### Phase 2 — Secure Scheduled Mailbox Intake
+### Phase 2 — Secure Scheduled Mailbox Intake (Completed)
 
 **Hypothesis:** The hosting provider can fetch new alerts securely and reliably without a permanent background worker.
 
@@ -116,6 +116,7 @@ Node.js is not a separate production service by default. A Node-based mail worke
 
 - Connect to a dedicated IMAP mailbox/folder over TLS using environment-managed credentials.
 - Fetch only candidate alert messages and submit them to the Phase 1 normalizer.
+- Support direct canonical job links only; safely quarantine redirect-only alerts as `email.missing_job_id` without contacting Upwork.
 - Use at-least-once processing with idempotency, bounded retries, and failure quarantine.
 - Record operational metadata without storing unnecessary mailbox headers or credentials.
 - Run through the provider's scheduler/cron and expose a health result.

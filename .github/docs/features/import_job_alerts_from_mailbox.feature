@@ -33,6 +33,18 @@ Feature: Import job alerts from a dedicated mailbox
 
   Rule: Temporary delivery failures are bounded and never lose or duplicate work
 
+    @critical @recovery @health
+    Scenario: Finalize obsolete unfinished work when UIDVALIDITY changes
+      Given the checkpoint and unfinished ledger rows use UIDVALIDITY 9001
+      And another workspace and existing terminal rows also have mailbox history
+      And the mailbox now reports UIDVALIDITY 9002 with a candidate reusing an obsolete numeric UID
+      When the scheduled mailbox poll runs
+      Then obsolete pending and retry rows are "permanently_failed" with error code "mailbox.uidvalidity_changed"
+      And their retry timestamps are cleared without increasing their attempt counts
+      And existing terminal history and the other workspace are unchanged
+      And only the candidate in UIDVALIDITY 9002 is fetched during the bounded rescan
+      And mailbox health is "unhealthy" until the permanent failures receive operator review
+
     @critical @retry
     Scenario: Retry a temporary fetch failure without duplicating the opportunity
       Given candidate message UID 102 is durably recorded in the message ledger
@@ -43,7 +55,9 @@ Feature: Import job alerts from a dedicated mailbox
       And the next attempt is scheduled 5 minutes later
       And no opportunity exists for UID 102
       When the next due mailbox poll fetches UID 102 successfully
-      Then the message ledger status for UID 102 is "imported"
+      Then its reconstructed non-positive size is treated as unknown
+      And valid size metadata for UID 102 is obtained before its body is requested
+      And the message ledger status for UID 102 is "imported"
       And exactly one opportunity exists for UID 102
       And rediscovering UID 102 creates no duplicate opportunity
 
@@ -59,6 +73,49 @@ Feature: Import job alerts from a dedicated mailbox
       And the health output contains no raw exception or mailbox credential
 
   Rule: Unsupported input and mailbox failures are isolated and safely observable
+
+    @critical @idempotency @history
+    Scenario Outline: Preserve a historical quarantine on ordinary redelivery
+      Given a terminal quarantined email import exists in the workspace
+      And a redelivery matches its "<identity>"
+      When the email import is attempted again
+      Then the parser is not invoked
+      And the stored quarantine status and error code are returned
+      And the historical import row remains byte-for-byte unchanged
+      And a matching quarantine in another workspace does not block that workspace's import
+
+      Examples:
+        | identity     |
+        | Message-ID   |
+        | content hash |
+
+    @critical @security
+    Scenario: Quarantine an oversized pending message discovered by an earlier poll and continue
+      Given candidate message UID 106 is pending from an earlier poll with no retained size
+      And UID 106 has server size metadata larger than 1 MiB
+      And pending candidate message UID 107 contains the sanitized raw fixture "hourly-client-success.eml"
+      When the scheduled mailbox poll processes both messages
+      Then only UID and size metadata is requested for UID 106
+      And the body for UID 106 is not requested
+      And the message ledger status for UID 106 is "quarantined"
+      And its error code is "mailbox.message_too_large"
+      And the message ledger status for UID 107 is "imported"
+      And the mailbox run status is "partial"
+
+    @critical @security @retry
+    Scenario Outline: Fail safely when unknown size metadata is unavailable
+      Given candidate message UID 108 is pending from an earlier poll with no retained size
+      And its UID size metadata is "<metadata>"
+      When the scheduled mailbox poll attempts UID 108
+      Then the body for UID 108 is not requested
+      And the message ledger status for UID 108 is "retry_wait"
+      And its error code is "mailbox.message_fetch_failed"
+      And no raw email content is persisted or logged
+
+      Examples:
+        | metadata |
+        | missing  |
+        | invalid  |
 
     @critical @security
     Scenario: Quarantine an unsupported candidate and continue the batch

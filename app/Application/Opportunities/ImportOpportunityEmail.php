@@ -6,6 +6,7 @@ use App\Application\Opportunities\Data\ImportResult;
 use App\Domain\Opportunities\Contracts\OpportunityEmailParser;
 use App\Domain\Opportunities\Data\ParsedOpportunity;
 use App\Domain\Opportunities\Enums\EmailImportStatus;
+use App\Domain\Opportunities\Enums\EmailParseErrorCode;
 use App\Domain\Opportunities\Exceptions\EmailParseException;
 use App\Models\EmailImport;
 use App\Models\Opportunity;
@@ -25,18 +26,13 @@ class ImportOpportunityEmail
         $existingImport = $this->findExistingImport($workspaceId, $contentHash, $safeMessageId);
 
         if ($existingImport !== null) {
-            return new ImportResult(
-                status: EmailImportStatus::Duplicate,
-                opportunityId: $existingImport->opportunity_id,
-                externalJobId: $existingImport->opportunity?->external_id,
-                errorCode: null,
-            );
+            return $this->resultForExistingImport($existingImport);
         }
 
         try {
             $parsedOpportunity = $this->parser->parse($rawEmail);
         } catch (EmailParseException $exception) {
-            EmailImport::query()->create([
+            $attributes = [
                 'workspace_id' => $workspaceId,
                 'opportunity_id' => null,
                 'message_id' => $safeMessageId,
@@ -44,7 +40,9 @@ class ImportOpportunityEmail
                 'status' => EmailImportStatus::Quarantined->value,
                 'error_code' => $exception->errorCode->value,
                 'imported_at' => now(),
-            ]);
+            ];
+
+            EmailImport::query()->create($attributes);
 
             return new ImportResult(
                 status: EmailImportStatus::Quarantined,
@@ -76,7 +74,7 @@ class ImportOpportunityEmail
                     ]);
                 }
 
-                EmailImport::query()->create([
+                $importAttributes = [
                     'workspace_id' => $workspaceId,
                     'opportunity_id' => $opportunity->id,
                     'message_id' => $parsedOpportunity->sourceMessageId,
@@ -84,7 +82,9 @@ class ImportOpportunityEmail
                     'status' => $status->value,
                     'error_code' => null,
                     'imported_at' => now(),
-                ]);
+                ];
+
+                EmailImport::query()->create($importAttributes);
 
                 return new ImportResult(
                     status: $status,
@@ -97,16 +97,30 @@ class ImportOpportunityEmail
             $duplicateImport = $this->findExistingImport($workspaceId, $contentHash, $parsedOpportunity->sourceMessageId);
 
             if ($duplicateImport !== null) {
-                return new ImportResult(
-                    status: EmailImportStatus::Duplicate,
-                    opportunityId: $duplicateImport->opportunity_id,
-                    externalJobId: $duplicateImport->opportunity?->external_id,
-                    errorCode: null,
-                );
+                return $this->resultForExistingImport($duplicateImport);
             }
 
             throw $exception;
         }
+    }
+
+    private function resultForExistingImport(EmailImport $emailImport): ImportResult
+    {
+        if ($emailImport->status === EmailImportStatus::Quarantined->value) {
+            return new ImportResult(
+                status: EmailImportStatus::Quarantined,
+                opportunityId: null,
+                externalJobId: null,
+                errorCode: EmailParseErrorCode::from((string) $emailImport->error_code),
+            );
+        }
+
+        return new ImportResult(
+            status: EmailImportStatus::Duplicate,
+            opportunityId: $emailImport->opportunity_id,
+            externalJobId: $emailImport->opportunity?->external_id,
+            errorCode: null,
+        );
     }
 
     private function fillOpportunity(Opportunity $opportunity, ParsedOpportunity $parsedOpportunity): void

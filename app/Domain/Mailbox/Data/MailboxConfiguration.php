@@ -74,10 +74,19 @@ final readonly class MailboxConfiguration
             || $this->username === null
             || $this->password === null
             || $this->folder === null
-            || $this->candidateFrom === ''
+            || $this->candidateFromAddresses() === []
             || $this->candidateSubjectPrefix === '') {
             throw new MailboxIntakeException(MailboxIntakeErrorCode::ConfigurationInvalid);
         }
+    }
+
+    /** @return list<string> */
+    public function candidateFromAddresses(): array
+    {
+        return array_values(array_filter(
+            array_map(trim(...), explode(',', $this->candidateFrom)),
+            static fn (string $address): bool => $address !== '',
+        ));
     }
 
     private static function nullableString(mixed $value): ?string
