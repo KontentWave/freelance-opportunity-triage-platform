@@ -291,7 +291,7 @@ No remaining application-scope gaps were found inside the agreed Phase 1 scope.
 ## Phase 2: Secure Scheduled Mailbox Intake
 
 **Document role:** Audited implementation specification for the current phase only
-**Current status:** Deadline correction implemented locally; awaiting closure review, protected CI, and target-host verification
+**Current status:** Complete; polling-deadline correction passed protected CI and target-host verification
 **Last updated:** 2026-09-08
 **Behavior specification:** `.github/docs/features/import_job_alerts_from_mailbox.feature`
 
@@ -730,7 +730,7 @@ This soak and CI record remain historical evidence for the commits named above. 
 
 The production adapter continued to fetch raw messages with `BODY.PEEK[]` and contains no flag, move, or delete operation. The prior target-host PEEK proof established unchanged source flags, and the corrected soak exercised that same reviewed adapter path.
 
-The later deadline review found that static socket inactivity timeouts did not bound a slow-drip IMAP response and that database waits or graceful logout could outlive the 600-second locks. The monotonic deadline correction supersedes the completion claim for newer commits. The evidence above remains valid history for its named commits, but Phase 2 now awaits closure review, protected CI, and target-host verification of the corrected implementation.
+The later deadline review found that static socket inactivity timeouts did not bound a slow-drip IMAP response and that database waits or graceful logout could outlive the 600-second locks. The monotonic deadline correction was reviewed in [PR #5](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/5) and merged as commit `161c97d`. Protected `Quality`, `Tests / MariaDB 11.4`, and `Secret scan` checks passed in [CI run 34269173609](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/34269173609). On 2026-09-08, the exact merge commit was deployed with PHP 8.4 and a clean worktree. Connectivity and a controlled poll succeeded with zero discovered messages, retries, or permanent failures. The next provider-scheduled run completed at 19:35:03 UTC with the same zero-failure counters, and persisted health remained `healthy`. Exactly one provider scheduler entry used PHP 8.4. No historical quarantine was replayed and no Upwork HTTP request was made. Phase 2 is complete.
 
 ### Risks and Mitigations
 

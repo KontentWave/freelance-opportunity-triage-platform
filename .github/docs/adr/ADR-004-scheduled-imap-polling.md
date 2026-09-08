@@ -1,6 +1,6 @@
 # ADR-004: Scheduled IMAP Polling
 
-- **Status:** Accepted; polling-deadline amendment awaiting closure verification
+- **Status:** Accepted; polling-deadline amendment verified
 - **Date:** 2026-08-29
 - **Last amended:** 2026-09-08
 - **Decision owners:** Project and quality engineering
@@ -237,7 +237,9 @@ The target-host soak and CI result above remain historical evidence for the name
 
 ### Polling-Deadline Review
 
-The evidence above remains historical for its named commits. A later review found that the static 30-second socket inactivity timeout did not impose an absolute poll deadline and that slow-drip IMAP responses, database waits, or graceful logout could outlive the lock. The monotonic budget amendment addresses that blocker without changing either 600-second lock, but Phase 2 remains awaiting protected CI and target-host closure verification for the amended implementation.
+The evidence above remains historical for its named commits. A later review found that the static 30-second socket inactivity timeout did not impose an absolute poll deadline and that slow-drip IMAP responses, database waits, or graceful logout could outlive the lock. The monotonic budget amendment addresses that blocker without changing either 600-second lock.
+
+The amendment was reviewed in [PR #5](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/5) and merged as commit `161c97d`. Protected `Quality`, `Tests / MariaDB 11.4`, and `Secret scan` checks passed in [CI run 34269173609](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/34269173609). On 2026-09-08, the exact merge commit was deployed with PHP 8.4 and a clean worktree. Connectivity and a controlled poll succeeded with zero discovered messages, retries, or permanent failures. The next provider-scheduled run completed at 19:35:03 UTC with the same zero-failure counters, persisted health remained `healthy`, and exactly one provider scheduler entry used PHP 8.4. No historical quarantine was replayed and no Upwork HTTP request was made. This closes the polling-deadline blocker and restores Phase 2's completed status.
 
 ## Alternatives Considered
 

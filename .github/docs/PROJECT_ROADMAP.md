@@ -1,6 +1,6 @@
 # Project Roadmap — Freelance Opportunity Triage Platform
 
-**Status:** Vision approved; Phase 1 completed; Phase 2 deadline correction awaiting closure review; optional Tester Skill deferred until after MVP
+**Status:** Vision approved; Phases 1 and 2 completed; optional Tester Skill deferred until after MVP
 **Primary user:** An independent freelancer reviewing opportunities from authorized job-alert emails  
 **Working title:** To be decided; do not use Upwork trademarks in product branding
 
@@ -108,7 +108,7 @@ Node.js is not a separate production service by default. A Node-based mail worke
 - `Ignore a duplicate job alert`
 - `Quarantine an unsupported or malformed email`
 
-### Phase 2 — Secure Scheduled Mailbox Intake (Awaiting Closure Review)
+### Phase 2 — Secure Scheduled Mailbox Intake (Completed)
 
 **Hypothesis:** The hosting provider can fetch new alerts securely and reliably without a permanent background worker.
 
@@ -260,6 +260,6 @@ A phase is complete only when its acceptance scenarios pass, unit/integration te
 
 ## Immediate Next Decision
 
-Complete Phase 2 closure review for the polling-deadline correction. Preserve the prior soak and deployment records as historical evidence for their named commits, and require protected CI plus target-host verification before restoring the completed status or starting Phase 3 implementation.
+Begin Phase 3 planning from the completed Phase 2 mailbox boundary. Preserve the prior soak and deployment records as historical evidence for their named commits; the polling-deadline correction closed through protected CI run `34269173609` and target-host verification of merge commit `161c97d`.
 
 The optional Tester Skill remains deferred and must not expand the Phase 1 `project_sheet.md` or MVP scope.
