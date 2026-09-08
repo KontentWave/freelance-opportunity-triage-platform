@@ -1,8 +1,8 @@
 # ADR-004: Scheduled IMAP Polling
 
-- **Status:** Accepted architecture; recovery correction pending review and verification
+- **Status:** Accepted; Phase 2 recovery correction verified
 - **Date:** 2026-08-29
-- **Last amended:** 2026-09-07
+- **Last amended:** 2026-09-08
 - **Decision owners:** Project and quality engineering
 
 ## Context
@@ -229,7 +229,7 @@ Completion review identified one health-reporting defect: a terminal quarantine 
 
 The reviewed adapter uses `BODY.PEEK[]` and has no flag, move, or delete operation. Together with the accepted target-host PEEK compatibility proof, the soak exercised the non-mutating mailbox path. At that review point, Phase 2 was recorded as complete for direct-link-only intake.
 
-The target-host soak and CI result above remain historical evidence for the named commits only. They do not validate the current UIDVALIDITY and quarantine-history recovery correction, so Phase 2 completion is reopened pending review, protected CI, and any required target-host verification of the corrected commit.
+The target-host soak and CI result above remain historical evidence for the named commits only. The UIDVALIDITY and quarantine-history recovery correction was reviewed and merged in PR #3 at commit `49a5a3b`. Protected `Quality`, `Tests / MariaDB 11.4`, and `Secret scan` checks passed in [CI run 34154391079](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/34154391079). On 2026-09-08, the exact merge commit was deployed with PHP 8.4 and a clean worktree. The safe connectivity check and one controlled poll succeeded with zero discovered messages, retries, or permanent failures. The next provider-scheduled run completed at 18:30:01 UTC with the same zero-failure counters, and persisted health remained `healthy`. This verification did not trigger a live UIDVALIDITY transition, replay a historical quarantine, or contact Upwork over HTTP; those recovery semantics are covered by the reviewed MariaDB test suite.
 
 ## Alternatives Considered
 
