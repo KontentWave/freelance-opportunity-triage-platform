@@ -46,4 +46,14 @@ class Workspace extends Model
     {
         return $this->hasMany(MailboxRun::class);
     }
+
+    public function opportunityEvaluations(): HasMany
+    {
+        return $this->hasMany(OpportunityEvaluation::class);
+    }
+
+    public function opportunityReviews(): HasMany
+    {
+        return $this->hasMany(OpportunityReview::class);
+    }
 }

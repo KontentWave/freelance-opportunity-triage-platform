@@ -1,6 +1,6 @@
 # Freelance Opportunity Triage Platform
 
-This repository currently implements Phase 1: offline normalization of supported Upwork hourly job-alert emails into workspace-owned opportunity records.
+This repository implements offline normalization, scheduled mailbox intake, and deterministic explainable triage of supported Upwork hourly job-alert emails. Phase 3 implementation is complete; calibration with a private personal profile and at least 30 genuine reviewed alerts is still pending.
 
 The Phase 1 slice is intentionally local-only. It parses a raw `.eml` file, reads the plain-text MIME part, normalizes the observed hourly alert fields, and persists safe workspace-scoped records without contacting Gmail, IMAP, Upwork, or any other external service.
 
@@ -164,6 +164,48 @@ The implementation does not:
 
 Typed parse failures are recorded only as safe quarantine metadata: workspace, optional safe message ID, content hash, status, and stable error code.
 
+## Synthetic Triage Walkthrough
+
+The committed profile at `resources/triage/profiles/demo-v1.json` is synthetic demonstration data. It does not represent personal preferences and cannot establish product feasibility.
+
+```bash
+php artisan opportunity:triage <opportunity-ulid> \
+	--workspace=<workspace-ulid> \
+	--profile=resources/triage/profiles/demo-v1.json \
+	--json
+
+php artisan opportunity:review <evaluation-ulid> SKIP \
+	--workspace=<workspace-ulid> \
+	--reason=fit \
+	--sample-kind=demo \
+	--json
+```
+
+Create a local JSON cohort containing 1–100 distinct evaluation ULIDs:
+
+```json
+["01K3MEXAMPLEEVALUATION00001", "01K3MEXAMPLEEVALUATION00002"]
+```
+
+Then build an aggregate-only report:
+
+```bash
+php artisan opportunity:triage-report \
+	--workspace=<workspace-ulid> \
+	--evaluations=storage/app/private/triage/demo-cohort.json \
+	--json
+```
+
+The report never auto-selects evaluations. Its scope is selected, supported imports only; the skip rate is a suggested reduction in listing opens, not marketplace-wide coverage or measured time savings.
+
+## Private Personal Calibration
+
+Keep personal profiles and cohort files under the ignored `storage/app/private/triage/` directory. Do not commit genuine opportunity identifiers, labels, or personal thresholds.
+
+Use a profile with `purpose` set to `personal`, evaluate a predetermined consecutive cohort of at least 30 genuine supported imports, and record each judgment with `--sample-kind=real`. A changed machine/human label requires one of `fit`, `availability`, `economics`, `client_risk`, `missing_information`, or `other` as `--reason`.
+
+`DEMO_ONLY` and `INSUFFICIENT_DATA` reports never pass calibration. Only a complete `READY` report can produce `targets_met=true` or `false`; no such real calibration result is claimed in this repository yet.
+
 ## Validation
 
 Focused checks during development should use the narrowest relevant PHPUnit files first.
@@ -193,6 +235,7 @@ The test job provisions an isolated MariaDB 11.4 service database, runs the full
 
 - at least 80% overall coverage
 - at least 90% coverage for Phase 1 parser/domain code
+- at least 90% coverage for `app/Domain/Triage/`
 
 Branch protection is still a manual GitHub setting. After the first successful workflow run on GitHub, enable these exact check names as required status checks on `main`:
 
@@ -212,6 +255,6 @@ Recommended branch protection for this solo project:
 
 ## Reference Docs
 
-- Phase 1 as-built specification: `.github/docs/project_sheet.md`
+- Current phase as-built specification: `.github/docs/project_sheet.md`
 - Phase 1 behavior scenarios: `.github/docs/features/normalize_job_alert.feature`
 - Product roadmap: `.github/docs/PROJECT_ROADMAP.md`

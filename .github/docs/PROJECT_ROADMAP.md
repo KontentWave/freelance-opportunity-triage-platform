@@ -1,6 +1,6 @@
 # Project Roadmap — Freelance Opportunity Triage Platform
 
-**Status:** Vision approved; Phases 1 and 2 completed; optional Tester Skill deferred until after MVP
+**Status:** Vision approved; Phases 1 and 2 completed; Phase 3 implementation complete with real calibration pending; optional Tester Skill deferred until after MVP
 **Primary user:** An independent freelancer reviewing opportunities from authorized job-alert emails  
 **Working title:** To be decided; do not use Upwork trademarks in product branding
 
@@ -120,7 +120,7 @@ Node.js is not a separate production service by default. A Node-based mail worke
 - Use at-least-once processing with idempotency, bounded retries, and failure quarantine.
 - Record operational metadata without storing unnecessary mailbox headers or credentials.
 - Run through the provider's scheduler/cron and expose a health result.
-- Enforce a shared 480-second monotonic work budget across application logic, blocking IMAP operations, and MariaDB waits, with finalization and cleanup reserved inside the 600-second locks.
+- Apply the implemented polling budget and bounded external-operation timeouts. The accepted Phase 2 implementation does not establish an absolute database runtime guarantee; further database deadline hardening is deferred.
 
 **Exit criteria:**
 
@@ -137,6 +137,8 @@ Node.js is not a separate production service by default. A Node-based mail worke
 - `Quarantine an unsupported message`
 
 ### Phase 3 — Explainable Triage and Feasibility Gate
+
+**Implementation status:** Complete. Real personal-profile calibration and the GO/stop decision are pending; synthetic and test evidence do not satisfy this gate.
 
 **Hypothesis:** Email-only data can remove a meaningful portion of manual review without unacceptable false negatives.
 
@@ -260,6 +262,8 @@ A phase is complete only when its acceptance scenarios pass, unit/integration te
 
 ## Immediate Next Decision
 
-Begin Phase 3 planning from the completed Phase 2 mailbox boundary. Preserve the prior soak and deployment records as historical evidence for their named commits; the polling-deadline correction closed through protected CI run `34269173609` and target-host verification of merge commit `161c97d`.
+Run the bounded Phase 3 calibration with a private personal profile and at least 30 genuine, consecutively selected supported imports. Record a GO decision only if a complete READY report meets both targets; otherwise make the one allowed deliberate revision or stop/reposition. No GO decision is currently claimed.
+
+Preserve the prior Phase 2 soak and deployment records as historical evidence for their named commits. The polling-deadline correction closed through protected CI run `34269173609` and target-host verification of merge commit `161c97d`, but those checks do not prove an absolute database runtime bound.
 
 The optional Tester Skill remains deferred and must not expand the Phase 1 `project_sheet.md` or MVP scope.

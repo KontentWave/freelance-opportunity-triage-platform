@@ -149,6 +149,8 @@ jobs:
           $overallCovered = 0;
           $phaseStatements = 0;
           $phaseCovered = 0;
+          $triageStatements = 0;
+          $triageCovered = 0;
 
           foreach ($xml->xpath("//file") as $file) {
               $name = (string) $file["name"];
@@ -163,18 +165,25 @@ jobs:
                   $phaseStatements += $statements;
                   $phaseCovered += $coveredStatements;
               }
+
+                if (str_contains($name, "/app/Domain/Triage/")) {
+                  $triageStatements += $statements;
+                  $triageCovered += $coveredStatements;
+                }
           }
 
-          if ($overallStatements === 0 || $phaseStatements === 0) {
+              if ($overallStatements === 0 || $phaseStatements === 0 || $triageStatements === 0) {
               fwrite(STDERR, "Coverage report did not include expected files." . PHP_EOL);
               exit(1);
           }
 
           $overallCoverage = ($overallCovered / $overallStatements) * 100;
           $phaseCoverage = ($phaseCovered / $phaseStatements) * 100;
+              $triageCoverage = ($triageCovered / $triageStatements) * 100;
 
           printf("Overall coverage: %.2f%%%s", $overallCoverage, PHP_EOL);
           printf("Phase 1 parser/domain coverage: %.2f%%%s", $phaseCoverage, PHP_EOL);
+              printf("Triage domain coverage: %.2f%%%s", $triageCoverage, PHP_EOL);
 
           if ($overallCoverage < 80.0) {
               fwrite(STDERR, "Overall coverage below 80%." . PHP_EOL);
@@ -183,6 +192,11 @@ jobs:
 
           if ($phaseCoverage < 90.0) {
               fwrite(STDERR, "Phase 1 parser/domain coverage below 90%." . PHP_EOL);
+              exit(1);
+          }
+
+          if ($triageCoverage < 90.0) {
+              fwrite(STDERR, "Triage domain coverage below 90%." . PHP_EOL);
               exit(1);
           }
           '
