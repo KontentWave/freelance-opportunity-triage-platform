@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $workspace_id
  * @property string $provider
  * @property string $external_id
+ * @property-read Workspace $workspace
  */
 class Opportunity extends Model
 {
@@ -79,5 +80,10 @@ class Opportunity extends Model
     public function mailboxMessages(): HasMany
     {
         return $this->hasMany(MailboxMessage::class);
+    }
+
+    public function evaluations(): HasMany
+    {
+        return $this->hasMany(OpportunityEvaluation::class);
     }
 }

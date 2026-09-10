@@ -771,3 +771,228 @@ The later deadline review found that static socket inactivity timeouts did not b
 - ADR-004 and the mailbox runbook are committed.
 - `project_sheet.md` is updated from draft to the audited as-built implementation.
 - `PROJECT_ROADMAP.md` marks Phase 2 complete only after deployment verification.
+
+## Phase 3: Explainable Triage and Feasibility Gate
+
+**Role:** As-built implementation specification for the current phase
+**Status:** Implementation complete; real calibration pending; no GO decision claimed
+**Date:** 2026-09-09
+**Repository destination:** `.github/docs/project_sheet.md`
+**Behavior specification:** `.github/docs/features/triage_imported_opportunities.feature`
+
+### Accepted baseline and scope decision
+
+Use [the accepted Phase 2 baseline, `40af4b5`](https://github.com/KontentWave/freelance-opportunity-triage-platform/tree/40af4b51b31e797b9707444c38d0cb590f2cd823). PHP 8.4, Laravel 13, MariaDB 11.4, the existing normalized opportunity contract, workspace ownership, and required CI checks remain the baseline. Prior as-built details remain available in Git history when this current-phase sheet replaces the active file.
+
+Marcel accepted the published Phase 2 implementation as complete for the portfolio demo on 2026-09-08. Further database deadline hardening is deferred. The existing implementation does not establish the previously claimed absolute database runtime guarantee. Correct that claim in the roadmap/ADR documentation when adopting this sheet; this is documentation reconciliation, not a new Phase 2 engineering prerequisite.
+
+Phase 3 follows the roadmap's deterministic scoring and calibration hypothesis. It adds no mailbox changes, new transport work, scheduler integration, UI, HTTP API, external requests, LLM service, queue, or new runtime/package dependency. The reusable Tester Skill and full-description enrichment remain outside this phase.
+
+### Action
+
+Classify an already imported opportunity as **APPLY**, **MAYBE**, or **SKIP**, explain the result from a versioned profile and saved inputs, and compare those suggestions with human judgments to decide whether a review dashboard is worth building.
+
+These are alert-triage labels. APPLY means “prioritize reviewing this opportunity for a possible application.” MAYBE means “retain for manual review.” SKIP means “suggest deprioritizing”; it never deletes or hides the underlying record. Every result has `manual_review_required=true` and the same reminder to verify full scope, credible delivery capability, and weekly hours before applying.
+
+The tool cannot establish Marcel's independent delivery capability from an email summary. His availability is at most **20 hours/week**; the existing `estimated_duration` field is a project duration, not weekly hours. Do not infer hours, specialist fluency, required credentials, or suitability from absent data. Exact skill matching is one preference signal, not proof of qualification or a hard exclusion.
+
+### Deliverable boundary
+
+- One pure scorer with **four fixed rules**, configurable weights and thresholds, and one confirmed rate exclusion.
+- Local JSON profiles; their canonical content hash is their immutable version. No profile-management database or rule-language framework.
+- Two new tables: evaluations and the current human review of each evaluation.
+- Three operator CLI commands: evaluate one opportunity, record/revise a human judgment, and report a selected calibration cohort.
+- Synthetic fixtures and MariaDB tests; one small real-data calibration exercise after implementation.
+
+### Scoring profile contract
+
+Add `resources/triage/profiles/demo-v1.json` containing this **synthetic demonstration configuration**. These amounts, skills, weights, and cutoffs are not asserted to be Marcel's actual preferences. Real calibration requires an explicitly supplied personal profile and human labels.
+
+```json
+{
+    "schema_version": 1,
+    "label": "Synthetic demo profile",
+    "purpose": "demo",
+    "minimum_hourly_usd": "20.00",
+    "preferred_skills": ["django", "project management", "quality assurance"],
+    "minimum_client_rating": "4.50",
+    "weights": {
+        "skill_match": 40,
+        "rate": 30,
+        "payment_verified": 20,
+        "client_rating": 10
+    },
+    "thresholds": { "skip_below": 35, "apply_at": 70 }
+}
+```
+
+Validate the entire profile before querying or writing opportunities. Accept only the documented keys and schema version 1. `purpose` is `demo` or `personal`; `label` is a non-empty string of at most 80 characters. The USD floor is a positive two-decimal string fitting the existing `decimal(10,2)` rate range; the rating threshold is a two-decimal string greater than zero and at most `5.00`. Each of the four weights is an integer from 1 to 100 and their sum is exactly 100. Thresholds are integers satisfying `0 <= skip_below < apply_at <= 100`. Require 1–50 unique normalized preferred skills, each at most 100 characters. Invalid profiles produce `triage.profile_invalid` and no evaluation write.
+
+Normalize skill strings by trimming, collapsing Unicode whitespace to one space, and applying `mb_strtolower`; discard empty input skill strings and deduplicate/sort skill lists with a stable string comparison. Reject empty preferred-skill entries in a profile. Match entire normalized skill names, not substrings, synonyms, titles, or excerpts.
+
+Canonical JSON recursively sorts object keys, preserves scalar types, uses normalized skill-list ordering and two-decimal monetary/rating strings, and excludes timestamps. Encode without insignificant whitespace using unescaped Unicode and slashes. `profile_version = sha256(canonical profile JSON)`. Persist that full normalized JSON alongside the hash. Formatting-only JSON changes preserve the version; a changed normalized definition gets a new version automatically. Use `engine_version = "triage-v1"`; change it if scoring semantics change later. No timestamps, current exchange rates, randomness, or network data affect scoring.
+
+### Input and rule contract
+
+Build an immutable input snapshot from the workspace-scoped `Opportunity` and its `skills` relation. Include only `contract_type`, `currency`, `hourly_max`, `skills`, `hidden_skill_count`, `payment_verified`, and `client_rating`. Preserve nullable decimal strings and genuine booleans. Normalize skills as above and `currency` to uppercase. Hash the canonical snapshot as `input_sha256`.
+
+Do not duplicate title, excerpt, URL, email data, or other unused fields into evaluation snapshots. Existing opportunity rows remain the source for those fields. Country, past client spend, project duration, and the absence of an exact specialist technology are not hard filters in this first version.
+
+Evaluate every rule in the following order, even when a hard exclusion applies. A rule returns `matched`, `not_matched`, or `unknown`, plus its integer contribution, maximum contribution, stable reason code, and a plain-language explanation.
+
+| Rule               | Matched: full configured weight                                               | Not matched: zero points                                       | Unknown: zero points                                                     |
+| ------------------ | ----------------------------------------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `skill_match`      | At least one visible normalized skill matches a profile preference            | Non-empty visible skills, no match, and `hidden_skill_count=0` | No visible skills, or no match while additional skills are hidden        |
+| `rate`             | Hourly USD job with a positive known maximum at or above the configured floor | Hourly USD job with a positive known maximum below the floor   | Missing/non-positive maximum, non-USD currency, or a non-hourly contract |
+| `payment_verified` | Exactly `true`                                                                | Exactly `false`                                                | `null`                                                                   |
+| `client_rating`    | Positive known rating at or above the threshold                               | Positive known rating below the threshold                      | `null` or `0.00` (unrated)                                               |
+
+A range whose lower bound is below the floor but whose maximum meets it passes the rate rule: the advertised ceiling permits the requested floor. This is not a guarantee of the client's offered rate. Do not do currency conversion. Existing `$0–$0` normalization already yields unknown rates.
+
+Use reason codes `skills.match`, `skills.no_match`, `skills.unknown`; `rate.meets_floor`, `rate.below_floor`, `rate.unknown`; `payment.verified`, `payment.unverified`, `payment.unknown`; and `rating.meets_minimum`, `rating.below_minimum`, `rating.unknown`. A confirmed below-floor rate additionally yields the hard-exclusion code `rate.maximum_below_minimum`.
+
+`missing_fields` is a sorted unique list. A skill unknown adds `skills`; payment/rating unknowns add their field names. A rate unknown adds whichever of `hourly_max`, `currency`, and `contract_type` caused it. Unknown means insufficient evidence, not an adverse fact.
+
+Compute `score` as the sum of the four contributions; never normalize by only the known rules. Apply this precedence:
+
+1. Confirmed hard exclusion → **SKIP**, regardless of score or other missing fields.
+2. Otherwise any unknown rule → **MAYBE**, regardless of score.
+3. Otherwise `score >= apply_at` → **APPLY**; `score < skip_below` → **SKIP**; all remaining scores → **MAYBE**.
+
+Decision reason codes are respectively `decision.below_rate_floor`, `decision.incomplete_data`, `decision.score_apply`, `decision.score_skip`, and `decision.score_maybe`. A known skill mismatch alone cannot force SKIP with the demo profile: all other positive signals give 60 points and MAYBE. Missing information alone cannot force SKIP under any valid profile.
+
+### Result, persistence, and workspace isolation
+
+`TriageResult` contains `recommendation`, `score`, the ordered four `contributions`, `missing_fields`, `hard_exclusions`, `decision_reason_code`, a plain-language decision explanation, and `manual_review_required=true`. Each contribution contains `rule`, `state`, `points`, `maximum_points`, `reason_code`, and `explanation`.
+
+Use ULIDs and the repository's existing model/migration conventions:
+
+| Table                     | Columns and invariants                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `opportunity_evaluations` | `id`; `workspace_id` and `opportunity_id` foreign keys; `engine_version` string(32); `profile_version` and `input_sha256` char(64); `profile_snapshot`, `input_snapshot`, and `result` JSON; `recommendation` string(8); `score` unsigned tiny integer validated 0–100; `created_at`. Unique `(workspace_id, opportunity_id, engine_version, profile_version, input_sha256)`. Stored recommendation/score must equal the JSON result. Evaluation rows are immutable through the application. |
+| `opportunity_reviews`     | `id`; `workspace_id` and `evaluation_id` foreign keys; `human_label` string(8); `reason_code` nullable string(32); `sample_kind` string(8), `demo` or `real`; `reviewed_at`; ordinary timestamps. Unique `evaluation_id`. One current human review, explicitly replaceable through the review action.                                                                                                                                                                                        |
+
+Use normal FK cascades for parent deletion, consistent with existing models; add no deletion command. Every lookup, write, and report must be scoped by the required workspace ID. Resolve the opportunity/evaluation within that workspace first, then derive child ownership from it. A foreign workspace's identifier is handled exactly like a nonexistent identifier with `triage.not_found`; no other workspace's data is returned or changed.
+
+Repeat evaluation of the same opportunity, normalized inputs, profile version, and engine version returns the existing evaluation without updating it. Changed inputs or profile content create a separate row; older snapshots and reviews remain unchanged. Handle a concurrent duplicate insert by retrieving the matching scoped row. Write each new evaluation atomically.
+
+The stored profile and input snapshots must reproduce an old result through the scorer even after the live opportunity or profile file changes. This is a testable domain capability; a separate replay command and a historical engine registry are unnecessary for this phase.
+
+Human labels use the same APPLY/MAYBE/SKIP enum. If a label differs from the machine recommendation, require one reason code: `fit`, `availability`, `economics`, `client_risk`, `missing_information`, or `other`. Explain these codes in CLI help. Free-text descriptions are outside this slice. A repeated identical review leaves the row unchanged; an explicit changed review updates it. Neither operation changes the machine evaluation. `sample_kind=real` is an operator declaration of genuine alert provenance, not something inferred from an identifier.
+
+### Classes and CLI boundary
+
+Implement the following small set of components; keep profile JSON reading in the command boundary and scoring independent of Laravel/database/network state.
+
+| Path                                                                       | Responsibility / callable contract                                                                                                                  |
+| -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `app/Domain/Triage/Enums/TriageRecommendation.php`                         | Backed enum with values `APPLY`, `MAYBE`, `SKIP`.                                                                                                   |
+| `app/Domain/Triage/Data/ScoringProfile.php`                                | Validated immutable profile, normalized array and content version; `fromArray(array $definition): self`.                                            |
+| `app/Domain/Triage/Data/TriageInput.php`                                   | Immutable normalized input and canonical snapshot/hash.                                                                                             |
+| `app/Domain/Triage/Data/TriageResult.php`                                  | Immutable result contract defined above.                                                                                                            |
+| `app/Domain/Triage/OpportunityScorer.php`                                  | `evaluate(TriageInput $input, ScoringProfile $profile): TriageResult`.                                                                              |
+| `app/Domain/Triage/CalibrationCalculator.php`                              | Pure aggregate calculations and evidence status from selected evaluations/reviews.                                                                  |
+| `app/Application/Triage/EvaluateOpportunity.php`                           | `execute(string $workspaceId, string $opportunityId, ScoringProfile $profile): OpportunityEvaluation`; scoped load, snapshot, score, persist/reuse. |
+| `app/Application/Triage/RecordOpportunityReview.php`                       | Scoped validation and explicit review create/update.                                                                                                |
+| `app/Application/Triage/BuildCalibrationReport.php`                        | Scoped cohort loading and validation, then pure calculator; no report table.                                                                        |
+| `app/Models/OpportunityEvaluation.php`, `app/Models/OpportunityReview.php` | Persistence, JSON casts, ownership and parent relations.                                                                                            |
+| `app/Console/Commands/TriageOpportunityCommand.php`                        | Evaluate one explicitly selected opportunity.                                                                                                       |
+| `app/Console/Commands/ReviewOpportunityCommand.php`                        | Record an explicit human decision.                                                                                                                  |
+| `app/Console/Commands/ReportOpportunityTriageCommand.php`                  | Report an explicit list of evaluations.                                                                                                             |
+
+Command contracts:
+
+```text
+php artisan opportunity:triage {opportunity} --workspace=<ULID> --profile=<local-json-path> [--json]
+php artisan opportunity:review {evaluation} {APPLY|MAYBE|SKIP} --workspace=<ULID> [--reason=<code>] [--sample-kind=demo|real] [--json]
+php artisan opportunity:triage-report --workspace=<ULID> --evaluations=<local-json-path> [--json]
+```
+
+`--workspace` and `--profile` are required where shown; there is no implicit global or personal profile. The review command defaults to `sample-kind=demo`. Profile and cohort files must be readable local regular files, at most 64 KiB, decoded as JSON; reject URLs/stream wrappers. A cohort file is a JSON array of 1–100 distinct evaluation ULIDs. Require one profile version and one engine version and at most one evaluation per opportunity in that cohort. Mixed versions or repeated opportunities produce `triage.cohort_invalid` before producing a report. Never select only machine-SKIP rows automatically.
+
+Successful commands return exit code 0 even for SKIP or an insufficient-data report; those are domain outcomes. Invalid input or an operational failure returns 1 with one of `triage.profile_invalid`, `triage.not_found`, `triage.review_invalid`, `triage.cohort_invalid`, or `triage.operation_failed`. Centralize that allowlist; do not print caught exceptions, private file contents, or paths.
+
+Evaluation output includes evaluation/opportunity IDs, profile and engine versions, result and explanations; review output includes its ID, evaluation ID, human label, reason code, and sample kind. Report output is aggregate only. `--json` emits one object with stable keys and no progress chatter. Default text output must be readable without color and include the full-scope/capability/20-hour reminder. CLI execution assumes a trusted server operator; this phase adds no unauthenticated web route or API.
+
+### Calibration and product decision
+
+After the synthetic demo works, select **at least 30 distinct genuine, successfully normalized alerts** from a consecutive, predetermined intake window. Keep all selected opportunities regardless of the machine label. Explicitly supply a personal profile and record a human label for each. Marcel may inspect his own screenshots/pasted text or manually view the listing to judge full suitability; the application performs no such retrieval and stores only the label/reason code. Where practical, label before viewing the machine suggestion.
+
+The denominator is this selected supported-import cohort. Redirect-only, fixed-price, quarantined, or unimported alerts are outside it. Therefore the measured elimination rate is a **suggested reduction in opens for supported imports**, not demonstrated marketplace-wide coverage or measured time savings. The report must state this scope.
+
+For skip-vs-review metrics, both APPLY and MAYBE count as **keep for review**. Keep the full 3×3 machine/human confusion matrix as well.
+
+| Metric                             | Exact definition                                           |
+| ---------------------------------- | ---------------------------------------------------------- |
+| `true_positive` / `false_positive` | Machine keeps, human keeps / machine keeps, human SKIPs.   |
+| `true_negative` / `false_negative` | Machine SKIPs, human SKIPs / machine SKIPs, human keeps.   |
+| `skip_rate_percent`                | `100 * (true_negative + false_negative) / N`.              |
+| `false_negative_rate_percent`      | `100 * false_negative / (true_positive + false_negative)`. |
+| `false_positive_rate_percent`      | `100 * false_positive / (true_negative + false_positive)`. |
+
+Report `n_selected`, `n_reviewed`, versions, sample-kind counts, confusion matrix, the four counts, the three rates, counts of each missing field, disagreement-reason counts, `data_status`, and `targets_met`. Percentages display two decimals; an undefined denominator yields `null`, never zero. If some selected rows lack reviews, all three rates and `targets_met` are null and the report identifies the incomplete count.
+
+- `DEMO_ONLY`: the profile purpose is demo or any selected review is demo; `targets_met=null` regardless of sample size. Synthetic data never establishes product success.
+- Otherwise `INSUFFICIENT_DATA`: fewer than 30 selected alerts, incomplete reviews, or no human-keep or no human-SKIP examples; `targets_met=null`. Complete smaller cohorts may show descriptive rates.
+- Otherwise `READY`: all selected reviews are real and complete, both human classes exist, and N is at least 30. Set `targets_met` using unrounded integers: `2 * (TN + FN) >= N` and `20 * FN <= TP + FN`.
+
+For READY reports, true supports proceeding to dashboard work; false calls for **one** deliberate profile/targeting revision and another reported calibration. If that still fails, stop or reposition before expanding the product. Record that project decision in the roadmap; do not build a tuning workflow. Thirty alerts are a small feasibility sample, not proof of a population-wide accuracy guarantee. No synthetic results or uncollected real labels may be described as successful calibration.
+
+### Ordered implementation tasks
+
+1. **Pure behavior first.** Read applicable repository rules; write the profile/scorer tests and implement the fixed contracts, canonicalization, demo JSON, and golden cases under `tests/Fixtures/Triage/`. Record the bounded design and accepted Phase 2 scope in `.github/docs/adr/ADR-005-deterministic-opportunity-triage.md`.
+2. **One complete CLI evaluation path.** Add migrations named `create_opportunity_evaluations_table` and `create_opportunity_reviews_table`, the models, scoped evaluate action, and triage command. Prove repeat evaluation, changed versions/inputs, and workspace isolation against MariaDB. Keep all prior import/mailbox behavior unchanged.
+3. **Human feedback and feasibility evidence.** Add review and report actions/commands, pure calibration math and their tests. Document a synthetic CLI walkthrough and private personal-profile/cohort usage in `README.md`; keep real files under ignored `storage/app/private/triage/`. Extend the existing CI coverage check to enforce at least 90% for `app/Domain/Triage/` while preserving the separate existing 90% parser/domain and 80% overall gates. Finish as-built docs and the actual calibration decision when evidence exists.
+
+These are three implementation slices, not three new phases. Review each coherent slice using the existing Scrum-XP loop. No additional generic infrastructure work is part of acceptance.
+
+## Test plan and behavior traceability
+
+The repository uses PHPUnit rather than a Gherkin runner. Keep the `.feature` file as the behavior contract and make these mapped PHPUnit cases its executable validation. No Behat dependency is required. All “real-mode” test records remain synthetic test data; they test report logic only.
+
+| Gherkin scenario                                                    | Primary PHPUnit case                                                |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Explain a promising imported opportunity                            | `it_explains_a_promising_opportunity_with_four_contributions`       |
+| Reject a confirmed rate ceiling below the configured minimum        | `it_applies_a_known_rate_exclusion_before_missing_data`             |
+| Keep incomplete evidence for manual review                          | `it_keeps_unknown_signals_as_maybe_without_a_hard_exclusion`        |
+| Treat a skill mismatch as a preference signal                       | `it_does_not_skip_only_because_visible_skills_do_not_match`         |
+| Apply deterministic score thresholds to complete evidence           | `it_applies_score_thresholds_after_exclusions_and_unknowns`         |
+| Reject an invalid scoring profile without writing                   | `it_rejects_invalid_profiles_before_evaluation_writes`              |
+| Reuse an identical evaluation and preserve older versions           | `it_reuses_identical_evaluations_and_preserves_prior_snapshots`     |
+| Record and revise human judgment independently                      | `it_records_human_feedback_without_changing_the_machine_result`     |
+| Isolate evaluation, feedback, and reports by workspace              | `it_rejects_foreign_workspace_ids_without_disclosure_or_writes`     |
+| Prevent synthetic or insufficient evidence from passing calibration | `it_never_passes_calibration_without_sufficient_real_labels`        |
+| Calculate a real-mode calibration report at the target boundary     | `it_calculates_calibration_counts_and_unrounded_targets`            |
+| Reject a cohort that could distort comparison                       | `it_rejects_mixed_versions_and_duplicate_opportunities_in_a_cohort` |
+
+Use `tests/Unit/Domain/Triage/ScoringProfileTest.php`, `OpportunityScorerTest.php`, and `CalibrationCalculatorTest.php` for pure logic. Use `tests/Feature/EvaluateOpportunityTest.php`, `RecordOpportunityReviewTest.php`, `OpportunityTriageReportTest.php`, and `OpportunityTriageCommandTest.php` for persistence and CLI paths. Factories create the actual MariaDB records; do not mock Eloquent queries.
+
+Also cover normalized JSON/hash equivalence; both score-threshold equalities; zero/unrated client rating; hidden-skill uncertainty; non-USD/non-hourly rate uncertainty; old-result reproduction after live-row mutation; atomic duplicate handling; review reason validation; null denominators; incomplete reviews; calibration with a skip rate below 50% despite zero false negatives; and safe JSON/error output. The CLI smoke must prove triage/review/report do not resolve the mailbox client or make an HTTP request. Do not copy the scoring formula into assertions to compute their expected results.
+
+### Privacy, accessibility, and operational limits
+
+Use only the existing normalized inputs and explicit local profile/cohort files. No raw email, headers, recipient addresses, credentials, tracking values, or full descriptions belong in new tables, fixtures, logs, or reports. Use stable errors and bounded inputs. Existing workspace and foreign-key safeguards remain required. Real opportunity/profile/review data remains private; publish only synthetic demonstrations and safe aggregate evidence.
+
+There is no graphical UI in Phase 3. Use text labels, plain reasons, accessible command help, and JSON output. Presentation must keep machine suggestions distinct from human judgments.
+
+This is explicit, small-cohort CLI processing. It is not automatically invoked by imports or cron. A synthetic CLI smoke on the deployment is sufficient new operational verification; no repeated mailbox soak or absolute-runtime engineering gate is introduced. Roll back by stopping use of the triage commands and reverting compatible Phase 3 code; preserve evaluations/reviews and leave the Phase 1/2 data and commands available. Do not run destructive migrations as an operational rollback.
+
+### Ready, Done, and evidence status
+
+**Ready:** this sheet and its feature file define the current slice; the accepted Phase 2 baseline is sufficient. The demo profile makes initial implementation possible without collecting personal thresholds or 30 real alerts first.
+
+**Implementation done:** the three implementation slices now provide the pure profile/scorer/calibration domain, immutable workspace-owned evaluations, explicit current reviews, scoped cohort reporting, and the three local operator commands. Review submissions validate labels, reasons, and sample provenance; identical submissions are no-ops and explicit changed submissions revise only the human review. Cohorts are explicit bounded local JSON arrays and reject duplicate IDs, mixed engine/profile versions, repeated opportunities, absent or foreign evaluations, and malformed input. Reports are aggregate-only and use integer target boundaries.
+
+Executed local evidence at this update: the reviewed Phase 3 PHPUnit surface passed against MariaDB 11.4 with 41 tests and 198 assertions. The final complete MariaDB suite passed with 150 tests and 1,085 assertions. PHPStan, Pint, strict Composer validation, workflow YAML parsing, and the locked dependency audit passed; the audit found no security advisories. Local coverage was not measured because this PHP installation has neither PCOV nor Xdebug.
+
+Protected CI passed for commit `240f20f` in [run 34523147987](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/34523147987): `Quality`, `Tests / MariaDB 11.4`, and `Secret scan` all succeeded. The hosted suite passed with 150 tests and 1,085 assertions. Measured statement coverage was 89.97% overall, 93.67% for the Phase 1 parser/domain slice, and 96.62% for `app/Domain/Triage/`, satisfying the respective 80%, 90%, and 90% gates. Composer validation, Pint, PHPStan, the locked dependency audit, and secret scanning also passed with no advisories or leaks found.
+
+**Phase 3 feasibility decision:** record a complete READY report and the resulting GO or stop/reposition decision. If choosing the one allowed revision, record its rerun before closing this checkpoint. Target failure can be a valid completed experiment; it does not justify pretending the hypothesis passed. If real labels are unavailable, label the state “implementation complete; real calibration pending” and keep product feasibility unclaimed. Gathering that evidence does not block implementation of this specified slice.
+
+No genuine personal profile, real calibration dataset, READY report, target result, or product GO decision is claimed. Phase 3 implementation is complete; collecting the explicitly selected private cohort and human labels is the next product-evidence step.
+
+### Sources used
+
+- [Phase 3 roadmap and success signals at the accepted baseline](https://github.com/KontentWave/freelance-opportunity-triage-platform/blob/40af4b51b31e797b9707444c38d0cb590f2cd823/.github/docs/PROJECT_ROADMAP.md).
+- [Opportunity model](https://github.com/KontentWave/freelance-opportunity-triage-platform/blob/40af4b51b31e797b9707444c38d0cb590f2cd823/app/Models/Opportunity.php), [existing schema](https://github.com/KontentWave/freelance-opportunity-triage-platform/blob/40af4b51b31e797b9707444c38d0cb590f2cd823/database/migrations/2026_08_27_145315_create_opportunities_table.php), and [CI gates](https://github.com/KontentWave/freelance-opportunity-triage-platform/blob/40af4b51b31e797b9707444c38d0cb590f2cd823/.github/workflows/ci.yml).
+- Supplied `Scrum-XP.md` and `scrum_xp_expanded_unified_dev_ops_guide.md`: Action → ordered tasks → named tests/Gherkin → audit and evidence; superseded scope assumptions follow Marcel's explicit demo-scope decision in this conversation.

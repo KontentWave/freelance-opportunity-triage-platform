@@ -1,0 +1,112 @@
+[
+    {
+        "name": "complete promising opportunity",
+        "input": {
+            "contract_type": "hourly",
+            "currency": "usd",
+            "hourly_max": "40.00",
+            "skills": ["Quality   Assurance", "Laravel"],
+            "hidden_skill_count": 0,
+            "payment_verified": true,
+            "client_rating": "4.90"
+        },
+        "expected_result": {
+            "recommendation": "APPLY",
+            "score": 100,
+            "contributions": [
+                {
+                    "rule": "skill_match",
+                    "state": "matched",
+                    "points": 40,
+                    "maximum_points": 40,
+                    "reason_code": "skills.match",
+                    "explanation": "At least one visible skill matches a preferred skill."
+                },
+                {
+                    "rule": "rate",
+                    "state": "matched",
+                    "points": 30,
+                    "maximum_points": 30,
+                    "reason_code": "rate.meets_floor",
+                    "explanation": "The known hourly USD maximum meets the configured minimum."
+                },
+                {
+                    "rule": "payment_verified",
+                    "state": "matched",
+                    "points": 20,
+                    "maximum_points": 20,
+                    "reason_code": "payment.verified",
+                    "explanation": "The client payment method is verified."
+                },
+                {
+                    "rule": "client_rating",
+                    "state": "matched",
+                    "points": 10,
+                    "maximum_points": 10,
+                    "reason_code": "rating.meets_minimum",
+                    "explanation": "The known client rating meets the configured minimum."
+                }
+            ],
+            "missing_fields": [],
+            "hard_exclusions": [],
+            "decision_reason_code": "decision.score_apply",
+            "decision_explanation": "The complete known signals meet the configured apply threshold.",
+            "manual_review_required": true
+        }
+    },
+    {
+        "name": "confirmed below-floor rate with incomplete evidence",
+        "input": {
+            "contract_type": "hourly",
+            "currency": "USD",
+            "hourly_max": "19.99",
+            "skills": [],
+            "hidden_skill_count": 0,
+            "payment_verified": null,
+            "client_rating": null
+        },
+        "expected_result": {
+            "recommendation": "SKIP",
+            "score": 0,
+            "contributions": [
+                {
+                    "rule": "skill_match",
+                    "state": "unknown",
+                    "points": 0,
+                    "maximum_points": 40,
+                    "reason_code": "skills.unknown",
+                    "explanation": "Visible skills do not provide enough evidence for an exact match decision."
+                },
+                {
+                    "rule": "rate",
+                    "state": "not_matched",
+                    "points": 0,
+                    "maximum_points": 30,
+                    "reason_code": "rate.below_floor",
+                    "explanation": "The known hourly USD maximum is below the configured minimum."
+                },
+                {
+                    "rule": "payment_verified",
+                    "state": "unknown",
+                    "points": 0,
+                    "maximum_points": 20,
+                    "reason_code": "payment.unknown",
+                    "explanation": "Payment verification is unknown."
+                },
+                {
+                    "rule": "client_rating",
+                    "state": "unknown",
+                    "points": 0,
+                    "maximum_points": 10,
+                    "reason_code": "rating.unknown",
+                    "explanation": "The client is unrated or the rating is unknown."
+                }
+            ],
+            "missing_fields": ["client_rating", "payment_verified", "skills"],
+            "hard_exclusions": ["rate.maximum_below_minimum"],
+            "decision_reason_code": "decision.below_rate_floor",
+            "decision_explanation": "The confirmed hourly rate ceiling is below the configured minimum.",
+            "manual_review_required": true
+        }
+    }
+]
