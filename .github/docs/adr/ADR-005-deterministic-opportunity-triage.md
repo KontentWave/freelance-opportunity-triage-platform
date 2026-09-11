@@ -36,4 +36,4 @@ Calibration accepts only an explicit local JSON cohort of 1–100 unique evaluat
 
 ## Phase Boundary
 
-This decision adds no mailbox behavior, scheduler integration, HTTP request, queue, UI, unauthenticated route, full-description enrichment, automated application, or dashboard. The accepted Phase 2 direct-link-only intake and its operational evidence remain unchanged. Phase 3 implementation is complete; real calibration and any GO/stop decision remain pending an explicitly supplied personal profile and human labels over the specified bounded cohort.
+This decision adds no mailbox behavior, scheduler integration, HTTP request, queue, UI, unauthenticated route, full-description enrichment, automated application, or dashboard. The accepted Phase 2 direct-link-only intake and its operational evidence remain unchanged. Phase 3 implementation is deployed, and a validated private personal profile exists. Real calibration and any GO/stop decision remain pending completion and human labeling of the specified bounded cohort.
