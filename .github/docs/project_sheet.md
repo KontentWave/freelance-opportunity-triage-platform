@@ -775,8 +775,8 @@ The later deadline review found that static socket inactivity timeouts did not b
 ## Phase 3: Explainable Triage and Feasibility Gate
 
 **Role:** As-built implementation specification for the current phase
-**Status:** Implementation complete; real calibration pending; no GO decision claimed
-**Date:** 2026-09-09
+**Status:** Implementation deployed; real calibration awaiting six more eligible imports; no GO decision claimed
+**Date:** 2026-09-11
 **Repository destination:** `.github/docs/project_sheet.md`
 **Behavior specification:** `.github/docs/features/triage_imported_opportunities.feature`
 
@@ -989,7 +989,9 @@ Protected CI passed for commit `240f20f` in [run 34523147987](https://github.com
 
 **Phase 3 feasibility decision:** record a complete READY report and the resulting GO or stop/reposition decision. If choosing the one allowed revision, record its rerun before closing this checkpoint. Target failure can be a valid completed experiment; it does not justify pretending the hypothesis passed. If real labels are unavailable, label the state “implementation complete; real calibration pending” and keep product feasibility unclaimed. Gathering that evidence does not block implementation of this specified slice.
 
-No genuine personal profile, real calibration dataset, READY report, target result, or product GO decision is claimed. Phase 3 implementation is complete; collecting the explicitly selected private cohort and human labels is the next product-evidence step.
+**Operational calibration status (2026-09-11):** Phase 3 is deployed at merge commit `2957eed9e6275580a4419a3e55d4e2b327a19f49`; its additive migrations are applied, and the deployed synthetic triage/review/report smoke passed with `DEMO_ONLY` status. A validated personal-purpose profile now exists only in private, Git-ignored production storage. Validation did not create a personal evaluation or review, and no private profile values or opportunity data are published here.
+
+The predetermined real cohort currently has 24 of the required 30 distinct genuine supported imports, so collection is correctly paused until six more eligible imports arrive. There are zero personal-profile evaluations and zero real reviews; blind human labeling must precede scoring where practical. No real calibration dataset, READY report, target result, or product GO decision is claimed. Phase 4 specification must treat feasibility as unresolved until the cohort is complete, reviewed, evaluated, and reported under the contract above.
 
 ### Sources used
 
