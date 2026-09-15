@@ -1,6 +1,6 @@
 # Project Roadmap — Freelance Opportunity Triage Platform
 
-**Status:** Vision approved; Phases 1 and 2 completed; Phase 3 implementation complete with real calibration pending; optional Tester Skill deferred until after MVP
+**Status:** Vision approved; Phases 1 and 2 completed; Phase 3 engineering and first real calibration complete; Phase 4 protected read journey in progress under an explicit portfolio-demo decision; optional Tester Skill deferred until after MVP
 **Primary user:** An independent freelancer reviewing opportunities from authorized job-alert emails  
 **Working title:** To be decided; do not use Upwork trademarks in product branding
 
@@ -138,7 +138,7 @@ Node.js is not a separate production service by default. A Node-based mail worke
 
 ### Phase 3 — Explainable Triage and Feasibility Gate
 
-**Implementation status:** Complete. Real personal-profile calibration and the GO/stop decision are pending; synthetic and test evidence do not satisfy this gate.
+**Implementation status:** Complete. The first real personal-profile calibration was `READY` with 30 reviewed imports, a 3.33% machine skip rate, a 9.09% false-negative rate, and `targets_met=false`. It did not establish a feasibility GO.
 
 **Hypothesis:** Email-only data can remove a meaningful portion of manual review without unacceptable false negatives.
 
@@ -165,6 +165,8 @@ Node.js is not a separate production service by default. A Node-based mail worke
 - `Reproduce a decision using its scoring-profile version`
 
 ### Phase 4 — Accessible Review Dashboard and Manual Enrichment
+
+**Implementation status:** In progress. The protected read journey is the first active slice. Marcel explicitly authorized Phase 4 on 2026-09-14 as a portfolio demonstration despite the failed feasibility targets; another calibration cycle is not an entry prerequisite. Enrichment, feedback, synthetic demo entry, and final browser acceptance remain later slices.
 
 **Hypothesis:** A compact review queue makes the remaining human work faster and provides a credible portfolio demonstration.
 
@@ -262,7 +264,7 @@ A phase is complete only when its acceptance scenarios pass, unit/integration te
 
 ## Immediate Next Decision
 
-Run the bounded Phase 3 calibration with a private personal profile and at least 30 genuine, consecutively selected supported imports. Record a GO decision only if a complete READY report meets both targets; otherwise make the one allowed deliberate revision or stop/reposition. No GO decision is currently claimed.
+Implement the bounded Phase 4 portfolio demonstration without presenting it as validated triage expansion. The completed Phase 3 calibration remains historical evidence: 30 reviewed imports, 3.33% machine skip rate, 9.09% false-negative rate, and `targets_met=false`. No calibration-based GO is claimed, and another calibration cycle is not a prerequisite for the portfolio direction.
 
 Preserve the prior Phase 2 soak and deployment records as historical evidence for their named commits. The polling-deadline correction closed through protected CI run `34269173609` and target-host verification of merge commit `161c97d`, but those checks do not prove an absolute database runtime bound.
 

@@ -1005,8 +1005,8 @@ The required skip rate of at least 50% and false-negative rate of at most 5% wer
 
 ## Phase 4: Accessible Review Dashboard and Manual Enrichment
 
-**Role:** Draft implementation contract; append this section to the existing as-built sheet.
-**Status:** Ready for specification review; Phase 3 engineering remains accepted. Product feasibility remains unresolved.
+**Role:** Approved implementation contract; append this section to the existing as-built sheet.
+**Status:** Protected read journey implemented and locally validated under the explicit portfolio-demo decision. Phase 3 engineering and its unsuccessful first real calibration remain accepted historical evidence; Phase 4 is not complete.
 **Date:** 2026-09-11
 **Behavior file:** `.github/docs/features/review_and_enrich_opportunities.feature`
 
@@ -1016,7 +1016,15 @@ Reviewed repository baseline: [main at ff499f3](https://github.com/KontentWave/f
 
 The Phase 3 operational record says the deployed synthetic smoke passed and the first private real calibration completed with 30 selected and reviewed opportunities. Its `READY` report measured a 3.33% skip rate and 9.09% false-negative rate, so `targets_met=false`. There is no calibration-based GO decision. Deployment verification and the Phase 3 engineering work remain complete; the feasibility hypothesis failed this first real test.
 
-This draft may be reviewed now, but dashboard implementation must not be justified as validated triage expansion. Before implementation, record either the outcome of the one allowed deliberate profile/targeting revision and rerun, a stop/reposition decision, or Marcel's explicit decision to proceed only as a portfolio demonstration despite the failed feasibility target. This is a product decision, not reopened Phase 3 engineering work.
+Marcel explicitly decided on 2026-09-14 to proceed only as a portfolio demonstration despite the failed feasibility targets. This authorizes implementation without another calibration cycle and does not convert the failed experiment into a feasibility GO. The protected read journey is implemented and locally validated; enrichment, feedback, synthetic demo entry, and final browser acceptance remain unimplemented later slices.
+
+### Protected read journey evidence
+
+Local Slice 1 validation completed on 2026-09-15 against the disposable MariaDB 11.4 test database. The complete suite passed with 159 tests and 1,172 assertions. PCOV 1.0.12 measured 90.29% overall statement coverage (2,017/2,234), 93.67% Phase 1 parser/domain coverage (222/237), and 96.62% triage-domain coverage (343/355), satisfying the existing 80%, 90%, and 90% gates.
+
+Pint, PHPStan, strict Composer validation, the locked Composer audit, `npm ci`, the Vite production build, the npm audit, and `git diff --check` passed. Composer and npm reported no known dependency vulnerabilities. A local synthetic browser smoke verified private login, ranked queue and detail navigation, explicit evaluation, persisted status after reload, logical keyboard operation, polite status output, and no page-level horizontal overflow at a 320 CSS-pixel viewport. It made no mailbox or marketplace request.
+
+Candidate commit [`83821d1`](https://github.com/KontentWave/freelance-opportunity-triage-platform/commit/83821d17a870b40d47e8cf6f7528c60bfaa2e249) passed the protected pull-request checks in [CI run 35006230737](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/35006230737): Quality, Tests / MariaDB 11.4, and Secret scan. The local Node runtime was 22.18.0, below the declared `>=22.23` project baseline; `npm ci` emitted `EBADENGINE`, although installation and the production build succeeded. Target-host verification, enrichment/feedback acceptance, synthetic demo acceptance, and the final Playwright suite are not claimed by this Slice 1 evidence.
 
 ### Action and bounded scope
 
@@ -1192,7 +1200,7 @@ The runbook covers private account/workspace assignment, server-only profile con
 
 **Done:** the specified journeys work, the mapped tests and existing checks pass on the candidate commit, the manual accessibility sweep and target-host synthetic browser smoke pass, and ADR/README/this Phase 4 section reflect the implementation. Preserve existing evaluation history and source rows. Application rollback removes access to the new routes/assets while preserving additive data; it does not run destructive down migrations against personal data.
 
-Record the Phase 3 product decision independently. If proceeding under a portfolio-demo decision, state that calibration remains pending. The completed Phase 4 delivers the functional MVP interface; Phase 5 remains the publication milestone. This draft claims no Phase 4 implementation, test execution, calibration success or deployment.
+Record the Phase 3 product decision independently. Under this portfolio-demo decision, state that the first real calibration completed and failed its targets; do not describe calibration as pending or successful. A completed Phase 4 will deliver the functional MVP interface, and Phase 5 remains the publication milestone. This entry currently claims only protected-read implementation in progress, not Phase 4 completion, deployment, or later-slice acceptance.
 
 ### Source anchors
 
