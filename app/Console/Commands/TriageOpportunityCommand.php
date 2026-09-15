@@ -3,27 +3,24 @@
 namespace App\Console\Commands;
 
 use App\Application\Triage\EvaluateOpportunity;
-use App\Domain\Triage\Data\ScoringProfile;
 use App\Domain\Triage\Enums\TriageErrorCode;
 use App\Domain\Triage\Exceptions\TriageException;
+use App\Infrastructure\Triage\LocalScoringProfileLoader;
 use App\Models\OpportunityEvaluation;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
-use InvalidArgumentException;
-use JsonException;
 use Throwable;
 
 #[Signature('opportunity:triage {opportunity} {--workspace=} {--profile=} {--json}')]
 #[Description('Evaluate one imported opportunity with a local scoring profile')]
 final class TriageOpportunityCommand extends Command
 {
-    private const MAXIMUM_PROFILE_BYTES = 65_536;
-
     private const REMINDER = 'Review the full opportunity scope, verify credible delivery capability, and confirm the work fits within 20 hours/week before applying.';
 
     public function __construct(
         private readonly EvaluateOpportunity $evaluateOpportunity,
+        private readonly LocalScoringProfileLoader $profileLoader,
     ) {
         parent::__construct();
     }
@@ -31,7 +28,7 @@ final class TriageOpportunityCommand extends Command
     public function handle(): int
     {
         try {
-            $profile = $this->loadProfile($this->option('profile'));
+            $profile = $this->profileLoader->load($this->option('profile'));
             $workspaceId = $this->requiredString($this->option('workspace'), TriageErrorCode::NotFound);
             $opportunityId = $this->requiredString($this->argument('opportunity'), TriageErrorCode::NotFound);
             $evaluation = $this->evaluateOpportunity->execute($workspaceId, $opportunityId, $profile);
@@ -44,41 +41,6 @@ final class TriageOpportunityCommand extends Command
         $this->outputEvaluation($evaluation);
 
         return self::SUCCESS;
-    }
-
-    private function loadProfile(mixed $profileOption): ScoringProfile
-    {
-        $path = $this->requiredString($profileOption, TriageErrorCode::ProfileInvalid);
-
-        if (preg_match('/^[a-z][a-z0-9+.-]*:/i', $path) === 1
-            || ! is_file($path)
-            || ! is_readable($path)) {
-            throw new TriageException(TriageErrorCode::ProfileInvalid);
-        }
-
-        $size = filesize($path);
-
-        if (! is_int($size) || $size > self::MAXIMUM_PROFILE_BYTES) {
-            throw new TriageException(TriageErrorCode::ProfileInvalid);
-        }
-
-        $contents = file_get_contents($path, false, null, 0, self::MAXIMUM_PROFILE_BYTES + 1);
-
-        if (! is_string($contents) || strlen($contents) > self::MAXIMUM_PROFILE_BYTES) {
-            throw new TriageException(TriageErrorCode::ProfileInvalid);
-        }
-
-        try {
-            $definition = json_decode($contents, true, flags: JSON_THROW_ON_ERROR);
-
-            if (! is_array($definition)) {
-                throw new InvalidArgumentException;
-            }
-
-            return ScoringProfile::fromArray($definition);
-        } catch (JsonException|InvalidArgumentException) {
-            throw new TriageException(TriageErrorCode::ProfileInvalid);
-        }
     }
 
     private function requiredString(mixed $value, TriageErrorCode $errorCode): string

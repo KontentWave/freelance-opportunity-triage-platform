@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * @property string $id
  * @property string $workspace_id
+ * @property string|null $review_evaluation_id
  * @property string $provider
  * @property string $external_id
  * @property-read Workspace $workspace
@@ -85,5 +86,10 @@ class Opportunity extends Model
     public function evaluations(): HasMany
     {
         return $this->hasMany(OpportunityEvaluation::class);
+    }
+
+    public function reviewEvaluation(): BelongsTo
+    {
+        return $this->belongsTo(OpportunityEvaluation::class, 'review_evaluation_id');
     }
 }

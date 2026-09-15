@@ -3,7 +3,6 @@
 namespace App\Application\Triage;
 
 use App\Domain\Triage\Data\ScoringProfile;
-use App\Domain\Triage\Data\TriageInput;
 use App\Domain\Triage\Enums\TriageErrorCode;
 use App\Domain\Triage\Exceptions\TriageException;
 use App\Domain\Triage\OpportunityScorer;
@@ -16,6 +15,7 @@ final class EvaluateOpportunity
 {
     public function __construct(
         private readonly OpportunityScorer $scorer,
+        private readonly BuildOpportunityTriageInput $buildInput,
     ) {}
 
     public function execute(
@@ -33,15 +33,7 @@ final class EvaluateOpportunity
             throw new TriageException(TriageErrorCode::NotFound);
         }
 
-        $input = TriageInput::fromArray([
-            'contract_type' => $opportunity->contract_type,
-            'currency' => $opportunity->currency,
-            'hourly_max' => $opportunity->hourly_max,
-            'skills' => $opportunity->skills->pluck('name')->all(),
-            'hidden_skill_count' => $opportunity->hidden_skill_count,
-            'payment_verified' => $opportunity->payment_verified,
-            'client_rating' => $opportunity->client_rating,
-        ]);
+        $input = $this->buildInput->execute($opportunity);
         $identity = [
             'workspace_id' => $workspaceId,
             'opportunity_id' => $opportunity->id,

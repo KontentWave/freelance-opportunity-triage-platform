@@ -27,6 +27,11 @@ class Workspace extends Model
         return $this->hasMany(Opportunity::class);
     }
 
+    public function users(): HasMany
+    {
+        return $this->hasMany(User::class);
+    }
+
     public function emailImports(): HasMany
     {
         return $this->hasMany(EmailImport::class);
