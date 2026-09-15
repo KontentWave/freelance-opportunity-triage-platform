@@ -1024,7 +1024,7 @@ Local Slice 1 validation completed on 2026-09-15 against the disposable MariaDB 
 
 Pint, PHPStan, strict Composer validation, the locked Composer audit, `npm ci`, the Vite production build, the npm audit, and `git diff --check` passed. Composer and npm reported no known dependency vulnerabilities. A local synthetic browser smoke verified private login, ranked queue and detail navigation, explicit evaluation, persisted status after reload, logical keyboard operation, polite status output, and no page-level horizontal overflow at a 320 CSS-pixel viewport. It made no mailbox or marketplace request.
 
-The local Node runtime was 22.18.0, below the declared `>=22.23` project baseline; `npm ci` emitted `EBADENGINE`, although installation and the production build succeeded. Protected CI, target-host verification, enrichment/feedback acceptance, synthetic demo acceptance, and the final Playwright suite are not claimed by this Slice 1 evidence.
+Candidate commit [`83821d1`](https://github.com/KontentWave/freelance-opportunity-triage-platform/commit/83821d17a870b40d47e8cf6f7528c60bfaa2e249) passed the protected pull-request checks in [CI run 35006230737](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/35006230737): Quality, Tests / MariaDB 11.4, and Secret scan. The local Node runtime was 22.18.0, below the declared `>=22.23` project baseline; `npm ci` emitted `EBADENGINE`, although installation and the production build succeeded. Target-host verification, enrichment/feedback acceptance, synthetic demo acceptance, and the final Playwright suite are not claimed by this Slice 1 evidence.
 
 ### Action and bounded scope
 
