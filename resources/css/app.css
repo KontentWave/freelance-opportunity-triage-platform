@@ -45,7 +45,8 @@
     }
     button,
     input,
-    select {
+    select,
+    textarea {
         font: inherit;
     }
     button,
@@ -56,6 +57,7 @@
     button:focus-visible,
     select:focus-visible,
     input:focus-visible,
+    textarea:focus-visible,
     a:focus-visible {
         outline: 3px solid #16785b;
         outline-offset: 3px;
@@ -415,6 +417,84 @@
     .review-reminder p {
         line-height: 1.7;
     }
+    .comparison-section,
+    .form-section {
+        display: grid;
+        gap: 1.4rem;
+        padding-block: 2rem;
+        border-bottom: 1px solid #aab3ad;
+    }
+    .comparison-section {
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+    }
+    .comparison-section > div,
+    .review-form,
+    .field-group,
+    .review-form fieldset {
+        display: grid;
+        gap: 0.65rem;
+    }
+    .review-form {
+        gap: 1.5rem;
+    }
+    .review-form fieldset {
+        min-width: 0;
+        margin: 0;
+        border: 1px solid #aab3ad;
+        padding: 1rem;
+    }
+    .review-form legend,
+    .field-group > label {
+        font-weight: 750;
+    }
+    .override-grid,
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+    }
+    .field-wide {
+        grid-column: 1 / -1;
+    }
+    .review-form input:not([type="radio"]),
+    .review-form textarea {
+        width: 100%;
+        min-width: 0;
+        border: 1px solid #718078;
+        border-radius: 0.25rem;
+        background: #fff;
+        padding: 0.7rem 0.75rem;
+        color: var(--color-ink);
+    }
+    .review-form textarea {
+        resize: vertical;
+        line-height: 1.5;
+    }
+    .field-help {
+        color: #536159;
+        font-size: 0.82rem;
+        line-height: 1.45;
+    }
+    .field-error {
+        color: #a32f23;
+        font-size: 0.85rem;
+        font-weight: 700;
+    }
+    .choice-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem 1.5rem;
+    }
+    .choice-row label {
+        display: inline-flex;
+        min-height: 2.75rem;
+        align-items: center;
+        gap: 0.45rem;
+    }
+    .review-form > .primary-button {
+        justify-self: start;
+    }
     .sr-only {
         position: absolute;
         width: 1px;
@@ -442,7 +522,10 @@
     .filter-grid,
     .facts-grid,
     .contribution-grid,
-    .evidence-summary {
+    .evidence-summary,
+    .comparison-section,
+    .override-grid,
+    .form-grid {
         grid-template-columns: 1fr;
     }
     .queue-row {

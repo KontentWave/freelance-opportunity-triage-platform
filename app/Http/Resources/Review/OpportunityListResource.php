@@ -19,7 +19,7 @@ final class OpportunityListResource extends JsonResource
         return [
             'id' => $this->resource->id,
             'evaluation_id' => $this->resource->getAttribute('displayed_evaluation_id'),
-            'current_enrichment_id' => null,
+            'current_enrichment_id' => $this->resource->getAttribute('displayed_enrichment_id'),
             'title' => $this->resource->title,
             'hourly_min' => $this->resource->hourly_min,
             'hourly_max' => $this->resource->hourly_max,
@@ -27,7 +27,9 @@ final class OpportunityListResource extends JsonResource
             'posted_on' => $this->resource->posted_on?->toDateString(),
             'recommendation' => $this->resource->getAttribute('displayed_recommendation') ?? 'UNSCORED',
             'score' => $this->resource->getAttribute('displayed_score'),
-            'basis' => $result === null ? null : 'Email evidence',
+            'basis' => $result === null
+                ? null
+                : ($this->resource->getAttribute('displayed_enrichment_id') === null ? 'Email evidence' : 'Your confirmed details'),
             'missing_fields' => is_array($result) ? ($result['missing_fields'] ?? []) : [],
             'stale' => (bool) $this->resource->getAttribute('displayed_stale'),
             'reviewed' => $this->resource->getAttribute('current_review_id') !== null,

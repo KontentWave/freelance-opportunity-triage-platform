@@ -32,11 +32,29 @@ final class OpportunityDetailResource extends JsonResource
             'profile' => $this->profile(),
             'email_input' => $this->resource->getAttribute('displayed_input_snapshot'),
             'current_input' => $this->resource->getAttribute('displayed_current_input'),
-            'email_result' => $this->resource->getAttribute('displayed_result'),
+            'email_result' => $this->resource->getAttribute('displayed_email_result'),
             'displayed_result' => $this->resource->getAttribute('displayed_result'),
+            'current_enrichment' => $this->resource->getAttribute('displayed_enrichment_id') === null
+                ? null
+                : [
+                    'id' => $this->resource->getAttribute('displayed_enrichment_id'),
+                    'revision' => $this->resource->getAttribute('displayed_enrichment_revision'),
+                    'full_description' => $this->resource->getAttribute('displayed_full_description'),
+                    'overrides' => $this->resource->getAttribute('displayed_overrides'),
+                    'input' => $this->resource->getAttribute('displayed_enrichment_input'),
+                    'result' => $this->resource->getAttribute('displayed_result'),
+                ],
             'current_review' => $this->resource->getAttribute('current_review_id') === null
                 ? null
-                : ['id' => $this->resource->getAttribute('current_review_id')],
+                : [
+                    'id' => $this->resource->getAttribute('current_review_id'),
+                    'enrichment_id' => $this->resource->getAttribute('current_review_enrichment_id'),
+                    'human_label' => $this->resource->getAttribute('current_review_human_label'),
+                    'reason_code' => $this->resource->getAttribute('current_review_reason_code'),
+                    'notes' => $this->resource->getAttribute('current_review_notes'),
+                    'outcome' => $this->resource->getAttribute('current_review_outcome'),
+                    'sample_kind' => $this->resource->getAttribute('current_review_sample_kind'),
+                ],
         ];
     }
 

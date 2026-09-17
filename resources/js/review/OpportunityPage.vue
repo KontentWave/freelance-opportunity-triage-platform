@@ -1,5 +1,7 @@
 <script setup>
 import { onMounted, ref } from "vue";
+import EnrichmentForm from "./EnrichmentForm.vue";
+import FeedbackForm from "./FeedbackForm.vue";
 import ScoreExplanation from "./ScoreExplanation.vue";
 import { reviewRequest } from "./http.js";
 
@@ -55,6 +57,11 @@ async function evaluate() {
     } finally {
         evaluating.value = false;
     }
+}
+
+function saved(updatedOpportunity, message) {
+    opportunity.value = updatedOpportunity;
+    notice.value = message;
 }
 
 onMounted(load);
@@ -194,7 +201,41 @@ onMounted(load);
                 >
             </section>
 
+            <section
+                v-if="opportunity.current_enrichment"
+                class="comparison-section"
+                aria-labelledby="email-comparison-heading"
+            >
+                <div>
+                    <p class="eyebrow">Original evidence</p>
+                    <h2 id="email-comparison-heading">Email suggestion</h2>
+                </div>
+                <span
+                    :class="[
+                        'suggestion',
+                        `suggestion-${opportunity.email_result.recommendation.toLowerCase()}`,
+                    ]"
+                    >{{ opportunity.email_result.recommendation }} ·
+                    {{ opportunity.email_result.score }}</span
+                >
+            </section>
+
             <ScoreExplanation :result="opportunity.displayed_result" />
+
+            <template v-if="opportunity.evaluation_id">
+                <EnrichmentForm
+                    :key="`enrichment-${opportunity.evaluation_id}`"
+                    :opportunity="opportunity"
+                    @started="notice = ''"
+                    @saved="saved"
+                />
+                <FeedbackForm
+                    :key="`feedback-${opportunity.evaluation_id}`"
+                    :opportunity="opportunity"
+                    @started="notice = ''"
+                    @saved="saved"
+                />
+            </template>
 
             <aside class="review-reminder" aria-labelledby="reminder-heading">
                 <h2 id="reminder-heading">Before acting</h2>

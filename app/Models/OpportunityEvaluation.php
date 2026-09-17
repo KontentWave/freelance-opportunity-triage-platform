@@ -6,6 +6,7 @@ use App\Domain\Triage\Enums\TriageRecommendation;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use LogicException;
 
@@ -81,5 +82,10 @@ class OpportunityEvaluation extends Model
     public function review(): HasOne
     {
         return $this->hasOne(OpportunityReview::class, 'evaluation_id');
+    }
+
+    public function enrichments(): HasMany
+    {
+        return $this->hasMany(OpportunityEnrichment::class, 'evaluation_id');
     }
 }

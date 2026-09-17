@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -28,6 +29,9 @@ final class ReviewAuthenticationTest extends TestCase
         $this->getJson('/review/v1/opportunities')
             ->assertUnauthorized()
             ->assertJsonMissingPath('data');
+        $opportunityId = (string) Str::ulid();
+        $this->postJson('/review/v1/opportunities/'.$opportunityId.'/enrichments')->assertUnauthorized();
+        $this->putJson('/review/v1/opportunities/'.$opportunityId.'/review')->assertUnauthorized();
 
         $this->post('/login', [
             'email' => 'OWNER@example.test',
@@ -46,14 +50,24 @@ final class ReviewAuthenticationTest extends TestCase
     public function it_rejects_unassigned_accounts_with_a_safe_setup_message(): void
     {
         $user = User::factory()->create();
+        $opportunityId = (string) Str::ulid();
+        $expectedError = [
+            'error_code' => 'review.workspace_unavailable',
+            'message' => 'This account is not assigned to a review workspace.',
+        ];
 
         $this->actingAs($user)
             ->getJson('/review/v1/opportunities')
             ->assertForbidden()
-            ->assertExactJson([
-                'error_code' => 'review.workspace_unavailable',
-                'message' => 'This account is not assigned to a review workspace.',
-            ]);
+            ->assertExactJson($expectedError);
+        $this->actingAs($user)
+            ->postJson('/review/v1/opportunities/'.$opportunityId.'/enrichments')
+            ->assertForbidden()
+            ->assertExactJson($expectedError);
+        $this->actingAs($user)
+            ->putJson('/review/v1/opportunities/'.$opportunityId.'/review')
+            ->assertForbidden()
+            ->assertExactJson($expectedError);
     }
 
     #[Test]

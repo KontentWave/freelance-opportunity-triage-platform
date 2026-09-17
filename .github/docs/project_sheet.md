@@ -1006,8 +1006,8 @@ The required skip rate of at least 50% and false-negative rate of at most 5% wer
 ## Phase 4: Accessible Review Dashboard and Manual Enrichment
 
 **Role:** Approved implementation contract; append this section to the existing as-built sheet.
-**Status:** Protected read journey implemented and locally validated under the explicit portfolio-demo decision. Phase 3 engineering and its unsuccessful first real calibration remain accepted historical evidence; Phase 4 is not complete.
-**Date:** 2026-09-11
+**Status:** Protected read journey plus enrichment and feedback implemented and locally validated under the explicit portfolio-demo decision. Phase 3 engineering and its unsuccessful first real calibration remain accepted historical evidence; Phase 4 is not complete.
+**Date:** 2026-09-17
 **Behavior file:** `.github/docs/features/review_and_enrich_opportunities.feature`
 
 ### Evidence and entry decision
@@ -1016,7 +1016,7 @@ Reviewed repository baseline: [main at ff499f3](https://github.com/KontentWave/f
 
 The Phase 3 operational record says the deployed synthetic smoke passed and the first private real calibration completed with 30 selected and reviewed opportunities. Its `READY` report measured a 3.33% skip rate and 9.09% false-negative rate, so `targets_met=false`. There is no calibration-based GO decision. Deployment verification and the Phase 3 engineering work remain complete; the feasibility hypothesis failed this first real test.
 
-Marcel explicitly decided on 2026-09-14 to proceed only as a portfolio demonstration despite the failed feasibility targets. This authorizes implementation without another calibration cycle and does not convert the failed experiment into a feasibility GO. The protected read journey is implemented and locally validated; enrichment, feedback, synthetic demo entry, and final browser acceptance remain unimplemented later slices.
+Marcel explicitly decided on 2026-09-14 to proceed only as a portfolio demonstration despite the failed feasibility targets. This authorizes implementation without another calibration cycle and does not convert the failed experiment into a feasibility GO. The protected read journey, enrichment, and feedback are implemented and locally validated; synthetic demo entry and final browser acceptance remain unimplemented Slice 3 work.
 
 ### Protected read journey evidence
 
@@ -1025,6 +1025,16 @@ Local Slice 1 validation completed on 2026-09-15 against the disposable MariaDB 
 Pint, PHPStan, strict Composer validation, the locked Composer audit, `npm ci`, the Vite production build, the npm audit, and `git diff --check` passed. Composer and npm reported no known dependency vulnerabilities. A local synthetic browser smoke verified private login, ranked queue and detail navigation, explicit evaluation, persisted status after reload, logical keyboard operation, polite status output, and no page-level horizontal overflow at a 320 CSS-pixel viewport. It made no mailbox or marketplace request.
 
 Candidate commit [`83821d1`](https://github.com/KontentWave/freelance-opportunity-triage-platform/commit/83821d17a870b40d47e8cf6f7528c60bfaa2e249) passed the protected pull-request checks in [CI run 35006230737](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/35006230737): Quality, Tests / MariaDB 11.4, and Secret scan. The local Node runtime was 22.18.0, below the declared `>=22.23` project baseline; `npm ci` emitted `EBADENGINE`, although installation and the production build succeeded. Target-host verification, enrichment/feedback acceptance, synthetic demo acceptance, and the final Playwright suite are not claimed by this Slice 1 evidence.
+
+### Enrichment and feedback evidence
+
+Local Slice 2 validation completed on 2026-09-17 against the disposable MariaDB 11.4 test database. The complete suite passed with 169 tests and 1,314 assertions. PCOV measured 90.61% overall statement coverage (2,276/2,512), 93.67% Phase 1 parser/domain coverage (222/237), and 96.90% triage-domain coverage (344/355), satisfying the existing 80%, 90%, and 90% gates.
+
+All seven named Slice 2 PHPUnit cases passed, covering independent feedback, email-only calibration, description-only enrichment, confirmed-field scoring, revision/idempotency behavior, stale contexts, and unsafe or excessive input. Additional executable coverage passed for guest and unassigned access, workspace and nested-resource isolation, sparse omitted/null/false/empty override semantics, current-review filtering, enriched queue display/filter/order, rollback, escaping, and stray HTTP prevention. Existing Phase 3 command and calibration behavior remained compatible.
+
+Pint, PHPStan, strict Composer validation, the locked Composer audit, `npm ci`, the Vite production build, the npm audit, and `git diff --check` passed. Composer and npm reported no known dependency vulnerabilities. The local Node runtime remained 22.18.0, below the declared `>=22.23` project baseline; `npm ci` emitted `EBADENGINE`, although installation and the production build succeeded.
+
+A local synthetic private browser smoke verified keyboard login and navigation, confirmed-detail enrichment, feedback persistence, text-only rendering of script-like input, same-origin resources, logical keyboard reachability at simulated 200% zoom, and no page-level horizontal overflow at a 320 CSS-pixel viewport. A recoverable invalid enrichment save returned 422, retained the draft, focused the error summary, and left no stale success announcement. This was a manual synthetic smoke, not the Slice 3 Playwright acceptance suite. No target-host verification, synthetic demo seeder or preset flow, credential-free demo entry, runbook, deployment, or final browser acceptance is claimed. Phase 4 remains incomplete.
 
 ### Action and bounded scope
 
