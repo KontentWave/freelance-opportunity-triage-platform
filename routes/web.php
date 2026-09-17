@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\Auth\SessionController;
+use App\Http\Controllers\OpportunityEnrichmentController;
 use App\Http\Controllers\OpportunityEvaluationController;
+use App\Http\Controllers\OpportunityFeedbackController;
 use App\Http\Controllers\OpportunityReviewController;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -29,6 +31,10 @@ Route::middleware(['auth', 'review.workspace'])->group(function (): void {
     Route::get('/review/v1/opportunities/{opportunity}', [OpportunityReviewController::class, 'detail'])->name('review.opportunities.show');
     Route::post('/review/v1/opportunities/{opportunity}/evaluations', [OpportunityEvaluationController::class, 'store'])
         ->name('review.opportunities.evaluations.store');
+    Route::post('/review/v1/opportunities/{opportunity}/enrichments', [OpportunityEnrichmentController::class, 'store'])
+        ->name('review.opportunities.enrichments.store');
+    Route::put('/review/v1/opportunities/{opportunity}/review', [OpportunityFeedbackController::class, 'update'])
+        ->name('review.opportunities.review.update');
 });
 
 Route::redirect('/', '/opportunities');

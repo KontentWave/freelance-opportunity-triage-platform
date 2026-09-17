@@ -88,6 +88,11 @@ class Opportunity extends Model
         return $this->hasMany(OpportunityEvaluation::class);
     }
 
+    public function enrichments(): HasMany
+    {
+        return $this->hasMany(OpportunityEnrichment::class);
+    }
+
     public function reviewEvaluation(): BelongsTo
     {
         return $this->belongsTo(OpportunityEvaluation::class, 'review_evaluation_id');

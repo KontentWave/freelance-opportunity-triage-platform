@@ -7,6 +7,7 @@ use App\Domain\Triage\Enums\TriageRecommendation;
 use App\Domain\Triage\OpportunityScorer;
 use App\Infrastructure\Triage\LocalScoringProfileLoader;
 use App\Models\Opportunity;
+use App\Models\OpportunityEnrichment;
 use App\Models\OpportunityEvaluation;
 use App\Models\OpportunityReview;
 use App\Models\User;
@@ -115,6 +116,65 @@ final class ReviewQueueTest extends TestCase
         $this->assertSame(1, OpportunityEvaluation::query()->count());
     }
 
+    #[Test]
+    public function it_filters_reviews_by_the_displayed_evaluation_and_enrichment(): void
+    {
+        config()->set('opportunity_review.profile_path', resource_path('triage/profiles/demo-v1.json'));
+        $workspace = Workspace::factory()->create();
+        $user = User::factory()->create(['workspace_id' => $workspace->id]);
+        $opportunity = $this->opportunity($workspace, 'Current context', '2026-09-12');
+        $evaluation = $this->evaluation($opportunity, TriageRecommendation::Maybe, 60);
+        $review = OpportunityReview::query()->create([
+            'workspace_id' => $workspace->id,
+            'evaluation_id' => $evaluation->id,
+            'enrichment_id' => null,
+            'human_label' => TriageRecommendation::Maybe,
+            'reason_code' => null,
+            'sample_kind' => 'demo',
+            'reviewed_at' => now(),
+        ]);
+        $enrichment = $this->enrichment(
+            $evaluation,
+            1,
+            [
+                ...$evaluation->result,
+                'recommendation' => 'APPLY',
+                'score' => 90,
+                'missing_fields' => ['client_rating'],
+            ],
+        );
+
+        $this->actingAs($user)->getJson('/review/v1/opportunities?recommendation=APPLY&missing=present')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.recommendation', 'APPLY')
+            ->assertJsonPath('data.0.score', 90)
+            ->assertJsonPath('data.0.basis', 'Your confirmed details');
+        $this->actingAs($user)->getJson('/review/v1/opportunities?recommendation=MAYBE')
+            ->assertOk()
+            ->assertJsonCount(0, 'data');
+
+        $this->actingAs($user)->getJson('/review/v1/opportunities?review=reviewed')
+            ->assertOk()
+            ->assertJsonCount(0, 'data');
+        $this->actingAs($user)->getJson('/review/v1/opportunities?review=unreviewed')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.reviewed', false);
+
+        $review->update(['enrichment_id' => $enrichment->id]);
+        $this->actingAs($user)->getJson('/review/v1/opportunities?review=reviewed')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.reviewed', true);
+
+        $this->enrichment($evaluation, 2);
+        $this->actingAs($user)->getJson('/review/v1/opportunities?review=unreviewed')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.reviewed', false);
+    }
+
     private function opportunity(Workspace $workspace, string $title, string $postedOn): Opportunity
     {
         return Opportunity::factory()->create([
@@ -168,5 +228,22 @@ final class ReviewQueueTest extends TestCase
         $opportunity->update(['review_evaluation_id' => $evaluation->id]);
 
         return $evaluation;
+    }
+
+    /** @param array<string, mixed>|null $result */
+    private function enrichment(OpportunityEvaluation $evaluation, int $revision, ?array $result = null): OpportunityEnrichment
+    {
+        return OpportunityEnrichment::query()->create([
+            'workspace_id' => $evaluation->workspace_id,
+            'opportunity_id' => $evaluation->opportunity_id,
+            'evaluation_id' => $evaluation->id,
+            'revision' => $revision,
+            'full_description' => 'Synthetic confirmed details '.$revision.'.',
+            'overrides' => [],
+            'input_snapshot' => $evaluation->input_snapshot,
+            'result' => $result ?? $evaluation->result,
+            'payload_sha256' => hash('sha256', 'payload-'.$revision),
+            'input_sha256' => $evaluation->input_sha256,
+        ]);
     }
 }

@@ -11,10 +11,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $id
  * @property string $workspace_id
  * @property string $evaluation_id
+ * @property string|null $enrichment_id
  * @property TriageRecommendation $human_label
  * @property string|null $reason_code
+ * @property string|null $notes
+ * @property string|null $outcome
  * @property string $sample_kind
  * @property-read OpportunityEvaluation $evaluation
+ * @property-read OpportunityEnrichment|null $enrichment
  */
 class OpportunityReview extends Model
 {
@@ -24,8 +28,11 @@ class OpportunityReview extends Model
     protected $fillable = [
         'workspace_id',
         'evaluation_id',
+        'enrichment_id',
         'human_label',
         'reason_code',
+        'notes',
+        'outcome',
         'sample_kind',
         'reviewed_at',
     ];
@@ -46,5 +53,10 @@ class OpportunityReview extends Model
     public function evaluation(): BelongsTo
     {
         return $this->belongsTo(OpportunityEvaluation::class, 'evaluation_id');
+    }
+
+    public function enrichment(): BelongsTo
+    {
+        return $this->belongsTo(OpportunityEnrichment::class, 'enrichment_id');
     }
 }
