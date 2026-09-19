@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Application\Review\DemoReviewConfiguration;
 use App\Application\Review\SaveOpportunityEnrichment;
 use App\Application\Review\ShowReviewOpportunity;
 use App\Http\Requests\Review\StoreOpportunityEnrichmentRequest;
@@ -18,20 +19,22 @@ class OpportunityEnrichmentController extends Controller
         SaveOpportunityEnrichment $saveEnrichment,
         ShowReviewOpportunity $showOpportunity,
         LocalScoringProfileLoader $profileLoader,
+        DemoReviewConfiguration $demo,
     ): JsonResponse {
         $workspaceId = (string) $request->user()->workspace_id;
         $profile = $profileLoader->load(config('opportunity_review.profile_path'));
         $record = $showOpportunity->execute($workspaceId, $opportunity, $profile);
         Gate::authorize('update', $record);
         $validated = $request->validated();
+        $preset = $demo->enabled() ? $demo->preset($validated['preset_key']) : null;
 
         $saveEnrichment->execute(
             $workspaceId,
             $opportunity,
             $validated['evaluation_id'],
             $validated['expected_enrichment_id'],
-            $validated['full_description'],
-            $validated['overrides'] ?? [],
+            $preset['full_description'] ?? $validated['full_description'],
+            $preset['overrides'] ?? ($validated['overrides'] ?? []),
             $profile,
         );
 

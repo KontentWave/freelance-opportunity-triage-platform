@@ -5,11 +5,13 @@ import { reviewRequest } from "./http.js";
 const props = defineProps({ opportunity: { type: Object, required: true } });
 const emit = defineEmits(["saved", "started"]);
 const current = props.opportunity.current_review;
+const demoMode = props.opportunity.demo?.enabled === true;
+const demoNote = props.opportunity.demo?.note ?? "";
 const humanLabel = ref(current?.human_label ?? "");
 const reasonCode = ref(current?.reason_code ?? "");
 const notes = ref(current?.notes ?? "");
 const outcome = ref(current?.outcome ?? "");
-const sampleKind = ref(current?.sample_kind ?? "demo");
+const sampleKind = ref(demoMode ? "demo" : (current?.sample_kind ?? "demo"));
 const saving = ref(false);
 const errors = ref({});
 const failure = ref("");
@@ -160,7 +162,7 @@ async function submit() {
                         {{ errors.outcome[0] }}
                     </p>
                 </div>
-                <div class="field-group">
+                <div v-if="!demoMode" class="field-group">
                     <label for="sample-kind">Sample provenance</label>
                     <select
                         id="sample-kind"
@@ -187,7 +189,29 @@ async function submit() {
                         {{ errors.sample_kind[0] }}
                     </p>
                 </div>
-                <div class="field-group field-wide">
+                <div v-if="demoMode" class="field-group field-wide">
+                    <label for="review-notes">Synthetic note</label>
+                    <select
+                        id="review-notes"
+                        v-model="notes"
+                        :aria-invalid="Boolean(errors.notes)"
+                        :aria-describedby="
+                            errors.notes ? 'notes-error' : 'notes-help'
+                        "
+                    >
+                        <option value="">No note</option>
+                        <option :value="demoNote">
+                            Use fixed demonstration note
+                        </option>
+                    </select>
+                    <p id="notes-help" class="field-help">
+                        Shared demo mode does not accept visitor-supplied notes.
+                    </p>
+                    <p v-if="errors.notes" id="notes-error" class="field-error">
+                        {{ errors.notes[0] }}
+                    </p>
+                </div>
+                <div v-else class="field-group field-wide">
                     <label for="review-notes">Notes</label>
                     <textarea
                         id="review-notes"

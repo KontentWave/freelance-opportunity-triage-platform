@@ -2,6 +2,7 @@
 
 use App\Domain\Triage\Enums\TriageErrorCode;
 use App\Domain\Triage\Exceptions\TriageException;
+use App\Http\Middleware\EnsureDemoMode;
 use App\Http\Middleware\EnsureReviewWorkspace;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -17,6 +18,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->web(prepend: [EnsureDemoMode::class]);
+
         $middleware->alias([
             'review.workspace' => EnsureReviewWorkspace::class,
         ]);

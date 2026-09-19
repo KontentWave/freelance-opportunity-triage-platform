@@ -15,9 +15,12 @@ final class OpportunityDetailResource extends JsonResource
     public function toArray(Request $request): array
     {
         $list = (new OpportunityListResource($this->resource))->resolve($request);
-        $canonicalUrl = $this->safeCanonicalUrl($this->resource->canonical_url);
+        $canonicalUrl = config('opportunity_review.mode') === 'demo'
+            ? null
+            : $this->safeCanonicalUrl($this->resource->canonical_url);
 
         return $list + [
+            'demo' => $this->demoConfiguration(),
             'canonical_url' => $canonicalUrl,
             'excerpt' => $this->resource->excerpt,
             'contract_type' => $this->resource->contract_type,
@@ -55,6 +58,30 @@ final class OpportunityDetailResource extends JsonResource
                     'outcome' => $this->resource->getAttribute('current_review_outcome'),
                     'sample_kind' => $this->resource->getAttribute('current_review_sample_kind'),
                 ],
+        ];
+    }
+
+    /** @return array{enabled: bool, note: string|null, presets: array<string, string>} */
+    private function demoConfiguration(): array
+    {
+        $enabled = config('opportunity_review.mode') === 'demo';
+
+        if (! $enabled) {
+            return ['enabled' => false, 'note' => null, 'presets' => []];
+        }
+
+        $presets = collect(config('opportunity_review.demo_presets', []))
+            ->mapWithKeys(fn (mixed $preset, string $key): array => [
+                $key => is_array($preset) && is_string($preset['label'] ?? null)
+                    ? $preset['label']
+                    : $key,
+            ])
+            ->all();
+
+        return [
+            'enabled' => true,
+            'note' => config('opportunity_review.demo_note'),
+            'presets' => $presets,
         ];
     }
 

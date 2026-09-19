@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\SessionController;
+use App\Http\Controllers\DemoSessionController;
 use App\Http\Controllers\OpportunityEnrichmentController;
 use App\Http\Controllers\OpportunityEvaluationController;
 use App\Http\Controllers\OpportunityFeedbackController;
@@ -21,6 +22,9 @@ Route::middleware('guest')->group(function (): void {
     Route::get('/login', [SessionController::class, 'create'])->name('login');
     Route::post('/login', [SessionController::class, 'store'])->middleware('throttle:login');
 });
+
+Route::get('/demo', [DemoSessionController::class, 'create'])->name('demo');
+Route::post('/demo-session', [DemoSessionController::class, 'store'])->name('demo-session.store');
 
 Route::middleware(['auth', 'review.workspace'])->group(function (): void {
     Route::post('/logout', [SessionController::class, 'destroy'])->name('logout');

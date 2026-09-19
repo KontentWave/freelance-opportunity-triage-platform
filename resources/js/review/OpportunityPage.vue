@@ -7,6 +7,8 @@ import { reviewRequest } from "./http.js";
 
 const props = defineProps({ opportunityId: { type: String, required: true } });
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+const demoMode =
+    document.querySelector('meta[name="review-mode"]')?.content === "demo";
 const opportunity = ref(null);
 const loading = ref(true);
 const evaluating = ref(false);
@@ -70,7 +72,10 @@ onMounted(load);
 <template>
     <div class="review-shell">
         <header class="detail-header">
-            <a class="back-link" :href="returnUrl">← Back to queue</a>
+            <div>
+                <p v-if="demoMode" class="eyebrow">Synthetic shared demo</p>
+                <a class="back-link" :href="returnUrl">← Back to queue</a>
+            </div>
             <form method="POST" action="/logout">
                 <input type="hidden" name="_token" :value="csrfToken" />
                 <button class="secondary-button" type="submit">Sign out</button>

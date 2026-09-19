@@ -3,6 +3,8 @@ import { onMounted, reactive, ref, watch } from "vue";
 import { reviewRequest } from "./http.js";
 
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+const demoMode =
+    document.querySelector('meta[name="review-mode"]')?.content === "demo";
 const query = new URLSearchParams(window.location.search);
 const filters = reactive({
     recommendation: query.get("recommendation") ?? "ALL",
@@ -78,11 +80,18 @@ onMounted(async () => {
     <div class="review-shell">
         <header class="app-header">
             <div>
-                <p class="eyebrow">Private workspace</p>
+                <p class="eyebrow">
+                    {{
+                        demoMode ? "Synthetic shared demo" : "Private workspace"
+                    }}
+                </p>
                 <h1>Opportunity review queue</h1>
                 <p>
-                    Saved experimental suggestions for human review, never
-                    automatic decisions.
+                    {{
+                        demoMode
+                            ? "Fixed fictional opportunities. Shared changes may be reset."
+                            : "Saved experimental suggestions for human review, never automatic decisions."
+                    }}
                 </p>
             </div>
             <form method="POST" action="/logout">
