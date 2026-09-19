@@ -1,6 +1,6 @@
 # Freelance Opportunity Triage Platform
 
-This repository implements offline normalization, scheduled mailbox intake, and deterministic explainable triage of supported Upwork hourly job-alert emails. Phase 3 implementation is complete; calibration with a private personal profile and at least 30 genuine reviewed alerts is still pending.
+This repository implements offline normalization, scheduled mailbox intake, deterministic explainable triage, and an accessible review dashboard for supported Upwork hourly job-alert emails. The first 30-item private calibration completed but did not meet its provisional targets; Phase 4 proceeds only as an explicitly authorized portfolio demonstration.
 
 The Phase 1 slice is intentionally local-only. It parses a raw `.eml` file, reads the plain-text MIME part, normalizes the observed hourly alert fields, and persists safe workspace-scoped records without contacting Gmail, IMAP, Upwork, or any other external service.
 
@@ -26,6 +26,7 @@ Not included:
 - PHP 8.4
 - Composer 2
 - MariaDB 11.4
+- Node.js 22.23 or later
 - the PHP extensions required by the installed dependencies, including `mbstring` and `iconv`
 
 The automated test suite is MariaDB-only. SQLite is not a supported substitute for Phase 1 database validation.
@@ -204,7 +205,44 @@ Keep personal profiles and cohort files under the ignored `storage/app/private/t
 
 Use a profile with `purpose` set to `personal`, evaluate a predetermined consecutive cohort of at least 30 genuine supported imports, and record each judgment with `--sample-kind=real`. A changed machine/human label requires one of `fit`, `availability`, `economics`, `client_risk`, `missing_information`, or `other` as `--reason`.
 
-`DEMO_ONLY` and `INSUFFICIENT_DATA` reports never pass calibration. Only a complete `READY` report can produce `targets_met=true` or `false`; no such real calibration result is claimed in this repository yet.
+`DEMO_ONLY` and `INSUFFICIENT_DATA` reports never pass calibration. The first complete `READY` report produced `targets_met=false`; synthetic demo activity cannot change that historical result.
+
+## Review Dashboard
+
+Install and compile the frontend with the locked dependencies:
+
+```bash
+npm ci
+npm run build
+```
+
+Private mode is the default. Configure an operator-controlled profile path, assign a provisioned user to exactly one workspace, and serve only compiled assets:
+
+```dotenv
+OPPORTUNITY_REVIEW_MODE=private
+OPPORTUNITY_REVIEW_PROFILE_PATH=/absolute/server/path/to/personal-profile.json
+OPPORTUNITY_REVIEW_DEMO_USER_ID=
+```
+
+The private login is `/login`. Every review page and mutation derives workspace ownership from the authenticated user; no request selects a workspace or profile.
+
+For a shared synthetic demonstration, use a separate disposable MariaDB database whose name ends in `_demo`, disable mailbox intake, migrate it, and run the guarded seeder:
+
+```dotenv
+OPPORTUNITY_REVIEW_MODE=demo
+OPPORTUNITY_REVIEW_DEMO_USER_ID=41001
+OPPORTUNITY_MAILBOX_ENABLED=false
+DB_DATABASE=freelance_opportunity_triage_platform_demo
+```
+
+```bash
+php artisan migrate:fresh --force
+php artisan db:seed --class=ReviewDemoSeeder --force
+```
+
+The seeder refuses private mode, mailbox-enabled operation, unsafe database names, and databases containing unrelated application records. `/demo` provides the CSRF-protected credential-free entry. Demo enrichment accepts fixed preset keys only, feedback accepts enum values and an empty or fixed note, and all demo reviews use `sample_kind=demo`.
+
+See `.github/docs/runbooks/phase4-review-dashboard.md` before provisioning, resetting, deploying, or verifying either mode.
 
 ## Validation
 
@@ -219,6 +257,12 @@ php artisan test --compact
 vendor/bin/phpstan analyse
 vendor/bin/pint --dirty --format agent
 composer audit --locked
+npm ci
+npm run build
+npm audit
+npx playwright install chromium
+npm run test:e2e
+git diff --check
 ```
 
 If your local MariaDB credentials are not configured yet, `php artisan test --compact` will fail fast by design instead of falling back to SQLite.
@@ -231,7 +275,7 @@ The repository CI workflow lives at `.github/workflows/ci.yml` and defines these
 - `Tests / MariaDB 11.4`
 - `Secret scan`
 
-The test job provisions an isolated MariaDB 11.4 service database, runs the full PHPUnit suite with coverage enabled, and enforces these thresholds:
+The test job provisions an isolated MariaDB 11.4 service database, runs the full PHPUnit suite with coverage enabled, builds production assets, and runs the one-worker Chromium acceptance suite. It enforces these thresholds:
 
 - at least 80% overall coverage
 - at least 90% coverage for Phase 1 parser/domain code

@@ -1006,8 +1006,8 @@ The required skip rate of at least 50% and false-negative rate of at most 5% wer
 ## Phase 4: Accessible Review Dashboard and Manual Enrichment
 
 **Role:** Approved implementation contract; append this section to the existing as-built sheet.
-**Status:** Protected read journey plus enrichment and feedback implemented and locally validated under the explicit portfolio-demo decision. Phase 3 engineering and its unsuccessful first real calibration remain accepted historical evidence; Phase 4 is not complete.
-**Date:** 2026-09-17
+**Status:** All three implementation slices are locally implemented and validated under the explicit portfolio-demo decision. Phase 3 engineering and its unsuccessful first real calibration remain accepted historical evidence; protected CI and target-host smoke are still required, so Phase 4 is not complete.
+**Date:** 2026-09-19
 **Behavior file:** `.github/docs/features/review_and_enrich_opportunities.feature`
 
 ### Evidence and entry decision
@@ -1016,7 +1016,7 @@ Reviewed repository baseline: [main at ff499f3](https://github.com/KontentWave/f
 
 The Phase 3 operational record says the deployed synthetic smoke passed and the first private real calibration completed with 30 selected and reviewed opportunities. Its `READY` report measured a 3.33% skip rate and 9.09% false-negative rate, so `targets_met=false`. There is no calibration-based GO decision. Deployment verification and the Phase 3 engineering work remain complete; the feasibility hypothesis failed this first real test.
 
-Marcel explicitly decided on 2026-09-14 to proceed only as a portfolio demonstration despite the failed feasibility targets. This authorizes implementation without another calibration cycle and does not convert the failed experiment into a feasibility GO. The protected read journey, enrichment, and feedback are implemented and locally validated; synthetic demo entry and final browser acceptance remain unimplemented Slice 3 work.
+Marcel explicitly decided on 2026-09-14 to proceed only as a portfolio demonstration despite the failed feasibility targets. This authorizes implementation without another calibration cycle and does not convert the failed experiment into a feasibility GO. The protected read journey, enrichment/feedback, guarded synthetic demo, and local browser acceptance are implemented. Target-host verification remains outstanding.
 
 ### Protected read journey evidence
 
@@ -1035,6 +1035,16 @@ All seven named Slice 2 PHPUnit cases passed, covering independent feedback, ema
 Pint, PHPStan, strict Composer validation, the locked Composer audit, `npm ci`, the Vite production build, the npm audit, and `git diff --check` passed. Composer and npm reported no known dependency vulnerabilities. The local Node runtime remained 22.18.0, below the declared `>=22.23` project baseline; `npm ci` emitted `EBADENGINE`, although installation and the production build succeeded.
 
 A local synthetic private browser smoke verified keyboard login and navigation, confirmed-detail enrichment, feedback persistence, text-only rendering of script-like input, same-origin resources, logical keyboard reachability at simulated 200% zoom, and no page-level horizontal overflow at a 320 CSS-pixel viewport. A recoverable invalid enrichment save returned 422, retained the draft, focused the error summary, and left no stale success announcement. This was a manual synthetic smoke, not the Slice 3 Playwright acceptance suite. No target-host verification, synthetic demo seeder or preset flow, credential-free demo entry, runbook, deployment, or final browser acceptance is claimed. Phase 4 remains incomplete.
+
+### Demonstration and acceptance evidence
+
+Local Slice 3 implementation added a guarded, idempotent `ReviewDemoSeeder` with two assigned synthetic workspaces, 28 fixed opportunities, all recommendation states plus UNSCORED and edge states, and no mailbox or marketplace access. The seeder accepts only demo mode on a disposable `_demo` or `_test` database with mailbox intake disabled, refuses unrelated application records, and does not update existing fixture rows.
+
+Demo entry is a credential-free CSRF-protected POST for the configured seeded user only. A middleware gate returns 404 for both demo routes in private mode before CSRF processing. Shared-demo enrichment resolves allowlisted preset keys on the server; arbitrary descriptions and overrides are rejected. Feedback accepts only its enums and an empty or fixed synthetic note, and real provenance is rejected while the application forces `sample_kind=demo`.
+
+Local MariaDB validation passed for `ReviewDemoTest` with 5 tests and 29 assertions. The production Vite build passed. The Chromium-only Playwright suite passed 2 tests sequentially with one worker against compiled assets and the disposable MariaDB `_test` database. It covered private-mode demo rejection and unauthenticated JSON access; keyboard entry/navigation; 26-record workspace isolation, direct foreign-record denial, and pagination boundary; 320 CSS pixels and simulated 200% zoom; script-like text escaping; same-origin request monitoring; forged CSRF rejection with no mutation; recoverable 422, 409, and 401 saves; draft preservation and focused errors; preset-only demo controls; persistence after reload; and no outside-origin request.
+
+The existing `Tests / MariaDB 11.4` job now pins Node 22.23.0, runs `npm ci`, builds production assets, audits npm dependencies, installs Chromium, and runs the one-worker browser suite after the existing PHPUnit coverage gates. This is local implementation evidence only: no hosted CI run, deployment, target-host smoke, or Phase 4 completion is claimed.
 
 ### Action and bounded scope
 
@@ -1210,7 +1220,7 @@ The runbook covers private account/workspace assignment, server-only profile con
 
 **Done:** the specified journeys work, the mapped tests and existing checks pass on the candidate commit, the manual accessibility sweep and target-host synthetic browser smoke pass, and ADR/README/this Phase 4 section reflect the implementation. Preserve existing evaluation history and source rows. Application rollback removes access to the new routes/assets while preserving additive data; it does not run destructive down migrations against personal data.
 
-Record the Phase 3 product decision independently. Under this portfolio-demo decision, state that the first real calibration completed and failed its targets; do not describe calibration as pending or successful. A completed Phase 4 will deliver the functional MVP interface, and Phase 5 remains the publication milestone. This entry currently claims only protected-read implementation in progress, not Phase 4 completion, deployment, or later-slice acceptance.
+Record the Phase 3 product decision independently. Under this portfolio-demo decision, state that the first real calibration completed and failed its targets; do not describe calibration as pending or successful. A completed Phase 4 will deliver the functional MVP interface, and Phase 5 remains the publication milestone. This entry claims local implementation and acceptance for all three slices, not protected CI, deployment, target-host verification, or Phase 4 completion.
 
 ### Source anchors
 

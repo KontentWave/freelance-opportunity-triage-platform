@@ -23,14 +23,18 @@ class UpdateOpportunityFeedbackRequest extends FormRequest
      */
     public function rules(): array
     {
+        $demoMode = config('opportunity_review.mode') === 'demo';
+
         return [
             'evaluation_id' => ['required', 'string', 'ulid'],
             'enrichment_id' => ['present', 'nullable', 'string', 'ulid'],
             'human_label' => ['required', Rule::in(['APPLY', 'MAYBE', 'SKIP'])],
             'reason_code' => ['present', 'nullable', Rule::in(['fit', 'availability', 'economics', 'client_risk', 'missing_information', 'other'])],
-            'notes' => ['present', 'nullable', 'string', 'max:2000'],
+            'notes' => $demoMode
+                ? ['present', 'nullable', Rule::in(['', config('opportunity_review.demo_note')])]
+                : ['present', 'nullable', 'string', 'max:2000'],
             'outcome' => ['present', 'nullable', Rule::in(['not_applied', 'applied', 'in_discussion', 'hired', 'closed'])],
-            'sample_kind' => ['required', Rule::in(['demo', 'real'])],
+            'sample_kind' => ['required', Rule::in($demoMode ? ['demo'] : ['demo', 'real'])],
         ];
     }
 

@@ -4,6 +4,9 @@ import { reviewRequest } from "./http.js";
 
 const props = defineProps({ opportunity: { type: Object, required: true } });
 const emit = defineEmits(["saved", "started"]);
+const demoMode = props.opportunity.demo?.enabled === true;
+const demoPresets = props.opportunity.demo?.presets ?? {};
+const presetKey = ref(Object.keys(demoPresets)[0] ?? "");
 const existingOverrides = props.opportunity.current_enrichment?.overrides ?? {};
 const currentInput =
     props.opportunity.current_enrichment?.input ??
@@ -92,17 +95,25 @@ async function submit() {
     status.value = "";
 
     try {
+        const requestBody = demoMode
+            ? {
+                  evaluation_id: props.opportunity.evaluation_id,
+                  expected_enrichment_id:
+                      props.opportunity.current_enrichment_id,
+                  preset_key: presetKey.value,
+              }
+            : {
+                  evaluation_id: props.opportunity.evaluation_id,
+                  expected_enrichment_id:
+                      props.opportunity.current_enrichment_id,
+                  full_description: fullDescription.value,
+                  overrides: sparseOverrides(),
+              };
         const payload = await reviewRequest(
             `/review/v1/opportunities/${props.opportunity.id}/enrichments`,
             {
                 method: "POST",
-                body: JSON.stringify({
-                    evaluation_id: props.opportunity.evaluation_id,
-                    expected_enrichment_id:
-                        props.opportunity.current_enrichment_id,
-                    full_description: fullDescription.value,
-                    overrides: sparseOverrides(),
-                }),
+                body: JSON.stringify(requestBody),
             },
         );
         fullDescription.value =
@@ -137,8 +148,11 @@ async function submit() {
                 <h2 id="enrichment-heading">Confirm additional details</h2>
             </div>
             <p class="judgment-note">
-                Pasted text supports your review. Only fields you explicitly
-                confirm affect the score.
+                {{
+                    demoMode
+                        ? "Choose a fixed synthetic preset. Visitor-supplied descriptions and overrides are not accepted."
+                        : "Pasted text supports your review. Only fields you explicitly confirm affect the score."
+                }}
             </p>
         </div>
 
@@ -154,7 +168,39 @@ async function submit() {
         <p class="sr-only" role="status" aria-live="polite">{{ status }}</p>
 
         <form class="review-form" @submit.prevent="submit">
-            <div class="field-group">
+            <div v-if="demoMode" class="field-group">
+                <label for="demo-preset">Synthetic confirmation preset</label>
+                <select
+                    id="demo-preset"
+                    v-model="presetKey"
+                    required
+                    :aria-invalid="Boolean(errors.preset_key)"
+                    :aria-describedby="
+                        errors.preset_key ? 'preset-error' : 'preset-help'
+                    "
+                >
+                    <option
+                        v-for="(label, key) in demoPresets"
+                        :key="key"
+                        :value="key"
+                    >
+                        {{ label }}
+                    </option>
+                </select>
+                <p id="preset-help" class="field-help">
+                    The server resolves this key to fixed synthetic text and
+                    confirmed fields.
+                </p>
+                <p
+                    v-if="errors.preset_key"
+                    id="preset-error"
+                    class="field-error"
+                >
+                    {{ errors.preset_key[0] }}
+                </p>
+            </div>
+
+            <div v-else class="field-group">
                 <label for="full-description">Full description</label>
                 <textarea
                     id="full-description"
@@ -178,7 +224,7 @@ async function submit() {
                 </p>
             </div>
 
-            <fieldset>
+            <fieldset v-if="!demoMode">
                 <legend>Confirmed scoring details</legend>
                 <div class="override-grid">
                     <div class="field-group">
