@@ -166,7 +166,7 @@ Node.js is not a separate production service by default. A Node-based mail worke
 
 ### Phase 4 — Accessible Review Dashboard and Manual Enrichment
 
-**Implementation status:** In progress. The protected read journey, enrichment/feedback, guarded synthetic demo entry, and local Chromium acceptance are implemented. Marcel explicitly authorized Phase 4 on 2026-09-14 as a portfolio demonstration despite the failed feasibility targets; another calibration cycle is not an entry prerequisite. Protected CI and approved target-host smoke remain required before completion.
+**Implementation status:** In progress. The protected read journey, enrichment/feedback, guarded synthetic demo entry, and Chromium acceptance are implemented and passed protected CI on merged commit `906586d`. Marcel explicitly authorized Phase 4 on 2026-09-14 as a portfolio demonstration despite the failed feasibility targets; another calibration cycle is not an entry prerequisite. Approved target-host smoke remains required before completion.
 
 **Hypothesis:** A compact review queue makes the remaining human work faster and provides a credible portfolio demonstration.
 
