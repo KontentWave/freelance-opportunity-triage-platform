@@ -1006,7 +1006,7 @@ The required skip rate of at least 50% and false-negative rate of at most 5% wer
 ## Phase 4: Accessible Review Dashboard and Manual Enrichment
 
 **Role:** Approved implementation contract; append this section to the existing as-built sheet.
-**Status:** All three implementation slices are locally implemented and validated under the explicit portfolio-demo decision. Phase 3 engineering and its unsuccessful first real calibration remain accepted historical evidence; protected CI and target-host smoke are still required, so Phase 4 is not complete.
+**Status:** All three implementation slices are implemented and passed protected CI under the explicit portfolio-demo decision. Phase 3 engineering and its unsuccessful first real calibration remain accepted historical evidence; target-host smoke is still required, so Phase 4 is not complete.
 **Date:** 2026-09-19
 **Behavior file:** `.github/docs/features/review_and_enrich_opportunities.feature`
 
@@ -1044,7 +1044,7 @@ Demo entry is a credential-free CSRF-protected POST for the configured seeded us
 
 Local MariaDB validation passed for `ReviewDemoTest` with 5 tests and 29 assertions. The production Vite build passed. The Chromium-only Playwright suite passed 2 tests sequentially with one worker against compiled assets and the disposable MariaDB `_test` database. It covered private-mode demo rejection and unauthenticated JSON access; keyboard entry/navigation; 26-record workspace isolation, direct foreign-record denial, and pagination boundary; 320 CSS pixels and simulated 200% zoom; script-like text escaping; same-origin request monitoring; forged CSRF rejection with no mutation; recoverable 422, 409, and 401 saves; draft preservation and focused errors; preset-only demo controls; persistence after reload; and no outside-origin request.
 
-The existing `Tests / MariaDB 11.4` job now pins Node 22.23.0, runs `npm ci`, builds production assets, audits npm dependencies, installs Chromium, and runs the one-worker browser suite after the existing PHPUnit coverage gates. This is local implementation evidence only: no hosted CI run, deployment, target-host smoke, or Phase 4 completion is claimed.
+The existing `Tests / MariaDB 11.4` job now pins Node 22.23.0, runs `npm ci`, builds production assets, audits npm dependencies, installs Chromium, and runs the one-worker browser suite after the existing PHPUnit coverage gates. PR #11 merged as commit [`906586d`](https://github.com/KontentWave/freelance-opportunity-triage-platform/commit/906586d77abad2b383306cbd89cfa4382c7c6faa). Its post-merge [CI run 35434572184](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/35434572184) passed `Quality`, `Tests / MariaDB 11.4`, and `Secret scan`. No deployment, target-host smoke, or Phase 4 completion is claimed.
 
 ### Action and bounded scope
 
@@ -1220,7 +1220,7 @@ The runbook covers private account/workspace assignment, server-only profile con
 
 **Done:** the specified journeys work, the mapped tests and existing checks pass on the candidate commit, the manual accessibility sweep and target-host synthetic browser smoke pass, and ADR/README/this Phase 4 section reflect the implementation. Preserve existing evaluation history and source rows. Application rollback removes access to the new routes/assets while preserving additive data; it does not run destructive down migrations against personal data.
 
-Record the Phase 3 product decision independently. Under this portfolio-demo decision, state that the first real calibration completed and failed its targets; do not describe calibration as pending or successful. A completed Phase 4 will deliver the functional MVP interface, and Phase 5 remains the publication milestone. This entry claims local implementation and acceptance for all three slices, not protected CI, deployment, target-host verification, or Phase 4 completion.
+Record the Phase 3 product decision independently. Under this portfolio-demo decision, state that the first real calibration completed and failed its targets; do not describe calibration as pending or successful. A completed Phase 4 will deliver the functional MVP interface, and Phase 5 remains the publication milestone. This entry claims implementation, acceptance, and protected CI for all three slices, not deployment, target-host verification, or Phase 4 completion.
 
 ### Source anchors
 

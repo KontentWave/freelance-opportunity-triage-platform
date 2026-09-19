@@ -88,7 +88,7 @@ Deployment requires explicit approval and target-host access. After deployment, 
 5. Logout invalidates access.
 6. Browser network records show no mailbox, marketplace, or non-origin request.
 
-Do not claim Phase 4 complete until protected CI and this target-host smoke pass.
+Protected CI passed for merged commit `906586d` in run `35434572184`. Do not claim Phase 4 complete until this target-host smoke also passes.
 
 ## Rollback
 
