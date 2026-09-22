@@ -1,6 +1,6 @@
 # Project Roadmap — Freelance Opportunity Triage Platform
 
-**Status:** Vision approved; Phases 1 and 2 completed; Phase 3 engineering and first real calibration complete; Phase 4 protected read journey in progress under an explicit portfolio-demo decision; optional Tester Skill deferred until after MVP
+**Status:** Vision approved; Phases 1 through 4 completed; Phase 3's first real calibration remains an unsuccessful feasibility result; Phase 5 is next; optional Tester Skill deferred until after MVP
 **Primary user:** An independent freelancer reviewing opportunities from authorized job-alert emails  
 **Working title:** To be decided; do not use Upwork trademarks in product branding
 
@@ -166,7 +166,7 @@ Node.js is not a separate production service by default. A Node-based mail worke
 
 ### Phase 4 — Accessible Review Dashboard and Manual Enrichment
 
-**Implementation status:** In progress. The protected read journey, enrichment/feedback, guarded synthetic demo entry, and Chromium acceptance are implemented and passed protected CI on merged commit `906586d`. Marcel explicitly authorized Phase 4 on 2026-09-14 as a portfolio demonstration despite the failed feasibility targets; another calibration cycle is not an entry prerequisite. Approved target-host smoke remains required before completion.
+**Implementation status:** Complete. The protected read journey, enrichment/feedback, guarded synthetic demo entry, and Chromium acceptance passed protected CI on merged commit `906586d`. Candidate `65bf4ea` was deployed as an isolated synthetic demo and passed the approved target-host smoke on 2026-09-22. Phase 3's failed feasibility targets remain historical evidence and are not converted into a GO claim.
 
 **Hypothesis:** A compact review queue makes the remaining human work faster and provides a credible portfolio demonstration.
 
@@ -264,7 +264,7 @@ A phase is complete only when its acceptance scenarios pass, unit/integration te
 
 ## Immediate Next Decision
 
-Implement the bounded Phase 4 portfolio demonstration without presenting it as validated triage expansion. The completed Phase 3 calibration remains historical evidence: 30 reviewed imports, 3.33% machine skip rate, 9.09% false-negative rate, and `targets_met=false`. No calibration-based GO is claimed, and another calibration cycle is not a prerequisite for the portfolio direction.
+Proceed to the Phase 5 portfolio-release decision without presenting the completed Phase 4 demonstration as validated triage expansion. Phase 4 target-host acceptance passed on deployed candidate `65bf4ea`. The completed Phase 3 calibration remains historical evidence: 30 reviewed imports, 3.33% machine skip rate, 9.09% false-negative rate, and `targets_met=false`. No calibration-based GO is claimed.
 
 Preserve the prior Phase 2 soak and deployment records as historical evidence for their named commits. The polling-deadline correction closed through protected CI run `34269173609` and target-host verification of merge commit `161c97d`, but those checks do not prove an absolute database runtime bound.
 
