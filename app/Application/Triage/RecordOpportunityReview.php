@@ -2,6 +2,7 @@
 
 namespace App\Application\Triage;
 
+use App\Application\Review\ResolveDisplayedEvaluation;
 use App\Domain\Triage\Data\ScoringProfile;
 use App\Domain\Triage\Enums\TriageErrorCode;
 use App\Domain\Triage\Enums\TriageRecommendation;
@@ -34,7 +35,10 @@ final class RecordOpportunityReview
         'closed',
     ];
 
-    public function __construct(private readonly BuildOpportunityTriageInput $buildInput) {}
+    public function __construct(
+        private readonly BuildOpportunityTriageInput $buildInput,
+        private readonly ResolveDisplayedEvaluation $resolveDisplayedEvaluation,
+    ) {}
 
     /**
      * @param  array{opportunity_id: string, enrichment_id: ?string, notes: ?string, outcome: ?string, profile: ScoringProfile}|null  $dashboardDetails
@@ -102,8 +106,9 @@ final class RecordOpportunityReview
                 $profile = $dashboardDetails['profile'];
                 $enrichmentId = $dashboardDetails['enrichment_id'];
                 $currentInput = $this->buildInput->execute($opportunity);
+                $displayedEvaluation = $this->resolveDisplayedEvaluation->execute($opportunity, $profile);
 
-                if ($opportunity->review_evaluation_id !== $evaluation->id
+                if ($displayedEvaluation?->id !== $evaluation->id
                     || $evaluation->input_sha256 !== $currentInput->sha256
                     || $evaluation->engine_version !== OpportunityScorer::ENGINE_VERSION
                     || $evaluation->profile_version !== $profile->version) {
@@ -170,9 +175,14 @@ final class RecordOpportunityReview
             }
 
             if ($review !== null) {
-                if ($review->only(array_keys($attributes)) === collect($attributes)
+                $currentAttributes = collect($review->only(array_keys($attributes)))
                     ->map(fn (mixed $value): mixed => $value instanceof TriageRecommendation ? $value->value : $value)
-                    ->all()) {
+                    ->all();
+                $newAttributes = collect($attributes)
+                    ->map(fn (mixed $value): mixed => $value instanceof TriageRecommendation ? $value->value : $value)
+                    ->all();
+
+                if ($currentAttributes === $newAttributes) {
                     return $review;
                 }
 

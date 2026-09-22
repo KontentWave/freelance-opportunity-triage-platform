@@ -136,9 +136,23 @@ Feature: Review and enrich opportunities in an accessible workspace dashboard
       And the original evaluation and opportunity are unchanged
       When I submit the identical review again
       Then the same review remains unchanged
+      And its review and update timestamps remain unchanged after time advances
       When I explicitly revise the feedback
       Then only the current review changes
       And the page continues to distinguish my judgment from the machine suggestion
+
+    @critical @evaluation @history
+    Scenario: Save against the effective evaluation displayed by the dashboard
+      Given a Phase 3 evaluation matches the active profile, engine, and current inputs
+      And the opportunity has no selected review evaluation
+      When I open the opportunity details
+      Then that newest eligible evaluation is displayed without changing the review pointer
+      When I save confirmed details and human feedback against that displayed evaluation
+      Then both writes succeed against the displayed context
+      And the review pointer remains unchanged
+      When I submit a different historical evaluation
+      Then the response status is 409
+      And no new enrichment or changed feedback is persisted
 
     @critical @enrichment
     Scenario: Re-evaluate confirmed details without rewriting the email

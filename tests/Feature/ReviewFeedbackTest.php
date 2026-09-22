@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Application\Triage\BuildCalibrationReport;
 use App\Application\Triage\EvaluateOpportunity;
+use App\Domain\Triage\Data\ScoringProfile;
 use App\Infrastructure\Triage\LocalScoringProfileLoader;
 use App\Models\Opportunity;
 use App\Models\OpportunityEnrichment;
@@ -69,6 +70,66 @@ final class ReviewFeedbackTest extends TestCase
     }
 
     #[Test]
+    public function it_saves_feedback_for_the_displayed_fallback_evaluation_without_selecting_a_pointer(): void
+    {
+        config()->set('opportunity_review.profile_path', resource_path('triage/profiles/demo-v1.json'));
+        $workspace = Workspace::factory()->create();
+        $user = User::factory()->create(['workspace_id' => $workspace->id]);
+        $opportunity = Opportunity::factory()->create(['workspace_id' => $workspace->id]);
+        $opportunity->skills()->create(['name' => 'Django', 'position' => 0]);
+        $profile = app(LocalScoringProfileLoader::class)->load(config('opportunity_review.profile_path'));
+        $historicalProfile = ScoringProfile::fromArray([
+            ...$profile->definition,
+            'label' => 'Historical test profile',
+        ]);
+        $historicalEvaluation = app(EvaluateOpportunity::class)->execute(
+            $workspace->id,
+            $opportunity->id,
+            $historicalProfile,
+        );
+        $evaluation = app(EvaluateOpportunity::class)->execute($workspace->id, $opportunity->id, $profile);
+
+        $this->assertNull($opportunity->fresh()->review_evaluation_id);
+        $this->actingAs($user)
+            ->getJson('/review/v1/opportunities/'.$opportunity->id)
+            ->assertOk()
+            ->assertJsonPath('data.evaluation_id', $evaluation->id);
+
+        $this->actingAs($user)->putJson(
+            '/review/v1/opportunities/'.$opportunity->id.'/review',
+            [
+                'evaluation_id' => $evaluation->id,
+                'enrichment_id' => null,
+                'human_label' => $evaluation->recommendation->value,
+                'reason_code' => null,
+                'notes' => null,
+                'outcome' => null,
+                'sample_kind' => 'demo',
+            ],
+        )->assertOk()
+            ->assertJsonPath('data.evaluation_id', $evaluation->id);
+
+        $this->actingAs($user)->putJson(
+            '/review/v1/opportunities/'.$opportunity->id.'/review',
+            [
+                'evaluation_id' => $historicalEvaluation->id,
+                'enrichment_id' => null,
+                'human_label' => $historicalEvaluation->recommendation->value,
+                'reason_code' => null,
+                'notes' => null,
+                'outcome' => null,
+                'sample_kind' => 'demo',
+            ],
+        )->assertStatus(409)->assertJsonMissing(['exception']);
+
+        $this->assertDatabaseHas('opportunity_reviews', [
+            'evaluation_id' => $evaluation->id,
+            'sample_kind' => 'demo',
+        ]);
+        $this->assertNull($opportunity->fresh()->review_evaluation_id);
+    }
+
+    #[Test]
     public function it_keeps_calibration_on_email_predictions_and_human_labels(): void
     {
         [$user, $opportunity, $evaluation, $enrichment] = $this->reviewContext();
@@ -118,6 +179,7 @@ final class ReviewFeedbackTest extends TestCase
             ->json('data.current_review.id');
         $original = OpportunityReview::query()->findOrFail($reviewId)->getRawOriginal();
 
+        $this->travel(1)->minute();
         $this->actingAs($user)->putJson($feedbackUrl, $payload)->assertOk();
         $this->assertSame($original, OpportunityReview::query()->findOrFail($reviewId)->getRawOriginal());
 
