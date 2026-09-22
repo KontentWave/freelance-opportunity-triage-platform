@@ -90,6 +90,12 @@ Deployment requires explicit approval and target-host access. After deployment, 
 
 Protected CI passed for merged commit `906586d` in run `35434572184`. Do not claim Phase 4 complete until this target-host smoke also passes.
 
+### Completion record
+
+Target-host acceptance passed on 2026-09-22 for deployed candidate `65bf4ea`. The isolated MariaDB 11.4 demo database ended in `_demo` and contained 2 synthetic workspaces, 2 synthetic users, 28 synthetic opportunities, 27 evaluations, 3 enrichment revisions, and 2 demo reviews after acceptance. Email-import and mailbox tables remained empty; mailbox intake remained disabled.
+
+The browser smoke passed credential-free entry, assigned-workspace queue and foreign-detail isolation, keyboard queue-to-detail navigation, confirmed-field re-evaluation, demo feedback persistence after reload, logout invalidation, 320 CSS-pixel and simulated 200% zoom checks, and focused recoverable-error behavior with draft preservation. Request capture found zero mailbox, marketplace, or non-origin requests. Protected CI evidence remains run `35434572184` for implementation commit `906586d`; deployment commit `65bf4ea` contains the subsequent evidence documentation baseline.
+
 ## Rollback
 
 Deploy the prior application assets and code while preserving additive review data. Do not run destructive down migrations against private data. A demo database may be discarded only after re-verifying its `_demo` identity.

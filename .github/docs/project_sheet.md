@@ -1006,8 +1006,8 @@ The required skip rate of at least 50% and false-negative rate of at most 5% wer
 ## Phase 4: Accessible Review Dashboard and Manual Enrichment
 
 **Role:** Approved implementation contract; append this section to the existing as-built sheet.
-**Status:** All three implementation slices are implemented and passed protected CI under the explicit portfolio-demo decision. Phase 3 engineering and its unsuccessful first real calibration remain accepted historical evidence; target-host smoke is still required, so Phase 4 is not complete.
-**Date:** 2026-09-19
+**Status:** Complete. All three implementation slices passed protected CI and the isolated synthetic deployment passed the approved target-host acceptance gate. Phase 3 engineering and its unsuccessful first real calibration remain accepted historical evidence.
+**Date:** 2026-09-22
 **Behavior file:** `.github/docs/features/review_and_enrich_opportunities.feature`
 
 ### Evidence and entry decision
@@ -1016,7 +1016,7 @@ Reviewed repository baseline: [main at ff499f3](https://github.com/KontentWave/f
 
 The Phase 3 operational record says the deployed synthetic smoke passed and the first private real calibration completed with 30 selected and reviewed opportunities. Its `READY` report measured a 3.33% skip rate and 9.09% false-negative rate, so `targets_met=false`. There is no calibration-based GO decision. Deployment verification and the Phase 3 engineering work remain complete; the feasibility hypothesis failed this first real test.
 
-Marcel explicitly decided on 2026-09-14 to proceed only as a portfolio demonstration despite the failed feasibility targets. This authorizes implementation without another calibration cycle and does not convert the failed experiment into a feasibility GO. The protected read journey, enrichment/feedback, guarded synthetic demo, and local browser acceptance are implemented. Target-host verification remains outstanding.
+Marcel explicitly decided on 2026-09-14 to proceed only as a portfolio demonstration despite the failed feasibility targets. This authorized implementation without another calibration cycle and did not convert the failed experiment into a feasibility GO. The protected read journey, enrichment/feedback, guarded synthetic demo, local browser acceptance, and target-host acceptance are complete.
 
 ### Protected read journey evidence
 
@@ -1044,7 +1044,13 @@ Demo entry is a credential-free CSRF-protected POST for the configured seeded us
 
 Local MariaDB validation passed for `ReviewDemoTest` with 5 tests and 29 assertions. The production Vite build passed. The Chromium-only Playwright suite passed 2 tests sequentially with one worker against compiled assets and the disposable MariaDB `_test` database. It covered private-mode demo rejection and unauthenticated JSON access; keyboard entry/navigation; 26-record workspace isolation, direct foreign-record denial, and pagination boundary; 320 CSS pixels and simulated 200% zoom; script-like text escaping; same-origin request monitoring; forged CSRF rejection with no mutation; recoverable 422, 409, and 401 saves; draft preservation and focused errors; preset-only demo controls; persistence after reload; and no outside-origin request.
 
-The existing `Tests / MariaDB 11.4` job now pins Node 22.23.0, runs `npm ci`, builds production assets, audits npm dependencies, installs Chromium, and runs the one-worker browser suite after the existing PHPUnit coverage gates. PR #11 merged as commit [`906586d`](https://github.com/KontentWave/freelance-opportunity-triage-platform/commit/906586d77abad2b383306cbd89cfa4382c7c6faa). Its post-merge [CI run 35434572184](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/35434572184) passed `Quality`, `Tests / MariaDB 11.4`, and `Secret scan`. No deployment, target-host smoke, or Phase 4 completion is claimed.
+The existing `Tests / MariaDB 11.4` job now pins Node 22.23.0, runs `npm ci`, builds production assets, audits npm dependencies, installs Chromium, and runs the one-worker browser suite after the existing PHPUnit coverage gates. PR #11 merged as commit [`906586d`](https://github.com/KontentWave/freelance-opportunity-triage-platform/commit/906586d77abad2b383306cbd89cfa4382c7c6faa). Its post-merge [CI run 35434572184](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/35434572184) passed `Quality`, `Tests / MariaDB 11.4`, and `Secret scan`.
+
+### Target-host deployment and acceptance evidence
+
+Candidate [`65bf4ea`](https://github.com/KontentWave/freelance-opportunity-triage-platform/commit/65bf4eaee6cc5d0d7eb0cc17527fe12d67e0983c) was deployed on 2026-09-22 using a separate disposable MariaDB 11.4 database ending in `_demo`. Production configuration resolved to demo mode with mailbox intake disabled and the bundled synthetic profile. The guarded `ReviewDemoSeeder` ran after `migrate:fresh`; locked production dependencies and compiled Vite assets were deployed. The resulting database contained 2 synthetic workspaces, 2 synthetic users, 28 synthetic opportunities, 27 evaluations, 3 enrichment revisions produced by acceptance retries, and 2 demo reviews. Email-import and mailbox tables contained zero records; every opportunity used the synthetic provider and every review retained demo provenance.
+
+The public target-host browser smoke passed credential-free demo entry; a 25-item first page from the assigned 26-opportunity workspace; direct foreign-workspace detail denial with 404; keyboard queue-to-detail navigation; 320 CSS-pixel and simulated 200% zoom layouts without page-level horizontal overflow; a focused recoverable 422 with its preset draft preserved; confirmed-field re-evaluation; feedback save and persistence after reload with `sample_kind=demo`; and logout followed by a 401 JSON access check. Browser request capture observed zero mailbox, marketplace, or non-origin requests. The deployed worktree remained tracked-clean at `65bf4ea`.
 
 ### Action and bounded scope
 
@@ -1220,7 +1226,7 @@ The runbook covers private account/workspace assignment, server-only profile con
 
 **Done:** the specified journeys work, the mapped tests and existing checks pass on the candidate commit, the manual accessibility sweep and target-host synthetic browser smoke pass, and ADR/README/this Phase 4 section reflect the implementation. Preserve existing evaluation history and source rows. Application rollback removes access to the new routes/assets while preserving additive data; it does not run destructive down migrations against personal data.
 
-Record the Phase 3 product decision independently. Under this portfolio-demo decision, state that the first real calibration completed and failed its targets; do not describe calibration as pending or successful. A completed Phase 4 will deliver the functional MVP interface, and Phase 5 remains the publication milestone. This entry claims implementation, acceptance, and protected CI for all three slices, not deployment, target-host verification, or Phase 4 completion.
+Record the Phase 3 product decision independently. Under this portfolio-demo decision, state that the first real calibration completed and failed its targets; do not describe calibration as pending or successful. Phase 4 delivers the functional MVP interface, and Phase 5 remains the publication milestone. This entry claims implementation, protected CI, isolated synthetic deployment, target-host verification, and Phase 4 completion.
 
 ### Source anchors
 
