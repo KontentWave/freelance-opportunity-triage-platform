@@ -30,6 +30,7 @@ final class RecordOpportunityReviewTest extends TestCase
 
         $created = $action->execute($evaluation->workspace_id, $evaluation->id, 'APPLY', null, 'demo');
         $originalAttributes = $created->fresh()->getRawOriginal();
+        $this->travel(1)->minute();
         $identical = $action->execute($evaluation->workspace_id, $evaluation->id, 'APPLY', null, 'demo');
         $this->travel(1)->minute();
         $revised = $action->execute($evaluation->workspace_id, $evaluation->id, 'SKIP', 'fit', 'real');

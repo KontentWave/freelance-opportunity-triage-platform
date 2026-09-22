@@ -17,6 +17,7 @@ class SaveOpportunityEnrichment
     public function __construct(
         private readonly BuildOpportunityTriageInput $buildInput,
         private readonly OpportunityScorer $scorer,
+        private readonly ResolveDisplayedEvaluation $resolveDisplayedEvaluation,
     ) {}
 
     /** @param array<string, mixed> $overrides */
@@ -54,8 +55,9 @@ class SaveOpportunityEnrichment
             }
 
             $currentInput = $this->buildInput->execute($opportunity);
+            $displayedEvaluation = $this->resolveDisplayedEvaluation->execute($opportunity, $activeProfile);
 
-            if ($opportunity->review_evaluation_id !== $evaluation->id
+            if ($displayedEvaluation?->id !== $evaluation->id
                 || $evaluation->input_sha256 !== $currentInput->sha256
                 || $evaluation->engine_version !== OpportunityScorer::ENGINE_VERSION
                 || $evaluation->profile_version !== $activeProfile->version) {
