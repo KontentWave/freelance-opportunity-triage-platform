@@ -1237,3 +1237,74 @@ Record the Phase 3 product decision independently. Under this portfolio-demo dec
 - [Reviewed calibration status and existing contracts](https://github.com/KontentWave/freelance-opportunity-triage-platform/blob/ff499f3f30b71ba4fef647a426a0b61cfcf4a6dd/.github/docs/project_sheet.md#phase-3-explainable-triage-and-feasibility-gate) and [Phase 4 roadmap](https://github.com/KontentWave/freelance-opportunity-triage-platform/blob/ff499f3f30b71ba4fef647a426a0b61cfcf4a6dd/.github/docs/PROJECT_ROADMAP.md#phase-4--accessible-review-dashboard-and-manual-enrichment).
 - Existing repository models, routes, composer/package manifests, scorer and review actions at the same pinned commit; the supplied Scrum-XP guides.
 - [Vue build integration](https://vuejs.org/guide/quick-start.html), [Vite requirements](https://vite.dev/guide/) and [Vue text-rendering security](https://vuejs.org/guide/best-practices/security.html). Package versions and API details must match the lockfiles selected during implementation.
+
+---
+
+## Phase 5: Portfolio Release and Compliant Extensibility
+
+**Document role:** Phase 5 scope and Slice 1 contract; earlier phases remain historical as-built records.
+**Status:** Slice 1 completed and merged in [PR #15](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/15); Slices 2 and 3 and publication remain pending.
+**Accepted baseline:** `d1818df5ec2e5211319393ab1726622e53b02028` (merged PR #14). Its [CI run](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/35769060483) passed 176 PHP tests / 1,361 assertions, two Chromium tests, and coverage of 90.93% overall, 93.67% parser/domain and 96.90% triage domain. These are baseline results, not Phase 5 results.
+**Associated feature:** `release_portfolio_demo.feature` was referenced in the preserved draft but is not yet present in the repository.
+
+### Action
+
+Release version `v1.0.0` as a reproducible, sanitized portfolio demonstration, with understandable operating evidence and a documented boundary for future authorized sources.
+
+The release demonstrates engineering quality. The first real calibration remains `READY`, 30 reviewed imports, 3.33% machine skip rate, 9.09% false-negative rate and `targets_met=false`. Do not claim a feasibility GO, measured time savings, comprehensive marketplace coverage, or validated commercial usefulness.
+
+### Scope and stopping boundary
+
+Keep PHP 8.4, Laravel 13, MariaDB 11.4, Vue, and the repository's Node 22.23 baseline. Reuse Phase 4 authentication, isolation, demo fixtures, browser tests and the three required CI checks.
+
+Phase 5 adds:
+
+- A clean-checkout demo route, a concise portfolio/architecture guide, synthetic screenshots, a threat model, release/rollback instructions and dependency-update configuration.
+- One read-only, workspace-scoped CLI aggregate report using existing tables.
+- An SBOM, a candidate archive with compiled assets, checksum validation and manually initiated release publication.
+- Documentation of existing provider boundaries and the prerequisites for any future source.
+
+No new scoring rules, recalibration cohort, mailbox soak, marketplace adapter, API/OAuth access, OCR, AI, queues, hosted monitoring stack, billing, tenant administration, or Tester Skill. No new application tables or runtime PHP dependencies. Dependency installation, audits and GitHub release operations may use their normal services; application/demo acceptance must make no mailbox or marketplace connection.
+
+Use three implementation slices in order. This recovered section specifies Slice 1; Slice 2 and Slice 3 contracts still need to be recorded. Give Copilot the Phase 5 section and applicable behavior contract, not a request to redesign the roadmap. Repository conventions take precedence over generic playbook examples.
+
+### Task — Slice 1: Make the accepted demo understandable and repeatable (complete)
+
+The accepted Slice 1 scope was delivered in [PR #15](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/15):
+
+1. `README.md` now leads with the synthetic demo, its limits and the supported stack; the former Phase 1-only scope is labeled historical.
+2. `.env.demo.example` supplies synthetic local settings with a blank application key, demo user `41001`, mailbox intake disabled and a separate `_demo` database. The real `.env.demo` remains ignored.
+3. The opt-in `mariadb_demo` Compose profile uses MariaDB 11.4, a separate disposable volume and loopback port 3308, without changing the `_test` database.
+4. The documented clean-checkout walkthrough installs locked dependencies, generates a demo key, migrates and seeds the existing `ReviewDemoSeeder`, builds assets and enters `/demo`. Playwright continues to reset only `_test`, never `_demo`.
+5. `.github/docs/portfolio.md` records the architecture, data boundaries, actual ADR links, threat model, future-source requirements, limits and evidence without inventing missing ADRs.
+6. Three synthetic screenshots show the ranked queue, confirmed-detail explanation and saved feedback, with descriptive alt text and no browser/account chrome. The local demo requires no marketplace credentials; no unverified hosted demo URL is claimed.
+7. `CHANGELOG.md` has an Unreleased entry. Existing license metadata and third-party notices were left alone; the Scrum-XP guides were not made release assets.
+8. `.github/dependabot.yml` schedules weekly Composer, npm and GitHub Actions updates with three open PRs per ecosystem and no auto-merge. Subsequent dependency PRs were reviewed and merged separately; they were not a prerequisite for completing Slice 1.
+
+#### Threat model and public evidence
+
+The portfolio guide contains a compact threat table with asset/trust boundary, threat, implemented control, verification and residual limitation. It covers email input, stored text, session/CSRF protection, workspace isolation, private/demo database separation, secrets/history/artifacts and dependency/release integrity.
+
+The existing full-history secret scan remained in place. A bounded human review of the committed fixtures, documentation, screenshots and proposed assets found no private content in the material examined; recognizable synthetic email addresses and IDs were retained for tests. Neither that review nor a passing scan proves the whole repository or future release archive free of private data. Review the exact candidate assets again before publication; if actual private content is found, stop and obtain an explicit remediation decision before rewriting history.
+
+#### Provider contract — documentation only
+
+The guide documents the existing `OpportunityEmailParser::parse(string $rawEmail): ParsedOpportunity` contract, `ParsedOpportunity`, its binding in `AppServiceProvider` and the `ImportOpportunityEmail` persistence/idempotency boundary. These are email-specific; a general API source contract is not implemented.
+
+For a future source, the guide requires documented authorization for the intended access method; a stable provider plus external ID; explicit unknown values; provenance; safe canonical links; workspace-owned persistence; deduplication; replaceable transport; sanitized fixtures; and failure/no-network contract tests. It identifies the email assumptions needing a separate ADR/specification before an API adapter can be built. Slice 1 added no registry, placeholder adapter, credentials or network calls.
+
+#### Completion evidence and limits
+
+The [Slice 1 verification record](../../README.md#slice-1-verification-2026-09-23) distinguishes an initial overlay smoke from the later clean checkout of committed candidate `1d02dae366f4e855ac9fde07b11a17f6869a16f1`. The latter used PHP 8.4.12, Composer 2.9.5, Node 22.23.0 and MariaDB 11.4, with a separate demo volume and external port override to avoid the existing service. Locked installs, key generation, migration, seeding and production build passed. Browser checks covered demo entry, 25/1 pagination, foreign-workspace 404, preset enrichment and saved feedback after reload, logout and same-origin resources. The isolated database held 2 workspaces, 2 users and 28 synthetic opportunities, with no mailbox or email-import rows. The bounded publication-material review found no private material in the examined files.
+
+PR #15 merged as [`77975ec`](https://github.com/KontentWave/freelance-opportunity-triage-platform/commit/77975ec7d16a85121e64c800acccdd183536131d); its post-merge [CI run 35890766817](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/35890766817) passed Quality, Tests / MariaDB 11.4 and Secret scan. The local browser observation was not a server-side network capture. Final candidate privacy review, target-host release acceptance, rollback rehearsal, SBOM, archive and publication belong to later slices; no `v1.0.0` release is claimed.
+
+### Implementation references
+
+Verify exact flags and pinned tool/action versions during implementation; do not invent them:
+
+- [GitHub workflow artifacts](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/download-workflow-artifacts)
+- [GitHub workflow syntax and permissions](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax)
+- [GitHub CLI release creation](https://cli.github.com/manual/gh_release_create)
+- [Dependabot configuration](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference)
+- [Syft SBOM generation](https://oss.anchore.com/docs/guides/sbom/getting-started/) and [Composer metadata support](https://oss.anchore.com/docs/capabilities/php/)
