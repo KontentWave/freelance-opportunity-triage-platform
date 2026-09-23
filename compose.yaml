@@ -27,5 +27,34 @@ services:
         volumes:
             - mariadb_test_data:/var/lib/mysql
 
+    mariadb_demo:
+        profiles: [demo]
+        image: mariadb:11.4
+        environment:
+            MARIADB_DATABASE: freelance_opportunity_triage_platform_demo
+            MARIADB_USER: demo
+            MARIADB_PASSWORD: demo_local_only
+            MARIADB_ROOT_PASSWORD: demo_root_local_only
+        ports:
+            - "127.0.0.1:3308:3306"
+        healthcheck:
+            test:
+                [
+                    "CMD",
+                    "mariadb-admin",
+                    "ping",
+                    "-h",
+                    "127.0.0.1",
+                    "-uroot",
+                    "-pdemo_root_local_only",
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 12
+            start_period: 10s
+        volumes:
+            - mariadb_demo_data:/var/lib/mysql
+
 volumes:
     mariadb_test_data:
+    mariadb_demo_data:
