@@ -23,6 +23,6 @@
         "@laravel/multiplex": "^0.4.1"
     },
     "dependencies": {
-        "vue": "^3.5.42"
+        "vue": "^3.5.43"
     }
 }
