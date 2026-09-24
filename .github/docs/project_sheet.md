@@ -1242,8 +1242,8 @@ Record the Phase 3 product decision independently. Under this portfolio-demo dec
 
 ## Phase 5: Portfolio Release and Compliant Extensibility
 
-**Document role:** Phase 5 scope and Slice 1 contract; earlier phases remain historical as-built records.
-**Status:** Slice 1 completed and merged in [PR #15](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/15); Slices 2 and 3 and publication remain pending.
+**Document role:** Phase 5 scope and Slice 1-2 contracts; earlier phases remain historical as-built records.
+**Status:** Slices 1 and 2 completed and merged in [PR #15](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/15) and [PR #29](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/29), respectively; Slice 3 and publication remain pending.
 **Accepted baseline:** `d1818df5ec2e5211319393ab1726622e53b02028` (merged PR #14). Its [CI run](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/35769060483) passed 176 PHP tests / 1,361 assertions, two Chromium tests, and coverage of 90.93% overall, 93.67% parser/domain and 96.90% triage domain. These are baseline results, not Phase 5 results.
 **Associated feature:** `release_portfolio_demo.feature` was referenced in the preserved draft but is not yet present in the repository.
 
@@ -1266,7 +1266,7 @@ Phase 5 adds:
 
 No new scoring rules, recalibration cohort, mailbox soak, marketplace adapter, API/OAuth access, OCR, AI, queues, hosted monitoring stack, billing, tenant administration, or Tester Skill. No new application tables or runtime PHP dependencies. Dependency installation, audits and GitHub release operations may use their normal services; application/demo acceptance must make no mailbox or marketplace connection.
 
-Use three implementation slices in order. This recovered section specifies Slice 1; Slice 2 and Slice 3 contracts still need to be recorded. Give Copilot the Phase 5 section and applicable behavior contract, not a request to redesign the roadmap. Repository conventions take precedence over generic playbook examples.
+Use three implementation slices in order. This section specifies Slices 1 and 2; the Slice 3 contract remains to be recorded. Give Copilot the Phase 5 section and applicable behavior contract, not a request to redesign the roadmap. Repository conventions take precedence over generic playbook examples.
 
 ### Task — Slice 1: Make the accepted demo understandable and repeatable (complete)
 
@@ -1298,6 +1298,99 @@ For a future source, the guide requires documented authorization for the intende
 The [Slice 1 verification record](../../README.md#slice-1-verification-2026-09-23) distinguishes an initial overlay smoke from the later clean checkout of committed candidate `1d02dae366f4e855ac9fde07b11a17f6869a16f1`. The latter used PHP 8.4.12, Composer 2.9.5, Node 22.23.0 and MariaDB 11.4, with a separate demo volume and external port override to avoid the existing service. Locked installs, key generation, migration, seeding and production build passed. Browser checks covered demo entry, 25/1 pagination, foreign-workspace 404, preset enrichment and saved feedback after reload, logout and same-origin resources. The isolated database held 2 workspaces, 2 users and 28 synthetic opportunities, with no mailbox or email-import rows. The bounded publication-material review found no private material in the examined files.
 
 PR #15 merged as [`77975ec`](https://github.com/KontentWave/freelance-opportunity-triage-platform/commit/77975ec7d16a85121e64c800acccdd183536131d); its post-merge [CI run 35890766817](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/35890766817) passed Quality, Tests / MariaDB 11.4 and Secret scan. The local browser observation was not a server-side network capture. Final candidate privacy review, target-host release acceptance, rollback rehearsal, SBOM, archive and publication belong to later slices; no `v1.0.0` release is claimed.
+
+### Task — Slice 2: Add lightweight operational reporting (complete)
+
+Implement:
+
+- `app/Application/Operations/BuildOperationalSummary.php`
+- `app/Console/Commands/OpportunitySummaryCommand.php`
+- `tests/Feature/OperationalSummaryTest.php`
+
+Command: `php artisan opportunity:summary --workspace=<workspace-ulid> --json`.
+
+This is a trusted operator CLI, with no HTTP route, scheduler, external collector or public dashboard. Require an explicit existing workspace and use the configured review profile through `LocalScoringProfileLoader`. Never fall back from an invalid private profile to the demo profile. Demo mode uses the existing bundled profile.
+
+Read existing tables only. Capture one UTC instant `T`; the reporting window is inclusive `[T - 24 hours, T]`. Scope every query to the selected workspace, including historical records across its mailbox keys. Do not expose identifiers, names, email metadata, titles, descriptions, notes, profile paths, connection settings or query text.
+
+The JSON success contract is exactly:
+
+```json
+{
+    "schema_version": 1,
+    "generated_at": "<UTC ISO-8601 timestamp>",
+    "window_hours": 24,
+    "mailbox": {
+        "completed_runs": 0,
+        "processed_count": 0,
+        "duplicate_count": 0,
+        "quarantined_count": 0,
+        "last_successful_poll_age_seconds": null,
+        "unfinished_count": 0,
+        "oldest_unfinished_age_seconds": null
+    },
+    "parser": {
+        "quarantined_imports": 0,
+        "error_counts": {}
+    },
+    "triage": { "APPLY": 0, "MAYBE": 0, "SKIP": 0, "UNSCORED": 0 }
+}
+```
+
+| Field                                               | Required meaning                                                                                                                                                                                   |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mailbox.completed_runs`                            | Count finished `succeeded`, `partial` or `failed` runs with `finished_at` in the window; exclude unfinished and overlap-skipped runs.                                                              |
+| Three mailbox counters                              | Sum the respective persisted counters on those runs. They are recorded processing outcomes, not distinct jobs or a complete audit of interrupted runs.                                             |
+| `last_successful_poll_age_seconds`                  | Non-negative integer age of the latest `succeeded` run ending at/before T, even if older than the window; null if none.                                                                            |
+| `unfinished_count`, `oldest_unfinished_age_seconds` | Current `pending`/`retry_wait` rows first seen at/before T and the age of the oldest; no rows means 0/null.                                                                                        |
+| `parser.quarantined_imports`                        | Quarantined `email_imports` with `imported_at` in the window. Count stored import records, not redelivery attempts.                                                                                |
+| `parser.error_counts`                               | Counts by the existing `EmailParseErrorCode` values; unknown/null codes aggregate as `unknown_error`. Emit only nonzero entries with stable key ordering.                                          |
+| `triage`                                            | Count each workspace opportunity once using the same valid-pointer/newest-eligible base and latest-enrichment result as the Phase 4 queue for the active profile/engine. No result means UNSCORED. |
+
+These ages are polling/backlog proxies for ingestion delay; they are not measured email-delivery latency. Triage counts describe saved suggestions and may include stale snapshots; they do not measure accuracy or update scores. Use SQL aggregates/subqueries and reuse the queue selection semantics without paginating, loading message bodies, or using the write-side locking resolver for a read. Do not change the existing `opportunity:mailbox-health` command or its exit-code semantics.
+
+An empty workspace is a successful all-zero/null report. Success exits 0; text mode presents the same information. Missing, malformed or absent workspace exits 1 with `summary.invalid_workspace`; unusable profile exits 1 with `summary.profile_unavailable`; unexpected operational failure exits 1 with `summary.unavailable`. JSON errors contain only `schema_version` and `error_code`. Output fixed safe messages, never exception text. No writes, scoring, imports or outbound requests occur.
+
+Use deterministic MariaDB tests for the exact window boundaries, an old successful poll, pending/retry age, completed-run counters, parser-code sanitization, empty state, two-workspace isolation and queue-aligned distributions (selected older result, fallback result, latest enrichment and UNSCORED). Prove persisted records remain unchanged.
+
+#### Completion evidence and limits
+
+The read-only `opportunity:summary` command and `BuildOperationalSummary` action were merged in [PR #29](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/29) as commit [`e86715d`](https://github.com/KontentWave/freelance-opportunity-triage-platform/commit/e86715dbc7b5605e04bef01e7d89557c0a0b160e) from candidate `ce20708`. It requires an existing explicit workspace ULID, loads the configured review profile without private-to-demo fallback, and emits only aggregate counts and fixed safe error codes. The report captures one UTC instant for the inclusive 24-hour window, uses bounded SQL aggregates and the existing queue's read-side evaluation/enrichment selection, and makes no scoring or persistence call. It adds no route, scheduler, table, collector or dependency; the mailbox-health command is unchanged.
+
+Local MariaDB validation passed with 181 PHP tests and 1,399 assertions. The five new `OperationalSummaryTest` cases cover empty output, inclusive and future window boundaries, old successful poll and pending/retry ages, multi-key/workspace isolation, recognized and unknown parser-code aggregation, all four queue suggestion buckets including pointer fallback and latest enrichment, fixed error output, and unchanged persisted records. PCOV measured 91.18% overall (2,441/2,677 statements), 93.67% parser/domain (222/237), and 96.90% triage domain (344/355), meeting the existing gates. PHPStan, Pint, strict Composer validation, locked Composer audit, and `git diff --check` passed locally; the audit found no known advisories. The PR's required Quality, Tests / MariaDB 11.4, and Secret scan checks passed before merge. These are implementation checks, not a target-host acceptance, release candidate, or `v1.0.0` publication claim.
+
+The reported ages are polling/backlog proxies rather than measured email-delivery latency. Saved triage suggestions can be stale and are not an accuracy measure. The trusted operator CLI is not an HTTP endpoint or a hosted monitoring service; Slice 3's release and publication requirements remain pending.
+
+**Scope of the following two sections:** “Test plan and behavior traceability” and “Perf, security and accessibility notes” apply across all three Phase 5 slices. Implement and verify each deliverable and test in its relevant slice; items assigned to later slices remain planned until implemented and verified. Shared security, privacy and accessibility constraints apply throughout. Phase 5 completion requires all applicable requirements to be satisfied.
+
+### Test plan and behavior traceability
+
+The feature is an acceptance specification mapped to existing PHPUnit/Playwright, new PHPUnit/Node tests and explicit operator checks. Do not add a Gherkin runtime or claim that document inspection executes application scenarios.
+
+| Feature scenario / requirement             | Verification                                                                                                                                                                                                 |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Launch the documented synthetic demo       | Clean-checkout operator walkthrough; existing `ReviewDemoTest` and `tests/Browser/review-dashboard.spec.js`.                                                                                                 |
+| Report scoped operational evidence         | `OperationalSummaryTest::it_reports_workspace_scoped_counts_and_ages`.                                                                                                                                       |
+| Match the displayed queue distribution     | `OperationalSummaryTest::it_counts_each_current_queue_suggestion_once`.                                                                                                                                      |
+| Handle empty and unavailable state safely  | `OperationalSummaryTest::it_reports_empty_state_without_writes`; `it_rejects_invalid_context_without_disclosure`.                                                                                            |
+| Explain the portfolio boundary honestly    | Operator review of README, portfolio guide, synthetic screenshots and actual adapter references.                                                                                                             |
+| Maintain dependencies through reviewed PRs | Review Dependabot configuration and unchanged PR gates; no waiting for a scheduled update.                                                                                                                   |
+| Prepare a traceable candidate              | `tests/Release/release-candidate.test.mjs`: `packages only approved source and compiled assets`; `validates PHP and JavaScript SBOM evidence`; actual CI packaging step.                                     |
+| Refuse incomplete release evidence         | Same Node suite: `rejects ineligible runs and mismatched candidate evidence before publication`, table-driven for each release gate. Mock only GitHub/CLI side effects; use real temporary files and hashes. |
+| Publish the archive tested on the host     | Node suite: `promotes the verified candidate without rebuilding or overwriting a tag`; one real operator-authorized release run.                                                                             |
+| Recover without losing review data         | Synthetic target-host rollback rehearsal, recorded in the release runbook.                                                                                                                                   |
+
+New tests must detect the corresponding failures: foreign-workspace counts, double-counted evaluations/revisions, incorrect time windows, fabricated zero ages, raw error-code leakage, environment-file inclusion, missing ecosystem inventory, altered archive, wrong run/SHA/attempt, non-main or failing CI, absent smoke, and existing tags. Use controlled time and synthetic fixtures. Keep the existing Phase 4 fallback-evaluation and timestamp-idempotency regressions.
+
+Run focused tests during implementation, then existing CI gates once per candidate. Keep actual counts and coverage in evidence only after execution; the baseline totals above are not targets to hard-code. Documentation-only changes need review, not placeholder tests. An unavailable required tool or host check is reported as pending, never passed.
+
+### Perf, security and accessibility notes
+
+Reporting must use bounded query structure/SQL aggregates over indexed workspace/time fields; avoid per-row queries and full private payload hydration. No new latency SLO, schema/index migration or monitoring service is required without evidence of a concrete problem.
+
+Public evidence uses synthetic data only; the aggregate CLI is local to the trusted operator and cannot be called through demo HTTP routes. Dependency scanning checks known advisories and does not establish safety against every vulnerability. Build inventory scope and manual smoke attestation must be described honestly.
+
+Keep the existing keyboard, focus, error-state and narrow-screen behavior. Provide useful alt text and readable captions for portfolio screenshots. Publication introduces no new product UI.
 
 ### Implementation references
 
