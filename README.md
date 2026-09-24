@@ -24,6 +24,18 @@ Open `http://127.0.0.1:8000/demo` in a browser and start the demo. The seeded da
 
 Do not run Playwright against the demo database: its setup recreates only the isolated `_test` database. Keep `.env.demo` private; commit only `.env.demo.example`. For review-specific behavior see the [review runbook](.github/docs/runbooks/phase4-review-dashboard.md) and [portfolio guide](.github/docs/portfolio.md). Candidate acceptance, publication and rollback belong to the later release-workflow slice.
 
+### Operational Summary
+
+For an existing workspace, a trusted operator can read aggregate operational state without connecting to the mailbox or changing records:
+
+```bash
+php artisan opportunity:summary --workspace=<workspace-ulid> --json
+```
+
+Use the actual workspace ULID from trusted local provisioning. Private mode requires a valid server-configured `OPPORTUNITY_REVIEW_PROFILE_PATH`; an invalid private profile never falls back to the bundled demo profile. Demo mode uses the bundled profile. Omit `--json` for text output. An empty workspace returns a successful zero/null report; a missing or invalid workspace, unusable profile, or operational failure exits 1 with a fixed `summary.*` error code. JSON errors include only `schema_version` and `error_code`.
+
+The report covers completed mailbox runs and quarantined import records in an inclusive UTC 24-hour window, the latest successful poll and current pending/retry backlog ages, and the saved queue suggestion distribution for the active profile. Ages are polling/backlog proxies, not email-delivery latency; suggestions can be stale and do not measure accuracy. The command is local to the trusted operator, with no dashboard or monitoring endpoint.
+
 ### Slice 1 verification (2026-09-23)
 
 The initial walkthrough was exercised in a fresh local clone of the accepted `main` baseline with only the then-pending Slice 1 files overlaid, with newly installed locked Composer/npm dependencies and no inherited application database or built assets. That was **not** a clean checkout of a committed Slice 1 candidate. PHP 8.4.12, Composer 2.9.5 and MariaDB 11.4 were used. Local Node 22.18.0 was below the documented 22.23 baseline; `npm ci` and `npm run build` nevertheless completed. The later committed-checkout check is recorded below.
