@@ -1361,6 +1361,12 @@ Local MariaDB validation passed with 181 PHP tests and 1,399 assertions. The fiv
 
 The reported ages are polling/backlog proxies rather than measured email-delivery latency. Saved triage suggestions can be stale and are not an accuracy measure. The trusted operator CLI is not an HTTP endpoint or a hosted monitoring service; Slice 3's release and publication requirements remain pending.
 
+### Reviewed dependency updates (separate from the Phase 5 slices)
+
+Five subsequent Dependabot PRs were reviewed and merged: [#24](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/24) updated Laravel Boost to 2.9.1, [#26](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/26) updated Pint to 1.32.1, [#28](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/28) updated the pinned setup-php action to 2.37.2, [#27](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/27) updated the pinned setup-node action to 7.0.0, and [#25](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/25) updated PHPUnit to 13.3.4. Each passed refreshed required Quality, Tests / MariaDB 11.4, and Secret scan checks before merge. The [#25 CI run](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/35992380830) passed 181 PHP tests with 1,399 assertions and the existing coverage gates; after synchronizing local dependencies, the five operational-summary tests also passed with PHPUnit 13.
+
+PHPUnit 13 requires PHP 8.4.1 or newer. The Composer platform remains pinned to 8.4.12, while the declared `^8.4` PHP requirement also admits 8.4.0; this compatibility edge is retained for now. These updates do not constitute Slice 3 acceptance or a published release.
+
 **Scope of the following two sections:** “Test plan and behavior traceability” and “Perf, security and accessibility notes” apply across all three Phase 5 slices. Implement and verify each deliverable and test in its relevant slice; items assigned to later slices remain planned until implemented and verified. Shared security, privacy and accessibility constraints apply throughout. Phase 5 completion requires all applicable requirements to be satisfied.
 
 ### Test plan and behavior traceability
