@@ -222,6 +222,40 @@ jobs:
       - name: Run browser acceptance
         run: npm run test:e2e
 
+      - name: Run release contract tests
+        run: npm run test:release
+
+      - name: Download verified Syft 1.32.0
+        run: |
+          mkdir -p build/syft
+          curl -fsSL --retry 3 -o build/syft/syft_1.32.0_linux_amd64.tar.gz https://github.com/anchore/syft/releases/download/v1.32.0/syft_1.32.0_linux_amd64.tar.gz
+          curl -fsSL --retry 3 -o build/syft/checksums.txt https://github.com/anchore/syft/releases/download/v1.32.0/syft_1.32.0_checksums.txt
+          cd build/syft
+          grep '  syft_1.32.0_linux_amd64.tar.gz$' checksums.txt | sha256sum --check --strict
+          tar -xzf syft_1.32.0_linux_amd64.tar.gz syft
+
+      - name: Generate installed build dependency inventory
+        env:
+          SYFT_CHECK_FOR_APP_UPDATE: "false"
+          SYFT_JAVASCRIPT_INCLUDE_DEV_DEPENDENCIES: "true"
+          SYFT_JAVASCRIPT_SEARCH_REMOTE_LICENSES: "false"
+          SYFT_ENRICH: ""
+        run: build/syft/syft dir:. --select-catalogers '+php-composer-installed-cataloger,+javascript-package-cataloger' -o cyclonedx-json=build/sbom.cdx.json
+
+      - name: Prepare and validate candidate
+        run: |
+          node scripts/prepare-release.mjs
+          node --input-type=module -e 'import { join } from "node:path"; import { digest, archiveName } from "./scripts/prepare-release.mjs"; import { validateFiles } from "./scripts/validate-release-candidate.mjs"; const sha = process.env.GITHUB_SHA; const archive = archiveName(sha); const directory = "build/release"; validateFiles(directory, { repository: process.env.GITHUB_REPOSITORY, sha, runId: Number(process.env.GITHUB_RUN_ID), runAttempt: Number(process.env.GITHUB_RUN_ATTEMPT), archive }, digest(join(directory, archive)));'
+
+      - name: Upload main candidate
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-candidate-${{ github.sha }}-${{ github.run_attempt }}
+          path: build/release/
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Upload coverage artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:

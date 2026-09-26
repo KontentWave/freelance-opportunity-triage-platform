@@ -1,6 +1,6 @@
 # Project Roadmap — Freelance Opportunity Triage Platform
 
-**Status:** Vision approved; Phases 1 through 4 completed; Phase 3's first real calibration remains an unsuccessful feasibility result; Phase 5 is next; optional Tester Skill deferred until after MVP
+**Status:** Phases 1 through 4 completed; Phase 5 Slices 1 and 2 merged and Slice 3 implemented locally, pending protected CI, exact-archive host smoke, rollback rehearsal and operator-approved publication. Phase 3's first real calibration remains an unsuccessful feasibility result; optional Tester Skill deferred until after MVP.
 **Primary user:** An independent freelancer reviewing opportunities from authorized job-alert emails  
 **Working title:** To be decided; do not use Upwork trademarks in product branding
 

@@ -1242,10 +1242,10 @@ Record the Phase 3 product decision independently. Under this portfolio-demo dec
 
 ## Phase 5: Portfolio Release and Compliant Extensibility
 
-**Document role:** Phase 5 scope and Slice 1-2 contracts; earlier phases remain historical as-built records.
-**Status:** Slices 1 and 2 completed and merged in [PR #15](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/15) and [PR #29](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/29), respectively; Slice 3 and publication remain pending.
+**Document role:** Phase 5 scope and Slice 1-3 contracts; earlier phases remain historical as-built records.
+**Status:** Slices 1 and 2 completed and merged in [PR #15](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/15) and [PR #29](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/29), respectively; Slice 3 is implemented locally but protected CI, exact-archive host smoke, rollback rehearsal and publication remain pending.
 **Accepted baseline:** `d1818df5ec2e5211319393ab1726622e53b02028` (merged PR #14). Its [CI run](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/35769060483) passed 176 PHP tests / 1,361 assertions, two Chromium tests, and coverage of 90.93% overall, 93.67% parser/domain and 96.90% triage domain. These are baseline results, not Phase 5 results.
-**Associated feature:** `release_portfolio_demo.feature` was referenced in the preserved draft but is not yet present in the repository.
+**Associated feature:** `.github/docs/features/release_portfolio_demo.feature` maps Phase 5 acceptance to the named tests and explicit operator checks below; it is not executed by a Gherkin runner.
 
 ### Action
 
@@ -1266,7 +1266,7 @@ Phase 5 adds:
 
 No new scoring rules, recalibration cohort, mailbox soak, marketplace adapter, API/OAuth access, OCR, AI, queues, hosted monitoring stack, billing, tenant administration, or Tester Skill. No new application tables or runtime PHP dependencies. Dependency installation, audits and GitHub release operations may use their normal services; application/demo acceptance must make no mailbox or marketplace connection.
 
-Use three implementation slices in order. This section specifies Slices 1 and 2; the Slice 3 contract remains to be recorded. Give Copilot the Phase 5 section and applicable behavior contract, not a request to redesign the roadmap. Repository conventions take precedence over generic playbook examples.
+Use three implementation slices in order. This section specifies their contracts. Repository conventions take precedence over generic playbook examples.
 
 ### Task — Slice 1: Make the accepted demo understandable and repeatable (complete)
 
@@ -1368,6 +1368,77 @@ Five subsequent Dependabot PRs were reviewed and merged: [#24](https://github.co
 PHPUnit 13 requires PHP 8.4.1 or newer. The Composer platform remains pinned to 8.4.12, while the declared `^8.4` PHP requirement also admits 8.4.0; this compatibility edge is retained for now. These updates do not constitute Slice 3 acceptance or a published release.
 
 **Scope of the following two sections:** “Test plan and behavior traceability” and “Perf, security and accessibility notes” apply across all three Phase 5 slices. Implement and verify each deliverable and test in its relevant slice; items assigned to later slices remain planned until implemented and verified. Shared security, privacy and accessibility constraints apply throughout. Phase 5 completion requires all applicable requirements to be satisfied.
+
+### Task — Slice 3: Prepare, verify and publish one release candidate
+
+#### Preserve CI and add candidate preparation
+
+Keep `Quality`, `Tests / MariaDB 11.4` and `Secret scan` and their existing gates: 80% overall coverage, 90% parser/domain, 90% triage-domain, Composer audit and the existing npm audit policy. Keep MariaDB-only validation, notice failures, production frontend build and Chromium acceptance.
+
+Add `scripts/prepare-release.mjs`, `scripts/validate-release-candidate.mjs` and behavioral tests in `tests/Release/release-candidate.test.mjs`, using Node's built-in test runner. Wire `npm run test:release` to those tests and run it in CI. No new JavaScript test framework is needed.
+
+After the test job's existing validation succeeds, prepare the following under ignored `build/release/` from that job's exact checkout and compiled assets:
+
+| File                                                      | Content                                                                                              |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `freelance-opportunity-triage-platform-<full-sha>.tar.gz` | Tracked source from the candidate commit plus its compiled `public/build` assets.                    |
+| `sbom.cdx.json`                                           | CycloneDX JSON dependency inventory generated by pinned Syft from the clean dependency installation. |
+| `candidate.json`                                          | `schema_version: 1`, repository, full commit SHA, CI run ID, run attempt, and the archive filename.  |
+| `SHA256SUMS`                                              | SHA-256 checksums of the preceding three files; never a checksum of itself.                          |
+
+Use locked Composer/npm installations. Generate the SBOM before any production-only dependency pruning; include PHP and JavaScript dependencies and identify it as a build/dependency inventory, which may include development tools, rather than an exact minimal production footprint. Verify a nonempty component list and installed versions of at least `laravel/framework` and `vue`. Record the Syft version in its metadata. Use the installed Composer metadata as needed to include development dependencies. Keep SBOM enrichment/network lookups disabled.
+
+Pin the Syft tool version and verify the official downloaded binary checksum, or use a commit-pinned official installation action with a pinned tool version. Do not use an unversioned curl-to-shell install. This tooling remains outside application runtime dependencies.
+
+The archive may include synthetic `.env.example`, `.env.testing.example` and `.env.demo.example`; it must exclude all actual environment files, credentials, Git metadata, `vendor`, `node_modules`, databases, private profiles, runtime storage contents, caches, browser traces, logs and local build output except the explicitly selected compiled assets. Empty tracked storage/cache scaffolding may remain. Refuse unexpected tracked sensitive paths and files or symlinks escaping the staging directory. Never archive the working directory wholesale.
+
+A PR runs packaging validation and the release-script tests without publishing a candidate for deployment. On a push to main, upload one artifact named `release-candidate-<full-sha>-<run-attempt>`, containing exactly the four files above, retained for 30 days. An artifact's existence does not make it eligible: the complete CI run must subsequently pass all three jobs. A failed package/SBOM check must fail the test job.
+
+#### Operator verification and rollback
+
+Add `.github/docs/runbooks/phase5-release.md`, referencing the existing Phase 4 runbook instead of duplicating it. It must give tested commands for:
+
+- Downloading the candidate from its CI run and checking `SHA256SUMS`.
+- Installing its locked production PHP dependencies and deploying its already compiled assets on the approved host, using a separate synthetic `_demo` database, HTTPS, debug disabled and mailbox intake disabled.
+- Running the existing demo smoke on this candidate: entry, scoped queue/detail, a preset enrichment, saved feedback/reload, foreign-workspace 404, logout denial and no marketplace/mailbox requests.
+- Recording UTC date, full SHA, CI run/attempt, archive SHA-256, synthetic counts and outcome; retain only sanitized evidence.
+- Returning to the previous known-good code/assets on the disposable demo deployment and verifying that existing review/enrichment rows remain intact; then restoring the candidate. Preserve configuration and data. Do not run destructive down migrations or reset a private database.
+
+Reuse the accepted accessibility coverage. No new accessibility audit or 24-hour soak is required unless Phase 5 changes UI/intake behavior, which this specification does not request. The old `65bf4ea` host smoke remains valid historical evidence; publication needs a smoke of the archive being released. Deployment and publication are operator-authorized actions, not implied by a request to implement this specification.
+
+#### Release publication contract
+
+Create `.github/workflows/release.yml` with `workflow_dispatch` only, run from main. Inputs are:
+
+- `ci_run_id`: positive integer.
+- `version`: exactly `v1.0.0` for this first release.
+- `target_host_smoke_passed`: boolean, default false.
+- `smoke_archive_sha256`: the 64-character lowercase hash recorded by the operator.
+- `smoke_verified_at`: UTC ISO-8601 time of the successful smoke.
+
+Dispatch with the confirmation set is the operator's publication approval. It attests to the recorded manual check; the workflow does not pretend to inspect the host itself.
+
+Before creating any tag or release, require:
+
+1. The run belongs to this repository's `.github/workflows/ci.yml`, was a push to main, and completed successfully with `Quality`, `Tests / MariaDB 11.4` and `Secret scan` successful on the same candidate SHA.
+2. Its commit is still reachable from main. Resolve the latest completed run attempt and its matching artifact; never mix artifacts or checks from different attempts.
+3. The unexpired artifact has exactly the expected files; manifest repository/SHA/run/attempt match the API run metadata; filenames are plain expected basenames; all checksums and required SBOM contents pass.
+4. The operator's smoke confirmation is true; its hash matches this archive; its timestamp is valid, not future-dated, and no earlier than that run attempt's completion.
+5. Neither the requested tag nor a release with that tag already exists.
+
+Any missing, unavailable, mismatched or failed evidence stops with a nonzero result before publication. No fallback to the latest branch build or arbitrary downloaded files. Validate inputs as data; pass them through environment variables or argument arrays, never interpolate them into executable shell source.
+
+After validation, create a draft GitHub Release targeting the exact candidate SHA, attach the four verified files, then publish it as `v1.0.0`. Notes identify the SHA, CI run/attempt, operator-attested smoke date/hash, installation instructions, screenshots, limits and rollback guide. Promote the same archive; do not rebuild assets during publication.
+
+If publication fails after creating the draft/tag, leave it for explicit operator inspection and report the partial state. Never force-move/delete a tag or replace existing release assets on an automatic retry. Document how to inspect and deliberately resume a matching draft. Do not rely on the token-created tag to trigger another validation workflow.
+
+Use minimal permissions: CI remains `contents: read`; release validation needs `contents: read` and `actions: read`; grant `contents: write` only to the publication job after validation. Pin third-party actions to immutable SHAs, use no hosting/mailbox credentials, keep PRs unprivileged and serialize publication with cancellation disabled.
+
+Record this bounded promotion decision in `.github/docs/adr/ADR-008-portfolio-release.md`. Update the integration map only for new verified relationships, and update the roadmap/project sheet with actual results after execution. Historical phase evidence and the failed calibration remain unchanged.
+
+#### Local implementation evidence (publication pending)
+
+The release scripts, four-case Node behavior suite, Syft-backed CI packaging steps, read-only release validation and separately write-scoped publication job, Phase 5 runbook and ADR-008 have been added locally. The Node suite passed four tests on Node 22.23.0, including refusal of missing installed development tools, stale versions, sensitive paths, symlinks, altered checksums, failing/ineligible CI evidence and absent smoke. The pinned official Syft 1.32.0 Linux archive passed its downloaded checksum check; after `npm ci`, an offline installed-dependency scan emitted CycloneDX with Laravel, Vue, PHPUnit and Playwright components and Syft metadata. Packaging and validation of the current checkout's committed source plus compiled assets passed locally. The full MariaDB suite passed with 181 PHP tests and 1,399 assertions, the Chromium suite passed two tests, and PCOV measured 91.19% overall (2,443/2,679 statements), 93.64% parser/domain (221/236), and 96.90% triage domain (344/355), satisfying the existing gates. The production build, npm audit (zero reported vulnerabilities), strict Composer validation/audit (no known advisories), PHPStan, workflow YAML parsing and `git diff --check` passed locally. This was a local packaging exercise using a synthetic run ID, **not** a deployable main CI artifact or host acceptance. The required protected CI push, exact archive privacy review, approved-host smoke, data-preserving rollback rehearsal and authorized `v1.0.0` publication remain pending; no public release is claimed.
 
 ### Test plan and behavior traceability
 

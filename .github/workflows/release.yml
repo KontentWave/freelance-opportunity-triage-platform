@@ -1,0 +1,87 @@
+name: Publish portfolio release
+
+on:
+  workflow_dispatch:
+    inputs:
+      ci_run_id:
+        description: Successful main CI run ID
+        required: true
+        type: string
+      version:
+        description: First release version (v1.0.0)
+        required: true
+        type: string
+      target_host_smoke_passed:
+        description: I verified this exact archive on the approved host
+        required: true
+        type: boolean
+        default: false
+      smoke_archive_sha256:
+        description: SHA-256 of the archive tested on the host
+        required: true
+        type: string
+      smoke_verified_at:
+        description: UTC ISO-8601 time of successful host smoke
+        required: true
+        type: string
+
+concurrency:
+  group: portfolio-release-v1.0.0
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate release evidence
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      archive_sha256: ${{ steps.check.outputs.archive_sha256 }}
+      candidate_sha: ${{ steps.check.outputs.candidate_sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22.23.0"
+      - name: Validate run, artifact and attested smoke
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MODE: validate
+          CI_RUN_ID: ${{ inputs.ci_run_id }}
+          VERSION: ${{ inputs.version }}
+          TARGET_HOST_SMOKE_PASSED: ${{ inputs.target_host_smoke_passed }}
+          SMOKE_ARCHIVE_SHA256: ${{ inputs.smoke_archive_sha256 }}
+          SMOKE_VERIFIED_AT: ${{ inputs.smoke_verified_at }}
+        run: node scripts/validate-release-candidate.mjs
+
+  publish:
+    name: Publish verified archive
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22.23.0"
+      - name: Revalidate and promote exact candidate
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MODE: publish
+          CI_RUN_ID: ${{ inputs.ci_run_id }}
+          VERSION: ${{ inputs.version }}
+          TARGET_HOST_SMOKE_PASSED: ${{ inputs.target_host_smoke_passed }}
+          SMOKE_ARCHIVE_SHA256: ${{ inputs.smoke_archive_sha256 }}
+          SMOKE_VERIFIED_AT: ${{ inputs.smoke_verified_at }}
+          VALIDATED_ARCHIVE_SHA256: ${{ needs.validate.outputs.archive_sha256 }}
+          VALIDATED_CANDIDATE_SHA: ${{ needs.validate.outputs.candidate_sha }}
+        run: node scripts/validate-release-candidate.mjs

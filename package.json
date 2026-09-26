@@ -8,7 +8,8 @@
     "scripts": {
         "build": "vite build",
         "dev": "vite",
-        "test:e2e": "playwright test"
+        "test:e2e": "playwright test",
+        "test:release": "node --test tests/Release/release-candidate.test.mjs"
     },
     "devDependencies": {
         "@playwright/test": "^1.63.0",
