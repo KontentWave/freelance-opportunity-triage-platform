@@ -1,6 +1,6 @@
 # Project Roadmap — Freelance Opportunity Triage Platform
 
-**Status:** Phases 1 through 4 completed; Phase 5 Slices 1 and 2 merged and Slice 3 implemented locally, pending protected CI, exact-archive host smoke, rollback rehearsal and operator-approved publication. Phase 3's first real calibration remains an unsuccessful feasibility result; optional Tester Skill deferred until after MVP.
+**Status:** Phases 1 through 5 completed as a portfolio release. Phase 5's exact CI archive passed isolated host smoke, bounded asset review and same-demo-database rollback rehearsal before the separately approved `v1.0.0` publication on 2026-09-28; the published tag and four assets were verified against the candidate. The same candidate was subsequently deployed to the separate private `fotp` site with its original configuration and data retained; the synthetic stage remains separate. Phase 3's first real calibration remains an unsuccessful feasibility result; optional Tester Skill deferred until after MVP.
 **Primary user:** An independent freelancer reviewing opportunities from authorized job-alert emails  
 **Working title:** To be decided; do not use Upwork trademarks in product branding
 
