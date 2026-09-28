@@ -1,6 +1,6 @@
 # ADR-008: Bounded Portfolio Release Promotion
 
-- **Status:** Implemented workflow; publication pending operator acceptance
+- **Status:** Accepted and executed for the [v1.0.0 release](https://github.com/KontentWave/freelance-opportunity-triage-platform/releases/tag/v1.0.0) on 2026-09-28
 - **Date:** 2026-09-26
 - **Decision owners:** Project and quality engineering
 
@@ -15,6 +15,8 @@ The existing MariaDB test job uses locked Composer/npm installations and pins Sy
 A manually dispatched workflow, run from main, first validates the selected push-to-main CI run and latest completed attempt with read-only permissions. It checks main ancestry, the matching unexpired artifact, required job outcomes, manifest, archived locks and inventory versions, all three checksums, and the operator-attested timestamp and archive hash. Its write-scoped job revalidates and downloads the same candidate, creates a draft release at the exact SHA with the four assets, then publishes it. Inputs are data, not executable shell fragments. Serialization does not cancel a publication in progress. A prior tag or release blocks automatic retries; a partial draft/tag is left for explicit inspection.
 
 The approved synthetic host must smoke the **archive being released**, rehearse code/assets rollback without database loss, and retain sanitized evidence before dispatch. CI does not inspect the host or make its own smoke attestation. There is no host/mailbox credential in the workflow and no extra runtime dependency or app behavior change.
+
+The exact archive passed the isolated stage smoke and data-preserving rollback rehearsal before the separately approved publication. [Release workflow run 36464920838](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/36464920838) published `v1.0.0` from candidate `a00803b5947b7f52e18537e46edab86a949331da`; the four release assets matched the verified CI download. See the [release runbook](../runbooks/phase5-release.md#publication-and-partial-failure) for the bounded asset review, checksums and deployment record. This release does not establish a product-feasibility GO.
 
 ## Consequences
 
