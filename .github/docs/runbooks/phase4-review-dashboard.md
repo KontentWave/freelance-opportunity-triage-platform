@@ -18,6 +18,17 @@
 
 Private mode must return 404 for `GET /demo` and `POST /demo-session`. Invalid or blank profile configuration must fail safely rather than loading the synthetic profile.
 
+## Existing private-site operator verification
+
+This is an operational check of an already deployed private site, not a deployment or database reset. See the [current remediation summary](../audit/fixes/README.md) and [dated REL-01 evidence](../audit/fixes/04-reliability-dependability-fixes.md#rel-01--private-operator-provisioning-and-authenticated-workflow); historical completion records below remain unchanged.
+
+1. Recheck the active deployed version, effective private database and mode, disabled mailbox flag, intended existing workspace and current accounts through authorized hosting access. Historical zero counts are not current-state instructions.
+2. Reuse an appropriate assigned operator. If none exists, use trusted interactive tooling with hidden credential input and Laravel-supported hashing; explicitly assign the verified existing `workspace_id`. Recheck for existing/concurrent accounts before inserting. Do not infer ownership from email, reset an existing password unnecessarily, use a factory password, or pass credentials in commands or logs.
+3. Reuse a clearly identified synthetic fixture or prepare exactly one through supported operator/model tooling, with a non-actionable synthetic URL. Preserve genuine records and immutable history. Do not run seeders, migrations, the Playwright database setup or bulk evaluation against production.
+4. Enter credentials directly in the private browser interface. Verify login → expected workspace queue → synthetic detail → evaluate that fixture if needed → save enrichment → save feedback with **`sample_kind=demo`**, including in private mode → reload and confirm both persisted → logout.
+5. In the same logged-out browser session, request `GET /review/v1/opportunities` with `Accept: application/json`; require 401, not a login redirect. Confirm saved demo provenance through supported readback, document fixture retention/disposition, and exclude all its evaluations from real calibration selections. A report containing demo feedback must not be treated as real calibration evidence.
+6. Keep intake disabled and make no mailbox or marketplace requests. Record only sanitized individual PASS / FAIL / NOT VERIFIED outcomes in the separate remediation evidence. If browser or interactive access is unavailable, provide this walkthrough and record results only after the operator performs and reports them. Local/staging tests cannot close the private-host check. Leave any check blocked by a concrete defect pending.
+
 ## Synthetic demo deployment
 
 Use a separate disposable database containing no private records:
