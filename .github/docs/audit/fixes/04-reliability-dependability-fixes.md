@@ -101,3 +101,68 @@ The historical September 28 dump's isolated restore proves only that dump's rest
 No application behavior, dependencies, migrations, release, existing cron, production `.env` or `storage/` changed. REL-04 and other findings remain outside scope. No commit, push or publication performed.
 
 **Closure decision:** recurring provider protection meets REL-03's documented provider route, with provenance and untested restoration/failure-domain boundaries explicit. REL-01 remains closed. Current verdict is **GO for documented personal use**, with intake disabled and all other accepted limitations retained; this is not a feasibility/calibration GO.
+
+## REL-04 — Stable private configuration and storage
+
+### Closure entry — 2026-10-13: copy-first shared-layout relocation
+
+**Original finding:** [REL-04 in Audit 04](../04-reliability-dependability.md#confirmed-defects-by-severity). **Current status: CLOSED / VERIFIED.**
+
+**Deployed version unchanged:** `v1.0.0`, `a00803b5947b7f52e18537e46edab86a949331da`. **Final independent host verification:** `2026-10-13T19:42:51Z`.
+
+#### Verified layout and actions
+
+The initial worktree was clean. Authorized SSH inspection confirmed that the historical coupling still existed; relocation was not based solely on the audit. Sanitized layout:
+
+```text
+Unchanged active code:
+  ~/apps/fotp -> fotp-private-releases/<deployed-sha>
+Before, in that active release:
+  .env    -> ../../fotp-before-v1-<previous-sha>/.env
+  storage -> ../../fotp-before-v1-<previous-sha>/storage
+After, in that same active release:
+  .env    -> ~/apps/fotp-private-shared/.env
+  storage -> ~/apps/fotp-private-shared/storage
+Recovery, not current runtime:
+  ~/apps/fotp-before-v1-<previous-sha>/{.env,storage}
+  ~/fotp-rel04-recovery-<date>/
+```
+
+The after-layout notation abbreviates absolute symlink targets; it does not imply literal tilde expansion inside a link. The dedicated shared directory did not exist before this task. It is outside public webroots and release/rollback directories, separate from staging's existing shared layout.
+
+- Created a `0700` shared directory and a separate `0700` host-only recovery directory. Recorded original link targets, ownership/permissions, maintenance state, exact cron contents and the two private loopback-server processes privately. Copied the environment and complete storage tree first, preserving ownership, contents and existing access modes; verified the initial copy without printing contents.
+- The environment and private profile remain `0600`; the private profile's enclosing directory remains `0700`. Existing storage directory permissions were preserved, with the shared parent restricting traversal. No blanket permissive permissions were introduced.
+- Inspected effective storage, logging, sessions, file-cache/lock paths, maintenance, filesystems, compiled views and the profile. The profile setting already used the active application alias. Laravel's uncached `view.compiled` resolved physically into the old tree before cutover and into shared storage afterwards. No environment setting required editing; no configuration cache existed. No internal storage symlinks or public storage link existed. No cache-clear operation was necessary; sessions, database caches, locks and application data were not cleared.
+- **Maintenance window:** `2026-10-13T19:40:14Z` to `2026-10-13T19:41:16Z`, approximately **62 seconds** including control restoration. Enabled prerendered application maintenance without a bypass. Verified HTML and JSON requests returned 503. HTML was stopped before normal bootstrap; JSON was stopped by global maintenance middleware before session/controller handling. Maintenance alone was not assumed to drain existing requests or stop non-HTTP writers.
+- Temporarily commented only this application's original scheduler entry and suspended only the two verified private loopback-server processes. No queue worker was found in the authorized account. With those controls applied, storage file-content digests were stable across 60 seconds and the application's database account had no other active, non-sleeping connections. Then performed checksum-based final synchronization to shared storage and the recovery copy, with no destructive synchronization, and verified equality before cutover.
+- Replaced the active release's two links with same-directory atomic renames while maintenance remained effective in both storage copies. Verified boot/configuration/profile/access before bringing the application live, then verified HTTPS checks. Restored the exact original cron contents and resumed the same loopback-server processes; their listener returned 200 and no open descriptor into old storage was found. Retained old storage remained unchanged during subsequent HTTP checks.
+- No application code, key, database connection, private mode, debug/intake flag or unrelated setting changed. No migration, dependency update, release, fixture, evaluation, enrichment, feedback, provider-backup change, commit, push or publication occurred.
+
+#### Individual verification results
+
+| Check | Result | Evidence / boundary |
+| --- | --- | --- |
+| Actual production target and unchanged deployed version | PASS | Same active release; before/after digest of the accepted tracked runtime inventory matched `25d7ad7ca54223c33c349d6c430ff61d5b3af9a458a751acdc7d29962283ba03`. Not a fresh full dependency/asset audit. |
+| Live environment/storage independent of retained rollback | PASS | Both active links resolve into the new dedicated private shared directory; old copies are retained but not live targets. |
+| Complete copy, stable contents and required directories | PASS | Initial copy and quiesced final checksum comparison passed; recovery copy retained. Required log, view, file-cache, session and private-profile directories exist. |
+| Private settings, key and actual database selection unchanged | PASS | Protected before/after configuration and environment fingerprints match, allowing only the expected resolved compiled-view path change. `SELECT DATABASE()` matches the unchanged private connection; production, debug off, private mode and disabled intake independently checked. |
+| Profile load and storage read/write access | PASS | Application loader succeeds without exposing the definition; CLI runtime created/read/removed temporary access probes in required directories. Environment/profile modes and ownership preserved; live web boot succeeds through the protected shared parent. |
+| Effective runtime paths and storage links | PASS | Recursive effective-config scan contains no rollback-directory reference; compiled-view path resolves to shared storage. No internal storage symlinks, public storage link, compiled-view rollback references or old-storage descriptors in the two loopback processes found. |
+| Controlled interruption and write-settlement observations | PASS | HTML/JSON 503 barriers, application-only scheduler/process controls, stable 60-second storage digests and no other active database connections before final synchronization. This is observed settlement, not provider-level request tracing. |
+| HTTPS login page | PASS | 200 before/after; trusted browser reload displays the sign-in form after cutover. |
+| Private-mode demo denial | PASS | HTTPS `/demo` returns 404. |
+| Unauthenticated protected JSON | PASS | HTTPS `/review/v1/opportunities` returns 401 with JSON content type, without an authenticated cookie. |
+| Authenticated read-only REL-01 queue/detail check | NOT VERIFIED | The available trusted browser was signed out. No credentials requested, password reset, session fabricated or new fixture created. Optional follow-up: operator signs in directly and opens the retained REL-01 synthetic record without evaluating/saving it. Prior REL-01 authenticated closure remains accepted. |
+| Normal service and original scheduler restored | PASS | Maintenance markers absent; exact original cron compared after restoration; original loopback processes resumed and login listener returns 200. Stage target unchanged. |
+| Mailbox intake remains disabled | PASS | Effective flag verified repeatedly; no intake/connectivity operation invoked. |
+| Rollback preparation | PASS | Protected original state, full recovery copies and a storage-preserving link-restoration procedure prepared before cutover. |
+| Rollback execution / rehearsal | NOT VERIFIED | Not exercised: essential cutover checks passed. Preparation is not proof of a rehearsed rollback. |
+| Provider web-worker internals / host-loss recovery | NOT VERIFIED | Account-scoped process inspection and application HTTP/storage/database checks do not expose provider worker internals or establish off-host recovery. Same-host recovery copies are not independent backups. REL-03's existing provider-database coverage is unchanged. |
+
+#### Recovery disposition and closure
+
+Retain both the original rollback installation's environment/storage and the protected task recovery directory as **recovery snapshots, not current runtime state**. The task recovery storage includes the quiesced maintenance markers; apply the recorded prior maintenance state during recovery rather than serving that snapshot blindly. No retained release was deleted or archived.
+
+Follow the [current shared-layout and recovery runbook](../../runbooks/phase5-release.md#private-shared-configuration-and-storage-rel-04). Future code deployments and rollbacks must link to the current shared environment/storage, including when reusing the retained older installation; never reactivate its stale regular-file/directory copies. If layout recovery becomes necessary, quiesce writers again, preserve the latest shared state and reconcile post-cutover additions, updates and deletions before restoring original links. Do not overwrite newer state from an older snapshot.
+
+**Closure decision:** relocation and essential operational checks passed. The unavailable optional authenticated read-only repeat and unexercised rollback are explicitly not claimed. REL-01/REL-03 remain closed, Phases 1–5 remain complete, and **GO for documented personal use** is unchanged with intake disabled and all unrelated findings/accepted limitations retained. No feasibility/calibration GO is implied.
