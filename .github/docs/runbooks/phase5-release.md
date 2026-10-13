@@ -92,3 +92,45 @@ The [provider restoration policy](https://www.websupport.sk/podpora/kb/obnova-da
 - **Live recovery is a separate operation requiring approval:** first preserve current database state, plan writer quiescence and schema/code compatibility, then use the chosen point's **Restore** action for the intended database. It replaces database state; this task did not execute it. Do not delete the original database: the provider warns its deleted name cannot be reused. Database restoration does not restore source files, environment or storage, so recover those separately if needed. Do not relocate the existing production `.env` or `storage/` as part of REL-03.
 
 Provider restoration was **not tested** on October 12. The historical isolated restore proves only the September 28 manual dump. Provider consistency internals, recovery SLA and storage separation from the production host/account remain **NOT VERIFIED**; request provider confirmation before claiming host-loss protection. The same-host historical manual backup cannot protect against loss of that host. Daily backups can lose changes since the last point and are not long-term archives. Keep mailbox intake disabled and leave Laravel's scheduler unchanged.
+
+## Private shared configuration and storage (REL-04)
+
+**Current layout verified 2026-10-13:** the private release remains `v1.0.0` / `a00803b5947b7f52e18537e46edab86a949331da`. See the [REL-04 closure evidence](../audit/fixes/04-reliability-dependability-fixes.md#closure-entry--2026-10-13-copy-first-shared-layout-relocation). The September 28 observation that live state resided inside the retained rollback installation is historical, not the current deployment layout.
+
+```text
+~/apps/fotp -> fotp-private-releases/<deployed-sha>
+~/apps/fotp-private-releases/<deployed-sha>/.env
+  -> <account-home>/apps/fotp-private-shared/.env
+~/apps/fotp-private-releases/<deployed-sha>/storage
+  -> <account-home>/apps/fotp-private-shared/storage
+~/apps/fotp-private-shared/                   # 0700, private production only
+  .env                                      # 0600
+  storage/app/private/triage/                # 0700
+    <private-profile>.json                  # 0600
+  storage/{app,framework,logs}/              # preserved runtime access modes
+~/fotp-rel04-recovery-<date>/                 # 0700, protected recovery records/copies
+~/apps/fotp-before-v1-<previous-sha>/         # retained code and old recovery snapshots
+```
+
+Use verified absolute paths for release links; do not embed literal `~` or placeholders in symlink targets. Shared state is outside public webroots and all code-release/rollback directories. Staging/demo retain their separate configuration/storage and database. There is no private deployment `public/storage` link; do not introduce a public link to private storage.
+
+### Future private deployments and code rollback
+
+1. Resolve the actual private target and verify the approved release, PHP executable, database, profile and writer inventory afresh. The verified production CLI is `/usr/bin/php8.4` (8.4.25 on October 13); do not substitute another default PHP or assume a later host configuration is identical.
+2. Link **every** new private release's `.env` and `storage` to the current dedicated private shared directory before booting/switching it. Do not copy the old rollback installation's stale state into a new release. Preserve ownership and required runtime access; environment/profile stay `0600`, shared parent and profile directory `0700`, never `0777`.
+3. For a code rollback, keep the same current shared environment, storage and database. If the retained older installation has regular `.env`/`storage` entries rather than links, first inspect and preserve them under new, non-colliding recovery names, then install verified shared links while that code is inactive. This preparation needs operational authorization; do not delete the snapshots or switch active code first. Establish code/schema compatibility without destructive migrations.
+4. Inspect absolute paths, internal symlinks and effective configuration, including `view.compiled`, profile, sessions, logging, file-cache/lock, maintenance and filesystem roots. On October 13 configuration was uncached, the profile used the active application alias and Laravel recomputed the physical compiled-view path after the storage switch; no environment edit or cache clear was needed. If a later deployment caches paths, rebuild only the affected cache with the verified PHP after correcting those references. Never blanket-clear sessions, database caches, locks or application data.
+5. Account for long-running processes and PHP path caching; verify they use the shared targets after a switch and restart only this application's affected processes when necessary. Preserve scheduler state and disabled mailbox intake. Verify boot, private profile/access, HTTPS login 200, private demo 404 and guest protected JSON 401; with an existing authenticated session, read only the retained REL-01 synthetic queue/detail. Do not create another fixture or evaluate/save it for a layout check.
+6. Treat retained old state as recovery material, not an alternative current configuration. Do not delete/archive retained releases merely because REL-04 is closed; cleanup requires separate authorization and dependency checks.
+
+### Layout-failure recovery
+
+Rollback was **prepared but not exercised** on October 13. Original link targets, permissions/ownership, exact cron, prior maintenance state and loopback-process state are in the protected host-only recovery directory, alongside the environment and complete quiesced storage copy. Both original rollback copies remain in place. These same-host copies do not replace REL-03 database backups or protect against host/account loss.
+
+1. Resolve current links and consult those private records. Quiesce this application's writers again: maintenance without bypass, pause only its scheduler/affected processes, and wait/check for active work and stable storage. Maintenance blocks new application requests; it does not itself drain active requests or stop workers/scheduled commands. Verify both HTML and JSON barriers; do not stop shared hosting services.
+2. Before restoring anything, preserve a new protected copy of the **latest** shared environment/storage and identify changes since cutover. Reconcile newer files, updates and intentional deletions into the intended recovery target, including any session/cache/lock implications. Never replace newer data with the pre-cutover snapshot or run a blind destructive synchronization.
+3. Correct only relocation-related paths and install the recorded original links using temporary links and atomic replacement while writers remain controlled. Keep maintenance effective in both old/new trees until both links and any affected cache agree. Do not replace application code/key/database settings or restore the database as part of layout recovery.
+4. Boot and verify effective private settings, selected database, profile, required directories/read-write access and targeted HTTP checks. Restore the recorded maintenance state and exact scheduler/process state, then recheck service and disabled intake. Recovery storage from the final synchronization contains task-created maintenance markers; restore the prior state deliberately, not by exposing that snapshot unmodified.
+5. If verification still fails, remain in controlled application maintenance, retain both latest and original material and report REL-04 pending with exact remaining steps. Record actual rollback execution separately from preparation; do not claim a rehearsal occurred.
+
+**October 13 maintenance observation:** copy-first synchronization and atomic link replacement passed during a roughly 62-second application/control window. The original scheduler and two private loopback-server processes were restored. Essential host checks passed; the optional authenticated read-only repeat was unavailable because the trusted browser was signed out. No code release, data migration or intake operation occurred.
