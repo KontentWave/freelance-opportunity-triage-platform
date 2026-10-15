@@ -12,7 +12,7 @@
         "test:release": "node --test tests/Release/release-candidate.test.mjs"
     },
     "devDependencies": {
-        "@playwright/test": "^1.63.0",
+        "@playwright/test": "^1.64.0",
         "@tailwindcss/vite": "^4.0.0",
         "@vitejs/plugin-vue": "^6.0.10",
         "concurrently": "^10.0.3",
