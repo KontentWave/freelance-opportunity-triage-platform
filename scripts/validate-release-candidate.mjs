@@ -21,6 +21,10 @@ import {
 } from "./prepare-release.mjs";
 
 const requiredJobs = ["Quality", "Tests / MariaDB 11.4", "Secret scan"];
+const validVersion = (value) =>
+    typeof value === "string" &&
+    value === value.trim() &&
+    /^v1\.0\.(0|[1-9]\d*)$/.test(value);
 const validTime = (value) =>
     typeof value === "string" &&
     /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?Z$/.test(value) &&
@@ -47,7 +51,7 @@ export function validateEvidence({
     if (
         !/^[\w.-]+\/[\w.-]+$/.test(repository) ||
         !/^[1-9]\d*$/.test(String(ciRunId)) ||
-        version !== "v1.0.0" ||
+        !validVersion(version) ||
         smokePassed !== true ||
         !/^[0-9a-f]{64}$/.test(smokeHash) ||
         !validTime(smokeAt)
@@ -113,6 +117,7 @@ export function validateEvidence({
             "Tag or release already exists; inspect before retrying",
         );
     return {
+        version,
         sha: run.head_sha,
         runId: run.id,
         runAttempt: run.run_attempt,
@@ -267,13 +272,15 @@ export function publishCandidate({
     smokeHash,
     command = cli,
 }) {
+    if (!validVersion(identity.version))
+        throw new Error("Invalid release version");
     const notes = join(directory, "release-notes.txt");
     writeFileSync(notes, publicationNotes(identity, smokeAt, smokeHash));
     try {
         command("gh", [
             "release",
             "create",
-            "v1.0.0",
+            identity.version,
             ...expectedFiles(identity.sha).map((name) => join(directory, name)),
             "--repo",
             identity.repository,
@@ -281,7 +288,7 @@ export function publishCandidate({
             identity.sha,
             "--draft",
             "--title",
-            "v1.0.0",
+            identity.version,
             "--notes-file",
             notes,
         ]);
@@ -289,7 +296,7 @@ export function publishCandidate({
             command("gh", [
                 "release",
                 "view",
-                "v1.0.0",
+                identity.version,
                 "--repo",
                 identity.repository,
                 "--json",
@@ -298,14 +305,14 @@ export function publishCandidate({
         );
         if (
             !draft.isDraft ||
-            draft.tagName !== "v1.0.0" ||
+            draft.tagName !== identity.version ||
             draft.targetCommitish !== identity.sha
         )
             throw new Error("Draft release does not target the candidate SHA");
         command("gh", [
             "release",
             "edit",
-            "v1.0.0",
+            identity.version,
             "--repo",
             identity.repository,
             "--draft=false",
@@ -313,7 +320,7 @@ export function publishCandidate({
         let tag = JSON.parse(
             command("gh", [
                 "api",
-                `repos/${identity.repository}/git/ref/tags/v1.0.0`,
+                `repos/${identity.repository}/git/ref/tags/${identity.version}`,
             ]),
         );
         for (let depth = 0; tag.object?.type === "tag" && depth < 3; depth++) {
@@ -348,7 +355,8 @@ export function validateAndDownload({
 }) {
     if (
         !/^[\w.-]+\/[\w.-]+$/.test(repository) ||
-        !/^[1-9]\d*$/.test(String(ciRunId))
+        !/^[1-9]\d*$/.test(String(ciRunId)) ||
+        !validVersion(version)
     )
         throw new Error("Invalid run selector");
     const run = gateway.api(repository, `actions/runs/${ciRunId}`);
@@ -399,8 +407,8 @@ export function validateAndDownload({
         artifacts,
         reachable,
         now,
-        tagExists: gateway.exists(repository, "git/ref/tags/v1.0.0"),
-        releaseExists: gateway.exists(repository, "releases/tags/v1.0.0"),
+        tagExists: gateway.exists(repository, `git/ref/tags/${version}`),
+        releaseExists: gateway.exists(repository, `releases/tags/${version}`),
     });
     gateway.cli("gh", [
         "run",

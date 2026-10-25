@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       version:
-        description: First release version (v1.0.0)
+        description: Stable v1.0 patch version (for example v1.0.1); must not exist
         required: true
         type: string
       target_host_smoke_passed:
@@ -26,7 +26,7 @@ on:
         type: string
 
 concurrency:
-  group: portfolio-release-v1.0.0
+  group: portfolio-release
   cancel-in-progress: false
 
 jobs:

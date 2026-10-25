@@ -248,6 +248,9 @@ test("rejects ineligible runs and mismatched candidate evidence before publicati
     const identity = validateEvidence(valid);
     validateFiles(input.output, { ...identity, repository }, archiveSha256);
     const failures = [
+        ...["", "v1.0.01", "v1.1.0", "v2.0.0", "v1.0.1-rc.1", "v1.0.1+build", "v1.0.1\n", "../v1.0.1", "--help", null].map(
+            (version) => ({ version }),
+        ),
         { ciRunId: 41 },
         { run: { ...valid.run, event: "pull_request" } },
         { run: { ...valid.run, head_branch: "feature" } },
@@ -341,11 +344,12 @@ test("rejects ineligible runs and mismatched candidate evidence before publicati
     );
 });
 
-test("promotes the verified candidate without rebuilding or overwriting a tag", (context) => {
+for (const version of ["v1.0.0", "v1.0.1"])
+test(`promotes ${version} without rebuilding or overwriting a tag`, (context) => {
     const input = fixture();
     context.after(() => rmSync(input.root, { recursive: true, force: true }));
     const { archiveSha256 } = prepareCandidate(input);
-    const valid = evidence(input.sha, archiveSha256);
+    const valid = { ...evidence(input.sha, archiveSha256), version };
     const responses = {
         "actions/runs/42": valid.run,
         "actions/runs/42/attempts/2": valid.attempt,
@@ -356,9 +360,13 @@ test("promotes the verified candidate without rebuilding or overwriting a tag", 
         },
     };
     const commands = [];
+    const existenceChecks = [];
     const gateway = {
         api: (_, path) => responses[path],
-        exists: () => false,
+        exists: (_, path) => {
+            existenceChecks.push(path);
+            return false;
+        },
         cli: (binary, args) => {
             commands.push([binary, args]);
             if (binary === "gh") {
@@ -384,6 +392,21 @@ test("promotes the verified candidate without rebuilding or overwriting a tag", 
         directory: downloaded,
         gateway,
     });
+    assert.equal(identity.version, version);
+    assert.deepEqual(existenceChecks, [
+        `git/ref/tags/${version}`,
+        `releases/tags/${version}`,
+    ]);
+    for (const path of existenceChecks) {
+        assert.throws(
+            () => validateAndDownload({
+                ...valid,
+                directory: downloaded,
+                gateway: { ...gateway, exists: (_, candidate) => candidate === path },
+            }),
+            /Tag or release already exists/,
+        );
+    }
     publishCandidate({
         directory: downloaded,
         identity,
@@ -394,7 +417,7 @@ test("promotes the verified candidate without rebuilding or overwriting a tag", 
             if (args[1] === "view")
                 return JSON.stringify({
                     isDraft: true,
-                    tagName: "v1.0.0",
+                    tagName: version,
                     targetCommitish: identity.sha,
                 });
             if (args[0] === "api")
@@ -412,11 +435,24 @@ test("promotes the verified candidate without rebuilding or overwriting a tag", 
             ["release", "create"],
             ["release", "view"],
             ["release", "edit"],
-            ["api", `repos/${repository}/git/ref/tags/v1.0.0`],
+            ["api", `repos/${repository}/git/ref/tags/${version}`],
         ],
     );
     assert.ok(commands.every(([, args]) => !args.includes("build")));
     assert.ok(commands.some(([, args]) => args.includes(input.sha)));
+    for (const [, args] of commands.filter(
+        ([binary, args]) => binary === "gh" && args[0] === "release",
+    )) {
+        assert.equal(args[2], version);
+    }
+    assert.throws(
+        () => publishCandidate({
+            directory: downloaded,
+            identity: { ...identity, version: "--help" },
+            command: () => assert.fail("Invalid versions must not invoke GitHub"),
+        }),
+        /Invalid release version/,
+    );
     const partial = [];
     assert.throws(
         () =>
@@ -430,7 +466,7 @@ test("promotes the verified candidate without rebuilding or overwriting a tag", 
                     if (args[1] === "view")
                         return JSON.stringify({
                             isDraft: true,
-                            tagName: "v1.0.0",
+                            tagName: version,
                             targetCommitish: "0".repeat(40),
                         });
                 },
