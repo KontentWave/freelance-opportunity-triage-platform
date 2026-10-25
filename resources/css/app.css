@@ -106,11 +106,15 @@
         box-shadow: 0 1rem 3rem rgb(23 34 29 / 0.12);
     }
     .login-intro,
-    .login-form {
+    .login-form,
+    .login-panel {
         display: grid;
         align-content: center;
         gap: 1.25rem;
         padding: clamp(1.5rem, 5vw, 3.5rem);
+    }
+    .login-panel {
+        grid-column: 1 / -1;
     }
     .login-intro {
         background: #e1ebe4;
