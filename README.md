@@ -2,6 +2,8 @@
 
 The credential-free `/demo` is a synthetic portfolio walkthrough of a ranked review queue, explainable saved suggestions, confirmed details and human feedback. It uses a dedicated disposable MariaDB database; it does not access a mailbox or marketplace. This is not a validated time-saving tool or a marketplace-wide feed. The first real calibration is `READY` with 30 reviews, a 3.33% machine skip rate, a 9.09% false-negative rate and `targets_met=false`.
 
+**Public portfolio demo:** [fotp.kontentwave.com/demo](https://fotp.kontentwave.com/demo). Use this credential-free entry, not the domain root, which retains the published application's login routing. The [October 25 hosting record](.github/docs/runbooks/phase5-release.md#current-public-demo-2026-10-25) documents the isolated deployment, verification and rollback. The former public demo host is retired with HTTP 410.
+
 The application also supports offline normalization of supported Upwork hourly email alerts, authorized scheduled IMAP intake, deterministic triage and a private authenticated review dashboard. It runs on PHP 8.4, Laravel 13, MariaDB 11.4, Vue and Node 22.23 for building frontend assets. No general marketplace API connector exists.
 
 ## Synthetic Demo From a Clean Checkout

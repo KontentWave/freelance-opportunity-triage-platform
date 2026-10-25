@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Moved the public synthetic walkthrough to `https://fotp.kontentwave.com/demo` using the unchanged, checksum-verified `v1.0.0` release on a separate hosting account, database, configuration and writable storage.
+- Verified HTTPS, demo sessions, synthetic review persistence and document-root rollback; retired the former public demo with HTTP 410 after acceptance. Private production and completed phase/remediation evidence remain unchanged.
+
 ## v1.0.0 - 2026-09-28
 
 - Released an isolated, reproducible synthetic demo and public architecture/privacy guide.

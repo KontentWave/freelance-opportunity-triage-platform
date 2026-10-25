@@ -1,6 +1,8 @@
 # Portfolio Demonstration
 
-This is a synthetic engineering demonstration, not a proven opportunity-discovery product. Run it locally using the [clean-checkout instructions](../../README.md#synthetic-demo-from-a-clean-checkout). The fixed seeder creates two workspaces, two users and 28 fictional opportunities (26 in the entered workspace); the queue paginates at 25. No mailbox or marketplace credentials are needed. The [v1.0.0 release](https://github.com/KontentWave/freelance-opportunity-triage-platform/releases/tag/v1.0.0) passed an isolated synthetic stage smoke; no permanent public demo URL is promised here.
+This is a synthetic engineering demonstration, not a proven opportunity-discovery product. [Open the public synthetic demo](https://fotp.kontentwave.com/demo), or run it locally using the [clean-checkout instructions](../../README.md#synthetic-demo-from-a-clean-checkout). The fixed seeder creates two workspaces, two users and 28 fictional opportunities (26 in the entered workspace); the queue paginates at 25. No mailbox or marketplace credentials are needed. The public deployment uses the unchanged [v1.0.0 release](https://github.com/KontentWave/freelance-opportunity-triage-platform/releases/tag/v1.0.0); its [October 25 hosting verification and rollback](runbooks/phase5-release.md#current-public-demo-2026-10-25) are separate from the historical stage acceptance.
+
+Use `/demo` for credential-free entry. By explicit operator choice, the domain root retains the published application's redirect to authenticated review/login rather than changing application routes or adding a hosting redirect. The former demo host is retired with HTTP 410, not redirected. This is a shared synthetic demonstration, not private storage; do not enter personal information.
 
 ![Synthetic ranked review queue with 26 workspace opportunities and saved suggestion badges](screenshots/ranked-queue.png)
 

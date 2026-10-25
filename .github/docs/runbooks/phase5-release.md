@@ -2,6 +2,68 @@
 
 This procedure promotes one CI-built archive. Deployment and release dispatch require explicit operator approval. See the [Phase 4 review runbook](phase4-review-dashboard.md) for demo setup, isolation, browser and accessibility checks; do not reset a private database. Earlier host smoke of `65bf4ea` is historical and does not qualify a new archive.
 
+## Current public demo (2026-10-25)
+
+**Portfolio entry:** [https://fotp.kontentwave.com/demo](https://fotp.kontentwave.com/demo). By explicit operator choice, `/` keeps the published application's `/opportunities` redirect and guest login behavior; use `/demo` in portfolio links. No root-route application change or hosting redirect was introduced. The former public `fotp-stage.zafo-forum.sk` demo is retired with HTTP 410, not redirected. Dated September deployment/publication records below remain historical evidence.
+
+### Approved move and isolation
+
+The operator approved a separate-account deployment and the configuration-only rollback before the document-root switch. Authorized SSH inspection established that the new account initially contained only the provider's placeholder, not Laravel or an application database. Public A/AAAA records resolved to `37.9.175.195` / `2a00:4b40:aaaa:2009::7`; HTTPS presented a valid Let's Encrypt certificate covering `*.kontentwave.com`, valid October 25, 2026 through January 23, 2027. HTTP redirected to HTTPS. A temporary nonce-bearing probe in the actual domain directory confirmed web PHP **8.4.27** and `pdo_mysql` after the operator configured PHP 8.4; the probe was removed and its URL then returned 404.
+
+The existing published `v1.0.0` archive, candidate `a00803b5947b7f52e18537e46edab86a949331da`, was downloaded as the original four release assets and strictly checksum-verified locally and after transfer. Archive SHA-256 remains `725c7b171882b7577c4229b1166eed4dc92d9c0c4dc541d86f53a34f2cdd6c78`. Locked production Composer dependencies and platform checks passed under PHP 8.4.27. No application source or compiled assets were changed, rebuilt or overwritten; no new release was published.
+
+The new account's independently verified, initially empty MariaDB **11.4.13** database ends in `_demo`; its user has only usage plus privileges scoped to that database. Database names and credentials remain host-only. A guarded, consistent snapshot of the former synthetic demo was imported into this empty database, not into private production. Source checks required the known synthetic users/workspaces/provider, demo-only review provenance, and empty intake tables. Sessions, password-reset tokens, caches, locks and job data were excluded. All eight application-table counts/digests matched after import; the original two demo reviews and one enrichment were preserved. The old source's eight application-table digests were checked unchanged before retirement. No migrations, seeders, database resets or private database writes were run.
+
+```text
+~/apps/fotp-demo/
+  incoming/                         # original four published release assets
+  releases/<deployed-sha>/           # extracted archive and locked production dependencies
+    .env -> <account-home>/apps/fotp-demo/shared/.env
+    storage -> <account-home>/apps/fotp-demo/shared/storage
+  current -> releases/<deployed-sha>
+  shared/                           # 0700, demo only
+    .env                            # 0600, fresh demo application key and database credentials
+    storage/                        # independent writable runtime state
+  recovery-20261025/                 # 0700, protected snapshot and operator evidence
+    original-document-root/         # retained original provider placeholder
+    demo.env-before-cutover         # 0600, new demo configuration recovery copy
+    snapshot.json
+    synthetic.sql                   # 0600, synthetic only, no sessions/cache/job data
+    import-result.json
+    cutover.json
+    smoke.json
+~/kontentwave.com/sub/fotp
+  -> <account-home>/apps/fotp-demo/current/public
+```
+
+Effective settings are `APP_URL=https://fotp.kontentwave.com`, `APP_ENV=production`, `APP_DEBUG=false`, `OPPORTUNITY_REVIEW_MODE=demo`, `OPPORTUNITY_MAILBOX_ENABLED=false`, database-backed sessions, `SESSION_COOKIE=fotp-public-demo-session`, `SESSION_SECURE_COOKIE=true`, `SESSION_DOMAIN=null`, HTTP-only cookies and SameSite Lax. The demo has a fresh key and its own database, configuration and writable storage; no private profile, mailbox credentials or private storage were copied. There is no `public/storage` link. Configuration remains uncached. Keep these boundaries for later deployments; do not use the private site's shared directory or retained recovery snapshots as demo state.
+
+### Verification and retirement
+
+At **2026-10-25T12:38:33.823Z**, a standalone real Chromium journey against this HTTPS host passed without invoking the repository browser suite's destructive `_test` setup:
+
+- Login page 200; credential-free demo session and expected queue; pagination 25 then 1.
+- Imported synthetic feedback visible; scoped detail; preset enrichment and demo feedback persisted after reload.
+- Foreign-workspace JSON detail 404; a tokenless API-context write rejected with 419; logout followed by protected JSON 401 and protected HTML redirect to login.
+- Secure, HTTP-only, SameSite Lax session cookie scoped to the exact public hostname.
+- **33 captured browser requests, zero outside-origin requests, zero page errors.** This is browser evidence, not a server-side egress capture.
+
+Post-smoke counts were 2 synthetic workspaces, 2 users, 28 opportunities, 27 evaluations, 3 demo reviews and 2 enrichments; imports, mailbox checkpoints/messages/runs and real-provenance reviews were empty. The original reviews/enrichment still matched their snapshot digests after the new synthetic smoke writes.
+
+At **2026-10-25T12:42:51.768Z**, a second browser session after rollback/restoration and old-host retirement again verified demo entry, retained feedback and logout, with 13 captured requests and zero outside-origin requests. Final public checks returned 200 for the new `/demo`, 410 for both the retired demo entry and `POST /demo-session`, provider-block status 466 for the new `/.env`, and 404 for `/storage/logs/laravel.log`.
+
+After new-host acceptance, only the former demo's public-root symlink was atomically replaced with a host-only HTTP 410 tombstone. Its `/`, `/demo` and `/opportunities` returned 410 with no redirect. The old application, configuration, storage, database, snapshot and original public-root link remain retained under protected operator storage; DNS/TLS and the vhost were not deleted. Re-enabling that public application is a separate deliberate recovery decision, not an automatic redirect or data synchronization.
+
+Private read-only checks at **2026-10-25T12:41:11Z** retained `v1.0.0`, private mode, the existing non-demo database, disabled debug/intake and the REL-04 dedicated shared environment/storage links. Private HTTPS login 200, demo 404 and guest JSON 401 passed again. No private user provisioning, profile change, scheduler change, application switch or authenticated private-data write occurred. Phases 1-5 and the REL-01/REL-03/REL-04 closures remain unchanged; this move neither renews provider-backup evidence nor changes the unsuccessful feasibility/calibration verdict.
+
+### Configuration-only rollback and retained limits
+
+The new domain's document-root rollback was **exercised**: the retained original placeholder directory was briefly restored, its public placeholder response checked, and the active demo symlink restored. The demo returned 200 afterward and review/enrichment digests remained unchanged. This rehearsed hosting mapping rollback, not a new code-version rollback; the September code/assets rollback evidence retains its original scope.
+
+For the same configuration rollback, resolve and verify the paths above first. Move only the new domain's active public-root symlink to a new non-colliding recovery name, then restore `original-document-root/` to that domain path. To return to the demo, preserve the placeholder back in recovery and atomically reinstall the verified demo public-root symlink. Keep the current demo environment, key, database and writable storage throughout; do not restore stale state, reset data, run down migrations or touch private paths. The saved environment is recovery material, not permission to replace newer configuration. Protected exact mapping/state records reside on the host. Reactivating the retired former domain requires an explicit operator decision and its saved original link; it is not necessary to preserve or inspect the new demo's data.
+
+Server-side outbound traffic, authenticated private-user re-verification, provider worker internals and off-host recovery of the new demo were not established by this move. The local `ReviewDemoTest` attempt could not connect to the disposable database on port 3307 (5 setup failures); the installed Compose shim reports that Docker Desktop WSL integration is unavailable. It was not redirected at either deployed database. Live HTTPS/browser checks above passed independently. The existing published release and historical CI results were reused, not represented as a new protected-CI run.
+
 ## Download and identify
 
 On a trusted operator machine with `gh`, `tar` and `sha256sum`, set the successful **push-to-main** CI run ID and its full SHA/attempt from the run page:
