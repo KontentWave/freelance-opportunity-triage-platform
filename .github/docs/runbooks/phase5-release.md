@@ -6,6 +6,8 @@ This procedure promotes one CI-built archive. Deployment and release dispatch re
 
 **Portfolio entry:** [https://fotp.kontentwave.com/demo](https://fotp.kontentwave.com/demo). By explicit operator choice, `/` keeps the published application's `/opportunities` redirect and guest login behavior; use `/demo` in portfolio links. No root-route application change or hosting redirect was introduced. The former public `fotp-stage.zafo-forum.sk` demo is retired with HTTP 410, not redirected. Dated September deployment/publication records below remain historical evidence.
 
+**Current public release:** [v1.0.1](https://github.com/KontentWave/freelance-opportunity-triage-platform/releases/tag/v1.0.1), accepted and published later on October 25 as recorded [below](#v101-demo-layout-patch-2026-10-25). The initial hosting-move observations in this section describe the preceding v1.0.0 installation, not the current code version.
+
 ### Approved move and isolation
 
 The operator approved a separate-account deployment and the configuration-only rollback before the document-root switch. Authorized SSH inspection established that the new account initially contained only the provider's placeholder, not Laravel or an application database. Public A/AAAA records resolved to `37.9.175.195` / `2a00:4b40:aaaa:2009::7`; HTTPS presented a valid Let's Encrypt certificate covering `*.kontentwave.com`, valid October 25, 2026 through January 23, 2027. HTTP redirected to HTTPS. A temporary nonce-bearing probe in the actual domain directory confirmed web PHP **8.4.27** and `pdo_mysql` after the operator configured PHP 8.4; the probe was removed and its URL then returned 404.
@@ -63,6 +65,45 @@ The new domain's document-root rollback was **exercised**: the retained original
 For the same configuration rollback, resolve and verify the paths above first. Move only the new domain's active public-root symlink to a new non-colliding recovery name, then restore `original-document-root/` to that domain path. To return to the demo, preserve the placeholder back in recovery and atomically reinstall the verified demo public-root symlink. Keep the current demo environment, key, database and writable storage throughout; do not restore stale state, reset data, run down migrations or touch private paths. The saved environment is recovery material, not permission to replace newer configuration. Protected exact mapping/state records reside on the host. Reactivating the retired former domain requires an explicit operator decision and its saved original link; it is not necessary to preserve or inspect the new demo's data.
 
 Server-side outbound traffic, authenticated private-user re-verification, provider worker internals and off-host recovery of the new demo were not established by this move. The local `ReviewDemoTest` attempt could not connect to the disposable database on port 3307 (5 setup failures); the installed Compose shim reports that Docker Desktop WSL integration is unavailable. It was not redirected at either deployed database. Live HTTPS/browser checks above passed independently. The existing published release and historical CI results were reused, not represented as a new protected-CI run.
+
+## v1.0.1 demo layout patch (2026-10-25)
+
+After the operator separately approved the release/deployment and its prerequisite, [PR #65](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/65) generalized the formerly first-release-only publication gate to stable `v1.0.<patch>` versions without weakening its candidate or no-overwrite checks. This followed the layout fix in [PR #64](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/64). Five focused release tests passed locally; protected PR and merged-main Quality, Tests / MariaDB 11.4 and Secret scan all passed.
+
+The deployed candidate is **`7806994bfe639ffc3185f6d3dd742511d36b9870`**, from push-to-main CI **`40205138804`, attempt 1**. The exact four-file candidate was downloaded by the operator after the assistant's download tool was blocked; strict checksums, manifest, archive inventory, locks and SBOM were independently verified. Archive SHA-256:
+
+```text
+63c215dfb8ad25b90354b9f2f5dab9cc07f08a1eec08d8e3712862d401133aa6
+```
+
+A bounded inspection covered its 392-entry inventory, permitted environment examples and empty storage scaffolding, unchanged synthetic screenshots and built-asset private-key/operator-email markers. No private content was identified in that bounded check; this is not proof that every possible secret is absent. The complete application delta from deployed v1.0.0 was reviewed: only demo Blade/CSS changed in application sources, with already-merged PHP/JS dependency updates also included (including Laravel 13.33.0 to 13.36.0). No route, controller, configuration or migration source changed. All 16 applied migrations matched both code versions; no migration, seeder or reset was run.
+
+The verified archive was extracted into `~/apps/fotp-demo/releases/7806994bfe639ffc3185f6d3dd742511d36b9870`, with locked production Composer dependencies and passing PHP 8.4.27 platform checks. Its environment/storage links point to the **same existing demo-only shared state**. The configuration/key/database fingerprint, all eight application-table counts/digests and storage paths matched before activation. `current` was switched atomically; no previous source/assets or shared configuration were overwritten. Protected preflight, smoke, state-digest, rollback and publication records are retained in `~/apps/fotp-demo/recovery-v1.0.1/`; original assets remain in `incoming-v1.0.1/`.
+
+At **2026-10-25T15:28:44.779Z**, live Chromium verified the actual compiled candidate CSS and:
+
+- Centered desktop (1440 x 900) and mobile (320 x 720) welcome cards, full-width panels, respectively 56px/24px content inset, and no horizontal overflow. A 1280 x 360 short screen retained at least 16px top spacing and could scroll without clipping.
+- Keyboard access to Start demo and no horizontal overflow at 200% zoom.
+- Demo sessions, 25/1 queue pagination, existing feedback, preset enrichment and feedback reload, foreign-workspace 404, tokenless API-context write 419, logout/guest JSON 401 and secure host-only cookies.
+- **29 captured browser requests, zero outside-origin requests and zero page errors.**
+
+### Cache-aware code rollback and restoration
+
+Initial immediate rollback checks correctly refused to call the rehearsal successful: the filesystem/CLI selected old code while the web welcome page still showed new markup. The candidate was restored after each unsuccessful check. Laravel's generated-view key is relative to the application base and can collide between releases sharing compiled-view storage; PHP's path/opcode caching can also delay a symlink switch. A symlink/CLI result alone is therefore insufficient.
+
+The successful rehearsal allowed a bounded **130-second cache-expiry interval per switch**, then invalidated **only the generated demo welcome view** in this deployment's shared `storage/framework/views`. No sessions, file/database caches, locks, feedback or other application data were cleared. The 120-second realpath TTL was observed in CLI, not independently measured in the web pool; the interval is a verified procedure here, not a provider-wide guarantee. Do not use CLI OPcache invalidation as proof that web workers changed. If a future web process does not converge within the approved bounded wait, restore known-good code and arrange an application-scoped provider reload rather than touching shared hosting services.
+
+At **2026-10-25T15:37:07.561Z**, the rehearsal had verified the actual old welcome markup/compiled assets on retained v1.0.0, then restored and verified the new welcome markup/assets on the candidate. The same authenticated browser session continued across both switches; retained feedback and logout passed. All eight application-table digests matched before rollback, on old code and after restoration. Counts remained 3 demo reviews and 2 enrichments; intake tables stayed empty and debug/intake stayed off. The rollback browser journey captured 25 requests, all same-origin.
+
+For rollback, keep the current demo environment/key/database/storage unchanged, atomically point `current` to `releases/a00803b5947b7f52e18537e46edab86a949331da`, account for path-cache convergence and invalidate only affected generated views, then verify **web** code/assets, sessions and row digests. Restore `releases/7806994bfe639ffc3185f6d3dd742511d36b9870` the same way when returning to v1.0.1. Never restore stale shared state or run down migrations.
+
+### Publication and final boundaries
+
+[Release workflow run `40207811032`](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/40207811032), dispatched from main with the approved version and recorded post-restoration smoke time/hash, passed validation and publication. **v1.0.1 was published at 2026-10-25T15:37:54Z**, neither draft nor prerelease; its tag directly targets the candidate SHA. Exactly four GitHub-reported asset digests matched the local verified CI assets, including the archive hash above. The existing v1.0.0 target and archive digest were rechecked unchanged; no tag or asset was overwritten.
+
+At **2026-10-25T15:38:28.602Z**, another browser session verified the centered live page, retained feedback and logout after publication, with 13 same-origin requests and no outside-origin requests. The old demo still returns 410. Private production retains v1.0.0, its REL-04 shared paths and passing login 200 / demo 404 / guest JSON 401; it was not switched or written to. Phases 1-5, REL-01/REL-03/REL-04 closures and the failed feasibility/calibration verdict remain unchanged.
+
+This patch establishes live layout and demo behavior for this archive, not a server-side egress capture, private authenticated-user rerun, new backup-coverage verification or an off-host recovery test. The local database limitation recorded for the earlier move remains historical; this candidate's protected MariaDB/browser CI did pass.
 
 ## Download and identify
 

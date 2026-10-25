@@ -2,8 +2,11 @@
 
 ## Unreleased
 
+## v1.0.1 - 2026-10-25
+
 - Extended the manually approved portfolio publication workflow to unused stable `v1.0.<patch>` versions, retaining exact-candidate validation and existing-tag/release refusal.
-- Fixed the demo welcome page's missing centered layout and panel spacing, with responsive browser regression checks. This source change requires a new verified release before deployment; the public host is not patched in place.
+- Fixed the demo welcome page's missing centered layout and panel spacing, with responsive browser regression checks. Published and deployed the exact verified CI archive after live layout/session/feedback acceptance and a data-preserving code rollback rehearsal; no published assets were patched in place.
+- Included the already-merged dependency updates since v1.0.0; no application schema, mailbox intake or private deployment change.
 - Moved the public synthetic walkthrough to `https://fotp.kontentwave.com/demo` using the unchanged, checksum-verified `v1.0.0` release on a separate hosting account, database, configuration and writable storage.
 - Verified HTTPS, demo sessions, synthetic review persistence and document-root rollback; retired the former public demo with HTTP 410 after acceptance. Private production and completed phase/remediation evidence remain unchanged.
 
