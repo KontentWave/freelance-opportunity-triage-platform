@@ -140,6 +140,33 @@ test.describe.serial("review dashboard acceptance", () => {
         });
 
         await page.goto(`${origin}/demo`);
+        for (const viewport of [
+            { width: 1440, height: 900 },
+            { width: 320, height: 720 },
+            { width: 1280, height: 360 },
+        ]) {
+            await page.setViewportSize(viewport);
+            const layout = await page.evaluate(() => {
+                const shell = document.querySelector("main").getBoundingClientRect();
+                const panel = document.querySelector("section").getBoundingClientRect();
+                const heading = document.querySelector("h1").getBoundingClientRect();
+
+                return {
+                    centerOffset: Math.abs(shell.x + shell.width / 2 - innerWidth / 2),
+                    top: shell.top,
+                    panelWidth: panel.width,
+                    shellWidth: shell.width,
+                    headingInset: heading.left - panel.left,
+                    horizontalOverflow: document.documentElement.scrollWidth > innerWidth,
+                };
+            });
+            expect(layout.centerOffset).toBeLessThanOrEqual(1);
+            expect(layout.top).toBeGreaterThanOrEqual(16);
+            expect(layout.panelWidth).toBeCloseTo(layout.shellWidth, 0);
+            expect(layout.headingInset).toBeGreaterThanOrEqual(24);
+            expect(layout.horizontalOverflow).toBe(false);
+        }
+        await page.setViewportSize({ width: 1280, height: 720 });
         await keyboardActivate(page, "Start demo");
         await expect(page.getByText("Synthetic shared demo")).toBeVisible();
         await expect(page.getByRole("article")).toHaveCount(25);

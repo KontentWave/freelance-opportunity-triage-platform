@@ -6,7 +6,7 @@
     <title>Synthetic review demonstration</title>
     @vite(['resources/css/app.css'])
 </head>
-<body>
+<body class="login-body">
     <main class="login-shell">
         <section class="login-panel" aria-labelledby="demo-heading">
             <p class="eyebrow">Synthetic data only</p>

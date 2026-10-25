@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Fixed the demo welcome page's missing centered layout and panel spacing, with responsive browser regression checks. This source change requires a new verified release before deployment; the public host is not patched in place.
 - Moved the public synthetic walkthrough to `https://fotp.kontentwave.com/demo` using the unchanged, checksum-verified `v1.0.0` release on a separate hosting account, database, configuration and writable storage.
 - Verified HTTPS, demo sessions, synthetic review persistence and document-root rollback; retired the former public demo with HTTP 410 after acceptance. Private production and completed phase/remediation evidence remain unchanged.
 
