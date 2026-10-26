@@ -20,7 +20,7 @@ Phase 1 does not contact Gmail, IMAP, Upwork, or any other external service.
 - Workspace-scoped opportunity persistence, skill replacement, import idempotency, and quarantine records.
 - Local Artisan command `opportunity:import-email {path} {--workspace=}`.
 - PHPUnit coverage for parser, import action, command behavior, and schema constraints.
-- Gherkin documentation in `.github/docs/features/normalize_job_alert.feature`.
+- Gherkin documentation in `docs/features/normalize_job_alert.feature`.
 
 ### Explicitly Excluded
 
@@ -245,7 +245,7 @@ File: `tests/Feature/OpportunitySchemaTest.php`
 
 #### Behavior spec
 
-File: `.github/docs/features/normalize_job_alert.feature`
+File: `docs/features/normalize_job_alert.feature`
 
 The feature file documents the four Phase 1 acceptance scenarios, but the repository does not currently install or run a Gherkin executor. The executable validation source of truth is the PHPUnit suite.
 
@@ -293,7 +293,7 @@ No remaining application-scope gaps were found inside the agreed Phase 1 scope.
 **Document role:** Audited implementation specification for the current phase only
 **Current status:** Complete; polling-deadline correction passed protected CI and target-host verification
 **Last updated:** 2026-09-08
-**Behavior specification:** `.github/docs/features/import_job_alerts_from_mailbox.feature`
+**Behavior specification:** `docs/features/import_job_alerts_from_mailbox.feature`
 
 ### Action
 
@@ -359,7 +359,7 @@ The first implementation slice is a compatibility spike. If TLS, authentication,
 - Store only delivery state and safe error codes in MariaDB. Hold raw RFC822 bytes in memory only long enough to call the Phase 1 importer.
 - Use the existing Phase 1 idempotency as the final duplicate guard; the mailbox ledger is an operational delivery guard, not a replacement.
 
-Record this decision in `.github/docs/adr/ADR-004-scheduled-imap-polling.md` during implementation.
+Record this decision in `docs/adr/ADR-004-scheduled-imap-polling.md` during implementation.
 
 ### Configuration Contract
 
@@ -547,7 +547,7 @@ The deployment runbook must document a provider cron entry that invokes `php art
 
 1. **Compatibility spike and ADR**
     - Add `webklex/php-imap:^6.2` and commit its lockfile change.
-    - Draft `.github/docs/adr/ADR-004-scheduled-imap-polling.md`.
+    - Draft `docs/adr/ADR-004-scheduled-imap-polling.md`.
     - Prove PHP 8.4 connectivity, certificate validation, folder selection, UID/UIDVALIDITY, raw RFC822 retrieval, size lookup, and unchanged message flags on the target host.
     - Stop and amend the ADR if any proof fails.
 2. **Configuration and domain contract**
@@ -567,7 +567,7 @@ The deployment runbook must document a provider cron entry that invokes `php art
 6. **Operational commands and scheduler**
     - Add `CheckOpportunityMailboxCommand`, `PollOpportunityMailboxCommand`, and `OpportunityMailboxHealthCommand`.
     - Add the guarded five-minute schedule in `routes/console.php`.
-    - Add `.github/docs/runbooks/mailbox-intake.md` with safe setup, cron, health, disable, and rollback instructions.
+    - Add `docs/runbooks/mailbox-intake.md` with safe setup, cron, health, disable, and rollback instructions.
 7. **TDD/BDD completion**
     - Write the named tests below before their production code, using `Tests\Support\Fakes\FakeMailboxClient` for deterministic no-network behavior.
     - Map every Gherkin scenario to at least one PHPUnit feature test.
@@ -756,7 +756,7 @@ The later deadline review found that static socket inactivity timeouts did not b
 
 ### Definition of Ready
 
-- This sheet and `.github/docs/features/import_job_alerts_from_mailbox.feature` are approved.
+- This sheet and `docs/features/import_job_alerts_from_mailbox.feature` are approved.
 - Phase 1 remains green on MariaDB 11.4 with all required GitHub checks.
 - The compatibility spike is the first implementation task and has an explicit stop condition.
 - Named tests, privacy boundaries, retry semantics, configuration keys, and rollback are defined.
@@ -777,8 +777,8 @@ The later deadline review found that static socket inactivity timeouts did not b
 **Role:** As-built implementation specification for the current phase
 **Status:** Implementation deployed; first real calibration READY but targets not met; no GO decision claimed
 **Date:** 2026-09-14
-**Repository destination:** `.github/docs/project_sheet.md`
-**Behavior specification:** `.github/docs/features/triage_imported_opportunities.feature`
+**Repository destination:** `docs/project_sheet.md`
+**Behavior specification:** `docs/features/triage_imported_opportunities.feature`
 
 ### Accepted baseline and scope decision
 
@@ -940,7 +940,7 @@ For READY reports, true supports proceeding to dashboard work; false calls for *
 
 ### Ordered implementation tasks
 
-1. **Pure behavior first.** Read applicable repository rules; write the profile/scorer tests and implement the fixed contracts, canonicalization, demo JSON, and golden cases under `tests/Fixtures/Triage/`. Record the bounded design and accepted Phase 2 scope in `.github/docs/adr/ADR-005-deterministic-opportunity-triage.md`.
+1. **Pure behavior first.** Read applicable repository rules; write the profile/scorer tests and implement the fixed contracts, canonicalization, demo JSON, and golden cases under `tests/Fixtures/Triage/`. Record the bounded design and accepted Phase 2 scope in `docs/adr/ADR-005-deterministic-opportunity-triage.md`.
 2. **One complete CLI evaluation path.** Add migrations named `create_opportunity_evaluations_table` and `create_opportunity_reviews_table`, the models, scoped evaluate action, and triage command. Prove repeat evaluation, changed versions/inputs, and workspace isolation against MariaDB. Keep all prior import/mailbox behavior unchanged.
 3. **Human feedback and feasibility evidence.** Add review and report actions/commands, pure calibration math and their tests. Document a synthetic CLI walkthrough and private personal-profile/cohort usage in `README.md`; keep real files under ignored `storage/app/private/triage/`. Extend the existing CI coverage check to enforce at least 90% for `app/Domain/Triage/` while preserving the separate existing 90% parser/domain and 80% overall gates. Finish as-built docs and the actual calibration decision when evidence exists.
 
@@ -1008,7 +1008,7 @@ The required skip rate of at least 50% and false-negative rate of at most 5% wer
 **Role:** Approved implementation contract; append this section to the existing as-built sheet.
 **Status:** Complete. All three implementation slices passed protected CI and the isolated synthetic deployment passed the approved target-host acceptance gate. Phase 3 engineering and its unsuccessful first real calibration remain accepted historical evidence.
 **Date:** 2026-09-22
-**Behavior file:** `.github/docs/features/review_and_enrich_opportunities.feature`
+**Behavior file:** `docs/features/review_and_enrich_opportunities.feature`
 
 ### Evidence and entry decision
 
@@ -1179,8 +1179,8 @@ The seeder refuses to run outside demo mode and refuses an existing database con
 Follow the supplied Scrum-XP Action → Task → named tests/Gherkin → audit → evidence workflow. Apply the repository Laravel/testing guidance; use Tailwind 4 conventions for the UI.
 
 1. **Protected read journey.** Add the user-workspace and selected-evaluation-pointer migrations, configuration, session flow, middleware/policy, reusable profile/input loaders, queue/detail resources and queries. Build the two Vue screens with read-only explanations and explicit Evaluate. Add `vue` 3, a Vite-8-compatible `@vitejs/plugin-vue`, and a committed npm lockfile; preserve the existing project rather than scaffolding over it. Keep Node's roadmap baseline, verifying package engines during installation. No new PHP runtime dependency.
-2. **Enrichment and feedback.** Add the enrichment table/model, review columns, validated requests, transactional actions, provenance/stale handling and forms. Record the integration decisions in `.github/docs/adr/ADR-007-review-dashboard-and-manual-enrichment.md` (ADR-006 remains reserved by the roadmap). Test old Phase 3 commands and calibration semantics alongside new HTTP paths.
-3. **Usable demonstration and acceptance.** Add the synthetic seeder/presets, opt-in demo entry, the browser acceptance test described below, README instructions and `.github/docs/runbooks/phase4-review-dashboard.md`. Verify on the existing target hosting with compiled assets; retain the existing three required checks and complete only this phase's acceptance work.
+2. **Enrichment and feedback.** Add the enrichment table/model, review columns, validated requests, transactional actions, provenance/stale handling and forms. Record the integration decisions in `docs/adr/ADR-007-review-dashboard-and-manual-enrichment.md` (ADR-006 remains reserved by the roadmap). Test old Phase 3 commands and calibration semantics alongside new HTTP paths.
+3. **Usable demonstration and acceptance.** Add the synthetic seeder/presets, opt-in demo entry, the browser acceptance test described below, README instructions and `docs/runbooks/phase4-review-dashboard.md`. Verify on the existing target hosting with compiled assets; retain the existing three required checks and complete only this phase's acceptance work.
 
 Concrete paths: `app/Http/Controllers/Auth/SessionController.php`, `DemoSessionController.php`; `app/Http/Controllers/OpportunityReviewController.php` (index/show), `OpportunityEvaluationController.php` (store), `OpportunityEnrichmentController.php` (store), `OpportunityFeedbackController.php` (update); corresponding requests under `app/Http/Requests/Review/` and explicit resources under `app/Http/Resources/Review/`; `app/Http/Middleware/EnsureReviewWorkspace.php`; `app/Policies/OpportunityPolicy.php`; `app/Application/Review/ListReviewOpportunities.php`, `ShowReviewOpportunity.php`, `RefreshReviewEvaluation.php`, `SaveOpportunityEnrichment.php`; `app/Application/Triage/BuildOpportunityTriageInput.php`; `app/Models/OpportunityEnrichment.php`.
 
@@ -1245,7 +1245,7 @@ Record the Phase 3 product decision independently. Under this portfolio-demo dec
 **Document role:** Phase 5 scope and Slice 1-3 contracts; earlier phases remain historical as-built records.
 **Status:** Phase 5 completed as a portfolio release. Slices 1 and 2 merged in [PR #15](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/15) and [PR #29](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/29); Slice 3 passed protected CI, isolated exact-archive staging smoke, bounded candidate-asset review and same-demo-database rollback rehearsal. The operator confirmed Apache 2.4 / PHP 8.4 for the stage in hosting settings. Separately approved `v1.0.0` publication and asset verification passed on 2026-09-28, followed by a separate private-site deployment of the same candidate.
 **Accepted baseline:** `d1818df5ec2e5211319393ab1726622e53b02028` (merged PR #14). Its [CI run](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/35769060483) passed 176 PHP tests / 1,361 assertions, two Chromium tests, and coverage of 90.93% overall, 93.67% parser/domain and 96.90% triage domain. These are baseline results, not Phase 5 results.
-**Associated feature:** `.github/docs/features/release_portfolio_demo.feature` maps Phase 5 acceptance to the named tests and explicit operator checks below; it is not executed by a Gherkin runner.
+**Associated feature:** `docs/features/release_portfolio_demo.feature` maps Phase 5 acceptance to the named tests and explicit operator checks below; it is not executed by a Gherkin runner.
 
 ### Action
 
@@ -1276,7 +1276,7 @@ The accepted Slice 1 scope was delivered in [PR #15](https://github.com/KontentW
 2. `.env.demo.example` supplies synthetic local settings with a blank application key, demo user `41001`, mailbox intake disabled and a separate `_demo` database. The real `.env.demo` remains ignored.
 3. The opt-in `mariadb_demo` Compose profile uses MariaDB 11.4, a separate disposable volume and loopback port 3308, without changing the `_test` database.
 4. The documented clean-checkout walkthrough installs locked dependencies, generates a demo key, migrates and seeds the existing `ReviewDemoSeeder`, builds assets and enters `/demo`. Playwright continues to reset only `_test`, never `_demo`.
-5. `.github/docs/portfolio.md` records the architecture, data boundaries, actual ADR links, threat model, future-source requirements, limits and evidence without inventing missing ADRs.
+5. `docs/portfolio.md` records the architecture, data boundaries, actual ADR links, threat model, future-source requirements, limits and evidence without inventing missing ADRs.
 6. Three synthetic screenshots show the ranked queue, confirmed-detail explanation and saved feedback, with descriptive alt text and no browser/account chrome. The local demo requires no marketplace credentials; no unverified hosted demo URL is claimed.
 7. `CHANGELOG.md` has an Unreleased entry. Existing license metadata and third-party notices were left alone; the Scrum-XP guides were not made release assets.
 8. `.github/dependabot.yml` schedules weekly Composer, npm and GitHub Actions updates with three open PRs per ecosystem and no auto-merge. Subsequent dependency PRs were reviewed and merged separately; they were not a prerequisite for completing Slice 1.
@@ -1295,7 +1295,7 @@ For a future source, the guide requires documented authorization for the intende
 
 #### Completion evidence and limits
 
-The [Slice 1 verification record](../../README.md#slice-1-verification-2026-09-23) distinguishes an initial overlay smoke from the later clean checkout of committed candidate `1d02dae366f4e855ac9fde07b11a17f6869a16f1`. The latter used PHP 8.4.12, Composer 2.9.5, Node 22.23.0 and MariaDB 11.4, with a separate demo volume and external port override to avoid the existing service. Locked installs, key generation, migration, seeding and production build passed. Browser checks covered demo entry, 25/1 pagination, foreign-workspace 404, preset enrichment and saved feedback after reload, logout and same-origin resources. The isolated database held 2 workspaces, 2 users and 28 synthetic opportunities, with no mailbox or email-import rows. The bounded publication-material review found no private material in the examined files.
+The [Slice 1 verification record](../README.md#slice-1-verification-2026-09-23) distinguishes an initial overlay smoke from the later clean checkout of committed candidate `1d02dae366f4e855ac9fde07b11a17f6869a16f1`. The latter used PHP 8.4.12, Composer 2.9.5, Node 22.23.0 and MariaDB 11.4, with a separate demo volume and external port override to avoid the existing service. Locked installs, key generation, migration, seeding and production build passed. Browser checks covered demo entry, 25/1 pagination, foreign-workspace 404, preset enrichment and saved feedback after reload, logout and same-origin resources. The isolated database held 2 workspaces, 2 users and 28 synthetic opportunities, with no mailbox or email-import rows. The bounded publication-material review found no private material in the examined files.
 
 PR #15 merged as [`77975ec`](https://github.com/KontentWave/freelance-opportunity-triage-platform/commit/77975ec7d16a85121e64c800acccdd183536131d); its post-merge [CI run 35890766817](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/35890766817) passed Quality, Tests / MariaDB 11.4 and Secret scan. The local browser observation was not a server-side network capture. Final candidate privacy review, target-host release acceptance, rollback rehearsal, SBOM, archive and publication belong to later slices; no `v1.0.0` release is claimed.
 
@@ -1396,7 +1396,7 @@ A PR runs packaging validation and the release-script tests without publishing a
 
 #### Operator verification and rollback
 
-Add `.github/docs/runbooks/phase5-release.md`, referencing the existing Phase 4 runbook instead of duplicating it. It must give tested commands for:
+Add `docs/runbooks/phase5-release.md`, referencing the existing Phase 4 runbook instead of duplicating it. It must give tested commands for:
 
 - Downloading the candidate from its CI run and checking `SHA256SUMS`.
 - Installing its locked production PHP dependencies and deploying its already compiled assets on the approved host, using a separate synthetic `_demo` database, HTTPS, debug disabled and mailbox intake disabled.
@@ -1434,7 +1434,7 @@ If publication fails after creating the draft/tag, leave it for explicit operato
 
 Use minimal permissions: CI remains `contents: read`; release validation needs `contents: read` and `actions: read`; grant `contents: write` only to the publication job after validation. Pin third-party actions to immutable SHAs, use no hosting/mailbox credentials, keep PRs unprivileged and serialize publication with cancellation disabled.
 
-Record this bounded promotion decision in `.github/docs/adr/ADR-008-portfolio-release.md`. Update the integration map only for new verified relationships, and update the roadmap/project sheet with actual results after execution. Historical phase evidence and the failed calibration remain unchanged.
+Record this bounded promotion decision in `docs/adr/ADR-008-portfolio-release.md`. Update the integration map only for new verified relationships, and update the roadmap/project sheet with actual results after execution. Historical phase evidence and the failed calibration remain unchanged.
 
 #### Local implementation evidence (prepublication checkpoint)
 

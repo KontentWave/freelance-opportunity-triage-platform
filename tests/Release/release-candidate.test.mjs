@@ -19,10 +19,27 @@ import {
     validateEvidence,
     validateFiles,
     publishCandidate,
+    publicationNotes,
     validateAndDownload,
 } from "../../scripts/validate-release-candidate.mjs";
 
 const repository = "KontentWave/freelance-opportunity-triage-platform";
+test("publication notes link to relocated documentation at the candidate SHA", () => {
+    const sha = "a".repeat(40);
+    const notes = publicationNotes(
+        { sha, runId: 1, runAttempt: 1 },
+        "2026-10-26T19:00:00Z",
+        "b".repeat(64),
+    );
+
+    for (const path of ["runbooks/phase5-release.md", "portfolio.md"]) {
+        assert.ok(
+            notes.includes(`https://github.com/${repository}/blob/${sha}/docs/${path}`),
+        );
+    }
+    assert.ok(!notes.includes(".github/docs/"));
+});
+
 const installed = (name, version, cataloger) => ({
     name,
     version,
