@@ -42,7 +42,7 @@ Budget exhaustion before committed discovery fails with `mailbox.poll_budget_exh
 
 ## Target-Host Verification Gate
 
-All items in `.github/docs/runbooks/phase2-compatibility-check.md` must pass on the target host before this ADR can be accepted:
+All items in `docs/runbooks/phase2-compatibility-check.md` must pass on the target host before this ADR can be accepted:
 
 - PHP 8.4 and required extension compatibility.
 - Outbound IMAP over certificate-validated TLS.

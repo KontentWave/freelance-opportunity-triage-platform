@@ -2,7 +2,7 @@
 
 The credential-free `/demo` is a synthetic portfolio walkthrough of a ranked review queue, explainable saved suggestions, confirmed details and human feedback. It uses a dedicated disposable MariaDB database; it does not access a mailbox or marketplace. This is not a validated time-saving tool or a marketplace-wide feed. The first real calibration is `READY` with 30 reviews, a 3.33% machine skip rate, a 9.09% false-negative rate and `targets_met=false`.
 
-**Public portfolio demo:** [fotp.kontentwave.com/demo](https://fotp.kontentwave.com/demo). Use this credential-free entry, not the domain root, which retains the published application's login routing. The [October 25 hosting record](.github/docs/runbooks/phase5-release.md#current-public-demo-2026-10-25) documents the isolated deployment, verification and rollback. The former public demo host is retired with HTTP 410.
+**Public portfolio demo:** [fotp.kontentwave.com/demo](https://fotp.kontentwave.com/demo). Use this credential-free entry, not the domain root, which retains the published application's login routing. The [October 25 hosting record](docs/runbooks/phase5-release.md#current-public-demo-2026-10-25) documents the isolated deployment, verification and rollback. The former public demo host is retired with HTTP 410.
 
 The application also supports offline normalization of supported Upwork hourly email alerts, authorized scheduled IMAP intake, deterministic triage and a private authenticated review dashboard. It runs on PHP 8.4, Laravel 13, MariaDB 11.4, Vue and Node 22.23 for building frontend assets. No general marketplace API connector exists.
 
@@ -24,7 +24,7 @@ APP_ENV=demo php artisan serve --host=127.0.0.1 --port=8000
 
 Open `http://127.0.0.1:8000/demo` in a browser and start the demo. The seeded dataset has two users, two workspaces and 28 fictional opportunities: the assigned workspace has 26, paginated 25 then 1. The seeded profile and preset controls need no mailbox or marketplace credentials. Saved preset enrichment and feedback survive reload; logout removes access to private review routes.
 
-Do not run Playwright against the demo database: its setup recreates only the isolated `_test` database. Keep `.env.demo` private; commit only `.env.demo.example`. For review-specific behavior see the [review runbook](.github/docs/runbooks/phase4-review-dashboard.md) and [portfolio guide](.github/docs/portfolio.md). Candidate acceptance, publication and rollback belong to the later release-workflow slice.
+Do not run Playwright against the demo database: its setup recreates only the isolated `_test` database. Keep `.env.demo` private; commit only `.env.demo.example`. For review-specific behavior see the [review runbook](docs/runbooks/phase4-review-dashboard.md) and [portfolio guide](docs/portfolio.md). Candidate acceptance, publication and rollback belong to the later release-workflow slice.
 
 ### Operational Summary
 
@@ -275,7 +275,7 @@ APP_ENV=demo php artisan db:seed --env=demo --class=ReviewDemoSeeder --force
 
 The seeder refuses private mode, mailbox-enabled operation, unsafe database names, and databases containing unrelated application records. `/demo` provides the CSRF-protected credential-free entry. Demo enrichment accepts fixed preset keys only, feedback accepts enum values and an empty or fixed note, and all demo reviews use `sample_kind=demo`.
 
-See `.github/docs/runbooks/phase4-review-dashboard.md` before provisioning, resetting, deploying, or verifying either mode.
+See `docs/runbooks/phase4-review-dashboard.md` before provisioning, resetting, deploying, or verifying either mode.
 
 ## Validation
 
@@ -332,6 +332,6 @@ Recommended branch protection for this solo project:
 
 ## Reference Docs
 
-- Current phase as-built specification: `.github/docs/project_sheet.md`
-- Phase 1 behavior scenarios: `.github/docs/features/normalize_job_alert.feature`
-- Product roadmap: `.github/docs/PROJECT_ROADMAP.md`
+- Current phase as-built specification: `docs/project_sheet.md`
+- Phase 1 behavior scenarios: `docs/features/normalize_job_alert.feature`
+- Product roadmap: `docs/PROJECT_ROADMAP.md`

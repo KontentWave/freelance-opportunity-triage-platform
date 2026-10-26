@@ -262,7 +262,7 @@ function exists(repository, path) {
 }
 
 export function publicationNotes(identity, smokeAt, smokeHash) {
-    return `Candidate SHA: ${identity.sha}\nCI run: ${identity.runId}, attempt: ${identity.runAttempt}\nOperator-attested synthetic host smoke: ${smokeAt}\nArchive SHA-256: ${smokeHash}\n\nInstall the attached archive with locked production Composer dependencies and its compiled public/build assets. See the [release and rollback runbook](https://github.com/KontentWave/freelance-opportunity-triage-platform/blob/${identity.sha}/.github/docs/runbooks/phase5-release.md) and [portfolio screenshots and limits](https://github.com/KontentWave/freelance-opportunity-triage-platform/blob/${identity.sha}/.github/docs/portfolio.md). This is a synthetic portfolio demo, not a product-feasibility GO or comprehensive marketplace coverage.\n`;
+    return `Candidate SHA: ${identity.sha}\nCI run: ${identity.runId}, attempt: ${identity.runAttempt}\nOperator-attested synthetic host smoke: ${smokeAt}\nArchive SHA-256: ${smokeHash}\n\nInstall the attached archive with locked production Composer dependencies and its compiled public/build assets. See the [release and rollback runbook](https://github.com/KontentWave/freelance-opportunity-triage-platform/blob/${identity.sha}/docs/runbooks/phase5-release.md) and [portfolio screenshots and limits](https://github.com/KontentWave/freelance-opportunity-triage-platform/blob/${identity.sha}/docs/portfolio.md). This is a synthetic portfolio demo, not a product-feasibility GO or comprehensive marketplace coverage.\n`;
 }
 
 export function publishCandidate({
