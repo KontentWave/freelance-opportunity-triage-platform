@@ -9,7 +9,8 @@
         "build": "vite build",
         "dev": "vite",
         "test:e2e": "playwright test",
-        "test:release": "node --test tests/Release/release-candidate.test.mjs"
+        "test:release": "node --test tests/Release/release-candidate.test.mjs",
+        "test:sync-sheet": "node --test scripts/sync-sheet.test.mjs"
     },
     "devDependencies": {
         "@playwright/test": "^1.64.0",

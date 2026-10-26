@@ -330,6 +330,36 @@ Recommended branch protection for this solo project:
 - disallow branch deletion
 - do not require an approving reviewer count
 
+## Project Sheet Synchronization
+
+The optional [sync client](scripts/sync-sheet.mjs) exchanges [the project sheet](docs/project_sheet.md) with an existing native Google Doc. It requires Bash and the project's supported Node.js version, with no extra packages. Astra is the project-sheet editor; consultant handoffs are advisory. Always retrieve the latest document before editing, preserve historical evidence, and review the Git diff after synchronization. The client cannot detect a semantically incorrect edit or missing historical section.
+
+### Google Apps Script setup
+
+1. Install [the Apps Script code](scripts/sync-sheet-apps-script.gs) as `Code.gs` in your Apps Script project. Merge [the manifest template](scripts/sync-sheet-appsscript.json) into its `appsscript.json`, preserving existing settings. The Drive v3 service enables the Drive API automatically for a default Cloud project; for a separately linked standard Cloud project, also enable Google Drive API in that project's API Library.
+2. In **Project Settings → Script Properties**, save `PROJECT_SHEET_DOC_ID` as the existing document ID and `SECRET_TOKEN` as a newly generated random secret. Never commit real tokens, document IDs or deployment URLs; rotate exposed tokens.
+3. Save and run `authorizeSync` from the editor, granting the required external-request and Drive read/write scopes. It verifies export and advertised Markdown import support without modifying the document.
+4. Deploy a web app that executes as you, with access **Anyone**, if permitted by your account policy. The application authenticates requests using the secret in the POST body. For later code changes, edit the deployment and select **New version**; changing local source files does not deploy them.
+
+### Local setup and use
+
+Create `.vscode/` if needed, then copy [the configuration example](scripts/sync-sheet.config.example.json) to `.vscode/sync-sheet.json` and enter the deployment's `/exec` URL without query parameters and the same new token. Alternatively, set `SYNC_SHEET_URL` and `SYNC_SHEET_TOKEN` in your environment; they override the corresponding configuration values. Configuration, sync state and backups stay under the Git-ignored `.vscode/` directory.
+
+For VS Code tasks, merge [the task examples](scripts/sync-sheet.tasks.example.json) into your existing `.vscode/tasks.json`; do not overwrite unrelated tasks. The shell entry point also works from any working directory:
+
+```bash
+bash scripts/sync-sheet.sh pull
+# Review docs/project_sheet.md and its Git diff before editing or pushing.
+bash scripts/sync-sheet.sh push
+npm run test:sync-sheet
+```
+
+Pull once before the first push to establish a remote-content baseline. A pull validates the response and hash before replacing the local document, backing up differing content under `.vscode/sync-sheet/backups/`. Local edits block an ordinary pull. Only after reviewing both copies, use `pull --force` to back up and replace local edits; it is not a merge. Restore a needed backup by copying its Markdown content back to the project sheet.
+
+Push imports Markdown into the same Google Doc rather than inserting literal Markdown text. It replaces the document content and may normalize formatting or lose Google-Docs-only features; test on a duplicate first. If the remote content changed since the last sync, push refuses the update: preserve your local edits separately, pull and reconcile both versions before pushing again. An unchanged remote export leaves local Markdown formatting intact on subsequent pulls.
+
+Avoid simultaneous edits. The Apps Script lock serializes sync requests, not human Google Docs edits, and the hash check is not an atomic lock against editors. A timed-out or failed push response does not prove the update failed: inspect the Google Doc before retrying. No automatic retry or live cloud request is made by the offline test suite.
+
 ## Reference Docs
 
 - Current phase as-built specification: `docs/project_sheet.md`

@@ -1,0 +1,21 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Sync: Pull from Google Drive",
+            "type": "process",
+            "command": "bash",
+            "args": ["${workspaceFolder}/scripts/sync-sheet.sh", "pull"],
+            "options": { "cwd": "${workspaceFolder}" },
+            "problemMatcher": []
+        },
+        {
+            "label": "Sync: Push to Google Drive",
+            "type": "process",
+            "command": "bash",
+            "args": ["${workspaceFolder}/scripts/sync-sheet.sh", "push"],
+            "options": { "cwd": "${workspaceFolder}" },
+            "problemMatcher": []
+        }
+    ]
+}
