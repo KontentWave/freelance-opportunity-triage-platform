@@ -16,6 +16,22 @@
             "args": ["${workspaceFolder}/scripts/sync-sheet.sh", "push"],
             "options": { "cwd": "${workspaceFolder}" },
             "problemMatcher": []
+        },
+        {
+            "label": "Sync: Pull PROJECT_ROADMAP from Google Drive",
+            "type": "process",
+            "command": "bash",
+            "args": ["${workspaceFolder}/scripts/sync-sheet.sh", "pull", "roadmap"],
+            "options": { "cwd": "${workspaceFolder}" },
+            "problemMatcher": []
+        },
+        {
+            "label": "Sync: Push PROJECT_ROADMAP to Google Drive",
+            "type": "process",
+            "command": "bash",
+            "args": ["${workspaceFolder}/scripts/sync-sheet.sh", "push", "roadmap"],
+            "options": { "cwd": "${workspaceFolder}" },
+            "problemMatcher": []
         }
     ]
 }

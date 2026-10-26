@@ -30,7 +30,7 @@ test("pull backs up the previous file and records a verified baseline", async (c
     const markdown = "# Remote phase\n\n**Formatted** text.\n";
     await run(["pull"], async (_, options) => {
         assert.equal(options.method, "POST");
-        assert.deepEqual(JSON.parse(options.body), { action: "pull", token: env.SYNC_SHEET_TOKEN });
+        assert.deepEqual(JSON.parse(options.body), { action: "pull", document: "sheet", token: env.SYNC_SHEET_TOKEN });
         return reply({ ok: true, markdown, hash: hash(markdown) });
     });
     assert.equal(await readFile(path, "utf8"), markdown);
@@ -91,7 +91,7 @@ test("push requires a prior pull and sends the last remote hash without rewritin
     const normalized = "# Local change\n\n";
     await run(["push"], async (_, options) => {
         assert.deepEqual(JSON.parse(options.body), {
-            action: "push", token: env.SYNC_SHEET_TOKEN, markdown: local, baseHash: hash(remote),
+            action: "push", document: "sheet", token: env.SYNC_SHEET_TOKEN, markdown: local, baseHash: hash(remote),
         });
         return reply({ ok: true, hash: hash(normalized) });
     });
@@ -143,6 +143,94 @@ test("pull still applies genuine remote changes after a successful push", async 
     assert.equal(await readFile(path, "utf8"), changed);
 });
 
+test("roadmap uses its own file, baseline and backups without changing sheet sync state", async (context) => {
+    const { root, path, run } = await fixture(context);
+    const sheet = "# Sheet remote\n";
+    await run(["pull"], async () => reply({ ok: true, markdown: sheet, hash: hash(sheet) }));
+    const sheetStatePath = join(root, ".vscode/sync-sheet/state.json");
+    const sheetState = await readFile(sheetStatePath, "utf8");
+    const roadmapPath = join(root, "docs/PROJECT_ROADMAP.md");
+    await writeFile(roadmapPath, "# Original roadmap\n");
+    await assert.rejects(run(["push", "roadmap"], () => assert.fail("Cannot reuse sheet baseline")), /Pull once/);
+    const roadmap = "# Roadmap remote\n";
+    await run(["pull", "roadmap"], async (_, options) => {
+        assert.deepEqual(JSON.parse(options.body), {
+            action: "pull-roadmap", document: "roadmap", token: env.SYNC_SHEET_TOKEN,
+        });
+        return reply({ ok: true, document: "roadmap", markdown: roadmap, hash: hash(roadmap) });
+    });
+    assert.equal(await readFile(roadmapPath, "utf8"), roadmap);
+    const backups = join(root, ".vscode/sync-sheet/roadmap/backups");
+    const names = await readdir(backups);
+    assert.equal(names.length, 1);
+    assert.equal(await readFile(join(backups, names[0]), "utf8"), "# Original roadmap\n");
+    const changed = "# Updated roadmap\n";
+    await writeFile(roadmapPath, changed);
+    await run(["push", "roadmap"], async (_, options) => {
+        assert.deepEqual(JSON.parse(options.body), {
+            action: "push-roadmap", document: "roadmap", token: env.SYNC_SHEET_TOKEN,
+            markdown: changed, baseHash: hash(roadmap),
+        });
+        return reply({ ok: true, document: "roadmap", hash: hash(changed) });
+    });
+    const state = JSON.parse(await readFile(join(root, ".vscode/sync-sheet/roadmap/state.json"), "utf8"));
+    assert.deepEqual(state, { remoteHash: hash(changed), localHash: hash(changed) });
+    assert.equal(await readFile(sheetStatePath, "utf8"), sheetState);
+    assert.equal(await readFile(path, "utf8"), sheet);
+});
+
+test("roadmap dirty pulls require force and unchanged exports preserve formatting", async (context) => {
+    const { root, path, run } = await fixture(context);
+    const roadmapPath = join(root, "docs/PROJECT_ROADMAP.md");
+    const remote = "# Roadmap\n";
+    const request = async () => reply({ ok: true, document: "roadmap", markdown: remote, hash: hash(remote) });
+    await run(["pull", "roadmap"], request);
+    await writeFile(roadmapPath, "# Unpublished roadmap\n");
+    await assert.rejects(run(["pull", "roadmap"], () => assert.fail("Must preserve local edits")), /Local edits/);
+    await run(["pull", "roadmap", "--force"], request);
+    assert.equal(await readFile(roadmapPath, "utf8"), remote);
+    await writeFile(roadmapPath, "# Roadmap update\n");
+    const normalized = "# Roadmap update\n\n";
+    await run(["push", "roadmap"], async () => reply({ ok: true, document: "roadmap", hash: hash(normalized) }));
+    const result = await run(["pull", "roadmap"], async () => reply({
+        ok: true, document: "roadmap", markdown: normalized, hash: hash(normalized),
+    }));
+    assert.match(result, /formatting was preserved/);
+    assert.equal(await readFile(roadmapPath, "utf8"), "# Roadmap update\n");
+    assert.equal(await readFile(path, "utf8"), "# Local original\n");
+});
+
+test("roadmap rejects missing or mismatched document confirmation without replacing either file", async (context) => {
+    const { root, path, run } = await fixture(context);
+    const roadmapPath = join(root, "docs/PROJECT_ROADMAP.md");
+    await writeFile(roadmapPath, "# Original roadmap\n");
+    for (const document of [undefined, "sheet", "unknown"]) {
+        await assert.rejects(run(["pull", "roadmap"], async () => reply({
+            ok: true, document, markdown: "# Wrong document\n", hash: hash("# Wrong document\n"),
+        })), /did not confirm/);
+    }
+    assert.equal(await readFile(path, "utf8"), "# Local original\n");
+    assert.equal(await readFile(roadmapPath, "utf8"), "# Original roadmap\n");
+});
+
+test("roadmap actions are rejected by a legacy server before it can write the sheet", async (context) => {
+    const { root, run } = await fixture(context);
+    const remote = "# Roadmap\n";
+    await run(["pull", "roadmap"], async () => reply({
+        ok: true, document: "roadmap", markdown: remote, hash: hash(remote),
+    }));
+    const statePath = join(root, ".vscode/sync-sheet/roadmap/state.json");
+    const before = await readFile(statePath, "utf8");
+    for (const action of ["pull", "push"]) {
+        await assert.rejects(run([action, "roadmap"], async (_, options) => {
+            const input = JSON.parse(options.body);
+            assert.ok(!["pull", "push"].includes(input.action), "Legacy server must reject the action before writing");
+            return reply({ ok: false, error: "Invalid sync action." });
+        }), /Invalid sync action/);
+    }
+    assert.equal(await readFile(statePath, "utf8"), before);
+});
+
 test("shell entry point resolves the client outside the repository working directory", () => {
     const result = spawnSync("bash", [
         fileURLToPath(new URL("./sync-sheet.sh", import.meta.url)),
@@ -174,7 +262,9 @@ test("configuration, VS Code task and Apps Script manifest templates are valid",
     const config = JSON.parse(await readFile(new URL("./sync-sheet.config.example.json", import.meta.url), "utf8"));
     assert.equal(config.token, "REPLACE_WITH_A_NEW_RANDOM_TOKEN");
     const tasks = JSON.parse(await readFile(new URL("./sync-sheet.tasks.example.json", import.meta.url), "utf8"));
-    assert.deepEqual(tasks.tasks.map((task) => task.args[1]), ["pull", "push"]);
+    assert.deepEqual(tasks.tasks.map((task) => task.args.slice(1).join(" ")).sort(), [
+        "pull", "pull roadmap", "push", "push roadmap",
+    ]);
     const manifest = JSON.parse(await readFile(new URL("./sync-sheet-appsscript.json", import.meta.url), "utf8"));
     assert.ok(manifest.oauthScopes.includes("https://www.googleapis.com/auth/script.external_request"));
     assert.ok(manifest.oauthScopes.includes("https://www.googleapis.com/auth/drive"));
@@ -183,7 +273,10 @@ test("configuration, VS Code task and Apps Script manifest templates are valid",
 
 test("invalid actions and non-deployment URLs fail before networking", async (context) => {
     const { root } = await fixture(context);
-    for (const args of [[], ["delete"], ["push", "--force"], ["pull", "--force", "extra"]]) {
+    for (const args of [
+        [], ["delete"], ["push", "--force"], ["pull", "--force", "extra"],
+        ["pull", "../roadmap"], ["push", "roadmap", "--force"], ["pull", "unknown"],
+    ]) {
         await assert.rejects(syncSheet({ root, args, env }), /Usage:/);
     }
     for (const url of [
@@ -199,14 +292,25 @@ test("invalid actions and non-deployment URLs fail before networking", async (co
     }
 });
 
-async function appsScript({ current = "# Remote\n", supported = true, failExport = false } = {}) {
+async function appsScript({
+    current = "# Remote\n",
+    roadmapCurrent = "# Roadmap\n",
+    supported = true,
+    failExport = false,
+    properties = {},
+} = {}) {
     const calls = [];
-    let content = current;
+    const contents = { "synthetic-doc-id": current, "synthetic-roadmap-id": roadmapCurrent };
     let locked = false;
     const context = vm.createContext({
         console,
         PropertiesService: { getScriptProperties: () => ({
-            getProperty: (key) => ({ PROJECT_SHEET_DOC_ID: "synthetic-doc-id", SECRET_TOKEN: env.SYNC_SHEET_TOKEN })[key],
+            getProperty: (key) => ({
+                PROJECT_SHEET_DOC_ID: "synthetic-doc-id",
+                PROJECT_ROADMAP_DOC_ID: "synthetic-roadmap-id",
+                SECRET_TOKEN: env.SYNC_SHEET_TOKEN,
+                ...properties,
+            })[key],
         }) },
         ContentService: {
             MimeType: { JSON: "application/json" },
@@ -229,20 +333,22 @@ async function appsScript({ current = "# Remote\n", supported = true, failExport
             calls.push({ url, options });
             let status = 200;
             let text;
+            const docId = /\/files\/([^/?]+)/.exec(url)?.[1];
             if (url.includes("/export?")) {
+                assert.ok(Object.hasOwn(contents, docId));
                 status = failExport ? 403 : 200;
-                text = content;
+                text = contents[docId];
             } else if (url.includes("/about?")) {
                 text = JSON.stringify({ importFormats: { "text/markdown": supported ? ["application/vnd.google-apps.document"] : [] } });
             } else if (url.includes("/upload/")) {
                 assert.equal(options.method, "patch");
-                assert.ok(url.includes("/files/synthetic-doc-id?"));
+                assert.ok(Object.hasOwn(contents, docId));
                 const payload = options.payload.toString("utf8");
                 assert.ok(payload.includes('"mimeType":"application/vnd.google-apps.document"'));
                 assert.ok(payload.includes("Content-Type: text/markdown; charset=UTF-8"));
                 assert.ok(payload.includes("\r\n\r\n# Updated\n\r\n--"));
-                content = "# Updated\n";
-                text = JSON.stringify({ id: "synthetic-doc-id", mimeType: "application/vnd.google-apps.document" });
+                contents[docId] = "# Updated\n";
+                text = JSON.stringify({ id: docId, mimeType: "application/vnd.google-apps.document" });
             } else {
                 assert.fail(`Unexpected URL: ${url}`);
             }
@@ -253,6 +359,7 @@ async function appsScript({ current = "# Remote\n", supported = true, failExport
     return {
         calls,
         post: (input) => context.doPost({ postData: { contents: JSON.stringify(input) } }),
+        authorize: () => context.authorizeSync(),
         isLocked: () => locked,
     };
 }
@@ -298,4 +405,68 @@ test("Apps Script reports Drive permission errors as failures, not Markdown", as
     assert.equal(result.ok, false);
     assert.match(result.error, /HTTP 403/);
     assert.equal(app.isLocked(), false);
+});
+
+test("Apps Script routes roadmap reads and writes only to its configured Google Doc", async () => {
+    const app = await appsScript();
+    const pulled = app.post({ action: "pull-roadmap", document: "roadmap", token: env.SYNC_SHEET_TOKEN });
+    assert.equal(pulled.ok, true);
+    assert.equal(pulled.document, "roadmap");
+    assert.equal(pulled.markdown, "# Roadmap\n");
+    const pushed = app.post({
+        action: "push-roadmap", document: "roadmap", token: env.SYNC_SHEET_TOKEN,
+        baseHash: pulled.hash, markdown: "# Updated\n",
+    });
+    assert.equal(pushed.ok, true);
+    assert.equal(pushed.document, "roadmap");
+    assert.equal(pushed.hash, hash("# Updated\n"));
+    assert.equal(app.calls.filter(({ options }) => options.method === "patch").length, 1);
+    assert.ok(app.calls.every(({ url }) => !url.includes("/files/synthetic-doc-id")));
+    assert.equal(app.isLocked(), false);
+});
+
+test("Apps Script rejects missing, duplicate and unknown roadmap targets without Drive calls", async () => {
+    for (const scenario of [
+        { properties: { PROJECT_ROADMAP_DOC_ID: null }, document: "roadmap" },
+        { properties: { PROJECT_ROADMAP_DOC_ID: "synthetic-doc-id" }, document: "roadmap" },
+        { properties: {}, document: "unknown" },
+        { properties: {}, document: "__proto__" },
+    ]) {
+        const app = await appsScript(scenario);
+        const result = app.post({ action: "pull-roadmap", document: scenario.document, token: env.SYNC_SHEET_TOKEN });
+        assert.equal(result.ok, false);
+        assert.equal(app.calls.length, 0);
+    }
+});
+
+test("Apps Script keeps legacy sheet requests working without roadmap configuration", async () => {
+    const app = await appsScript({ properties: { PROJECT_ROADMAP_DOC_ID: null } });
+    const result = app.post({ action: "pull", token: env.SYNC_SHEET_TOKEN });
+    assert.equal(result.ok, true);
+    assert.equal(result.document, "sheet");
+    assert.equal(result.markdown, "# Remote\n");
+});
+
+test("Apps Script refuses mismatched actions and roadmap conflicts before mutation", async () => {
+    const app = await appsScript();
+    for (const input of [
+        { action: "push", document: "roadmap", baseHash: hash("# Roadmap\n") },
+        { action: "push-roadmap", document: "sheet", baseHash: hash("# Remote\n") },
+        { action: "push-roadmap", document: "roadmap", baseHash: hash("# Stale roadmap\n") },
+    ]) {
+        const result = app.post({ ...input, token: env.SYNC_SHEET_TOKEN, markdown: "# Updated\n" });
+        assert.equal(result.ok, false);
+    }
+    assert.ok(app.calls.every(({ options }) => options.method !== "patch"));
+    assert.equal(app.isLocked(), false);
+});
+
+test("authorization checks both configured document exports without modifying either", async () => {
+    const app = await appsScript();
+    app.authorize();
+    const exports = app.calls.filter(({ url }) => url.includes("/export?"));
+    assert.equal(exports.length, 2);
+    assert.ok(exports.some(({ url }) => url.includes("/files/synthetic-doc-id/")));
+    assert.ok(exports.some(({ url }) => url.includes("/files/synthetic-roadmap-id/")));
+    assert.ok(app.calls.every(({ options }) => options.method === "get"));
 });
