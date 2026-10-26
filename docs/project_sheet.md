@@ -1,5 +1,9 @@
 # Project Sheet — Freelance Opportunity Triage Platform
 
+Current planning status — 2026-10-26: Phases 1-5 are complete and the public portfolio demo is deployed. Phase 6: Live AI Evaluation & Reports is specified below as planned work; implementation and acceptance remain pending. Earlier phase sections and dated deployment/audit evidence retain their historical scope.
+
+Phase 6 adds real demo-email retrieval, AI evaluation and reports using authored synthetic data. It does not change the unsuccessful product-feasibility result or reopen the completed MVP. The ordered delivery slices are recorded in Phase 6 below.
+
 ## Phase 1: Fixture-Driven Email Normalization
 
 **Document role:** As-built Phase 1 specification  
@@ -1532,3 +1536,85 @@ Immediate rollback attempts initially found stale web welcome markup despite the
 [Publication workflow `40207811032`](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/40207811032) passed and published v1.0.1 at `2026-10-25T15:37:54Z`; its tag directly targets the candidate. All four GitHub-reported asset digests matched the verified local assets. v1.0.0 was not overwritten. A final browser session at `2026-10-25T15:38:28.602Z` rechecked layout, retained feedback and logout after publication, with 13 same-origin requests.
 
 Private production remains v1.0.0 with its existing shared state and 200 login / 404 demo / 401 guest JSON boundary; the retired old demo remains 410. Completed phases, REL-01/REL-03/REL-04 closures and the unsuccessful feasibility verdict remain unchanged. The [detailed v1.0.1 evidence](runbooks/phase5-release.md#v101-demo-layout-patch-2026-10-25) retains limitations: no server-side egress capture, private authenticated-user rerun, renewed provider-backup evidence or off-host recovery test.
+
+---
+
+## Phase 6: Live AI Evaluation & Reports
+
+Document role: Planned post-MVP specification. Status: Scope accepted for planning on 2026-10-26; implementation, live-service verification and release acceptance are pending. Phases 1-5 remain completed historical records. Their exclusions of AI, queues and external demo connections apply to those phases; the bounded additions below apply only to Phase 6.
+
+### Action and intended outcome
+
+Turn the public portfolio demo into an interactive integration demonstration: a visitor selects Evaluate up to 20 alerts, sees progress, and receives fresh AI-assisted APPLY/MAYBE/SKIP recommendations with reasons and missing information. Evaluate against a versioned, publishable representation of Marcel’s profile and his approved evaluation prompt. Label results as recommendations for that profile, not personalized advice for the visitor.
+
+Demonstrate email ingestion, background processing, a real AI API and report delivery. Do not claim better job-discovery freshness, measured time savings or validated recommendation accuracy. Delayed real alerts remain a known source limitation; manual skimming remains the primary discovery method and official marketplace API integration remains deferred.
+
+### Included scope and public/private boundary
+
+- Public input comes only from a dedicated owner-controlled demo inbox containing realistic fictional alerts authored for publication. Use real IMAP-over-TLS retrieval and real AI API calls. Do not expose or route requests to the owner’s genuine job-alert inbox, private database, private profile or existing private intake.
+- The server selects the newest eligible demo alerts in a stable order, with a maximum of 20 per run and a bounded scan. Process fewer when fewer are available; show empty, skipped and rejected counts honestly. Do not mark mail read, move or delete it. Preserve stable source identity and deduplicate repeated messages.
+- Keep credentials, API keys and transport configuration server-side. Visitors cannot choose mailboxes, workspaces, recipients, provider endpoints, prompts or arbitrary input text. Existing private mailbox intake stays disabled; the new manual demo trigger has a separate, explicit enable switch and no recurring polling schedule.
+- Publish only the approved demo corpus, sanitized prompt/profile and derived report. Genuine alerts may later use the same evaluation boundary privately under a separate operator task; publishing them requires a separate authorization decision. No marketplace scraping, page fetches, API integration, proposal generation or automated applications are included.
+- Keep deterministic scores, enrichment, human feedback and historical calibration intact. Persist AI results separately and identify them as AI suggestions. Demo runs and feedback remain excluded from real calibration cohorts; use the existing demo provenance convention where applicable.
+
+### Evaluation and processing contracts
+
+Reuse the Laravel/PHP, MariaDB and Vue baseline and existing mailbox/parser boundaries where they fit. Add a replaceable AI-provider boundary and durable background execution within the monolith. Prefer existing database-backed jobs and bounded scheduler execution if supported by the host; verify the actual runtime before choosing a persistent worker or new service. Node remains a build/test tool unless a separate ADR justifies otherwise.
+
+- Prompt/profile contract: obtain Marcel’s actual evaluation prompt and approve a sanitized public profile before implementation uses them. Version both; display the approved evaluation criteria and versions. Never publish the private prompt/profile, credentials or Scrum-XP framework merely because a public explanation is required. Record the selected provider/model and input snapshot/version for each run.
+- Input contract: send only allowlisted normalized job fields and the approved public evaluation profile. Remove recipient addresses, mail headers, tracking tokens and unrelated text before the AI boundary. Treat missing facts as unknown. Email text is untrusted data, never an instruction to the model; it cannot enable tools, fetch URLs, send email or change the evaluation rules.
+- Output contract: validate a structured response with the source item ID, APPLY/MAYBE/SKIP recommendation, bounded reasons, evidence references and missing-information fields. Do not invent job facts. Apply approved hard constraints and conservative missing-data rules in application validation. Malformed or unavailable AI output is an evaluation failure, not a fabricated SKIP or a disguised deterministic AI result.
+- Run contract: assign a server-owned run ID and source snapshot; expose queued, running, completed, partial, failed or rejected state with item counts and a completion timestamp. Preserve successful item results when another item fails. Persist validated results and sanitized error codes; do not store raw mail, full provider request/response dumps or secrets.
+- Idempotency contract: repeated submission, refresh and retry must reuse the intended in-flight run or existing item result without duplicate imports, avoidable provider calls or repeated mail delivery. Bound retries and account for ambiguous provider timeouts. If an optional cached result is shown, identify it and its original generation time; never label it as a new live evaluation.
+
+### Reports and email delivery
+
+Show a read-only report in the demo and offer a downloadable HTML report with a print stylesheet. Both use the same stored result snapshot and contain run time, actual item count, synthetic-data label, profile/prompt/model versions, per-item recommendations, explanations, unknowns and failures. Display alert timestamps separately from evaluation time; a fresh evaluation does not imply a fresh marketplace listing. Escape untrusted text and allow only validated links; downloads contain no executable scripts or external tracking.
+
+The Upwork-facing demo requires no visitor email address and provides no visitor email-collection or sending endpoint. Demonstrate delivery only to an operator-configured, verified, allowlisted owner test recipient; the trigger is operator-only and sends the already generated synthetic report once. Mail failure is separate from evaluation status and must not rerun AI processing.
+
+Visitor email delivery is deferred beyond the initial Phase 6 release. If later enabled in a permitted context, first define recipient verification, consent, minimal retention/deletion, sending quotas and applicable platform conditions. This deferred capability is not part of Phase 6 completion.
+
+### Limits, isolation and operations
+
+- Before live activation, configure per-run input/output and execution limits, per-visitor request limits, global concurrency/queue limits, bounded retries and an owner-approved hard daily spending ceiling. Reject new paid work when configuration is absent, capacity is exhausted or the remaining budget cannot cover it.
+- Enforce the spending ceiling in application logic across concurrent jobs, including retries: reserve a conservative maximum before dispatch, reconcile actual usage and retain a conservative charge/reservation when the provider outcome is uncertain. Provider-side alerts or soft quotas alone do not establish a hard cap. Record model pricing assumptions and review them when the provider/model changes.
+- Use CSRF protection for session-based triggers, ownership/mode checks for every run/report route, and fixed server-side demo configuration. Test that public requests cannot select private records or configuration. Published report data must remain synthetic even when multiple visitors share the demo.
+- Handle IMAP/API outage, provider rate limits, timeout, refusal, invalid output and delivery failure with bounded recovery and clear sanitized status. Keep the existing seeded demo usable when live mode is disabled or unavailable; label that mode honestly. No silent private-source or alternative paid-provider fallback.
+- Provide an operator kill switch, sanitized counts/latency/token-cost telemetry and a stale-job check. Keep logs private and bounded. Default generated demo-run/report retention is seven days, with visible expiry; purge only this feature’s expired records and temporary files, never existing review history, audit evidence or unrelated storage.
+
+### Ordered implementation slices
+
+#### 6.1 — Confirm inputs, provider and execution feasibility
+
+Inspect repository instructions and the deployed demo runtime. Finalize the actual approved prompt, public profile, authored email corpus, provider/model, provider data-handling settings, host execution mechanism, numeric limits and budget. Document the minimal schema and adapter decisions in new ADRs using unused IDs. Keep live mode disabled until these decisions are recorded. No stack migration or broad refactor is required.
+
+#### 6.2 — Implement bounded intake and AI evaluation
+
+Add the manually triggered demo workflow, durable run/item state, provider adapter, output validation, retries, idempotency and budget enforcement. Reuse established normalization and workspace isolation without changing accepted scoring history. Cover success, partial failure, malicious input and concurrent budget exhaustion with deterministic tests using controlled adapters; CI makes no paid or mailbox calls.
+
+#### 6.3 — Add progress and reports
+
+Build the accessible trigger, progress/result states, shared synthetic report and download. Preserve the existing review journey. Cover keyboard/focus behavior, narrow screens, refresh/re-entry, stale asynchronous responses, empty/partial/failed states and expired reports with browser tests and manual checks.
+
+#### 6.4 — Verify owner delivery and release the opt-in feature
+
+Add the operator-only owner email path and delivery idempotency. Run a bounded staging smoke using the authored inbox and selected live AI provider; verify actual costs, one owner email, isolation, disable/recovery behavior and the exact release candidate. Use the established release process. Record checks actually performed and any pending limitations; enabling this new runtime path needs its own acceptance evidence.
+
+### Acceptance scenarios and verification
+
+- A real bounded run retrieves up to 20 eligible authored alerts and obtains validated results from the chosen provider; fewer-than-20, empty, malformed and duplicate input cases are explicit. Evidence distinguishes live service checks from adapter fakes and cached output.
+- Each successful item has traceable input, prompt/profile/model versions, reasons and unknowns. Hard-profile violations, invented evidence, prompt-injection attempts and schema-invalid responses are rejected or handled conservatively; deterministic scores and real calibration records remain unchanged.
+- Concurrent triggers, refreshes, retries and delayed responses cannot bypass limits, duplicate work/delivery, overwrite a newer UI state or cross the private/demo boundary. Cap exhaustion stops new paid work and reports the reason.
+- Outages, refusal, rate limits and ambiguous timeouts reach an honest partial/failed/rejected state with bounded retries, no secrets in output and no unbounded backlog. Stale jobs can be identified and recovered without silently repeating paid work.
+- The on-screen and downloaded reports agree; synthetic/profile labels, timestamps, failures and expiry remain visible. The public flow collects no email address, and the operator-only test delivery uses the same report snapshot exactly once.
+- Existing PHPUnit/MariaDB, static-analysis, build, secret-scan and browser gates stay green. Add focused unit/integration tests and Playwright scenarios for the new boundaries; paid live calls are a separate, budgeted manual acceptance check, not CI.
+- Map scenarios in a planned `docs/features/live_ai_evaluation_reports.feature` to named tests and operator checks during implementation; no Gherkin runtime is implied. Maintain accessibility/manual evidence, a concise operating runbook, architecture decisions and the as-built specification.
+
+### Definition of Ready, Done and evidence status
+
+Ready: the prompt and public profile are supplied and approved; the publishable corpus, selected provider/model, data handling, execution approach, limits, budget and owner test recipient are configured through protected operator channels. Any missing item remains an explicit entry decision; do not invent secret values or silently choose an unlimited plan.
+
+Done: all four slices and the applicable acceptance scenarios have implementation, automated-test and bounded live-host evidence; report delivery and disable/recovery behavior are verified; the exact candidate is accepted through the existing release process; and the project sheet, roadmap, runbook and portfolio explanation reflect the as-built feature. Earlier personal-use GO does not automatically approve the new public AI path. No recommendation-quality or business-outcome claim follows merely from a successful integration demo.
+
+Evidence at this update: planning only. No Phase 6 code, AI calls, mailbox changes, email sends, test passes, deployment or release are claimed. Keep historical audit findings unchanged; record any new remediation and evidence under `docs/audit/fixes/`. The reusable Tester Skill remains separately deferred.

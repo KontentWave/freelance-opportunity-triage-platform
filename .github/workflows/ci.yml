@@ -225,6 +225,11 @@ jobs:
       - name: Run release contract tests
         run: npm run test:release
 
+      - name: Run project-sheet synchronization tests
+        run: |
+          bash -n scripts/sync-sheet.sh
+          npm run test:sync-sheet
+
       - name: Download verified Syft 1.32.0
         run: |
           mkdir -p build/syft
