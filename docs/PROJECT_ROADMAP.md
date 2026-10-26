@@ -4,11 +4,17 @@
 **Primary user:** An independent freelancer reviewing opportunities from authorized job-alert emails  
 **Working title:** To be decided; do not use Upwork trademarks in product branding
 
+**Planning update — 2026-10-26:** Phase 6: Live AI Evaluation & Reports is accepted for planning; implementation, live-service verification and release acceptance are pending. The optional reusable Tester Skill remains deferred. Phase 6 visitors inspect an evaluation against Marcel’s approved public profile.
+
+**Deployment context:** The [project sheet](project_sheet.md) records the public portfolio move to [https://fotp.kontentwave.com/demo](https://fotp.kontentwave.com/demo) on 2026-10-25 and the unchanged REL-01/REL-03/REL-04 closures. These and the baseline deployment statements above are historical records, not newly repeated checks.
+
 ## Vision
 
 Build a portfolio-quality personal tool that converts job-alert emails delivered to the user's own mailbox into an explainable, prioritized review queue. The platform should reduce low-value manual browsing while leaving all marketplace access, final judgment, and proposal submission under human control.
 
 The first source is Upwork Freelancer Plus email alerts, but the design should remain provider-agnostic. A source adapter normalizes each alert into a common opportunity model; deterministic rules then classify it as **APPLY**, **MAYBE**, or **SKIP**, with reasons that the user can inspect and refine.
+
+Phase 6 extends that completed baseline with visitor-triggered AI evaluation of authored demo alerts and reports. Publish the approved public criteria and label whose profile is evaluated; retain human judgment and the distinction between technical integration success and recommendation quality.
 
 ## Problem and Value Hypothesis
 
@@ -16,11 +22,14 @@ Job alerts contain enough summary and client-economics data to reject many unsui
 
 This is a hypothesis to validate, not an assumption to defend. Phase 3 includes an explicit go/no-go calibration checkpoint.
 
+**Post-MVP decision — 2026-10-26:** The first calibration did not meet the feasibility targets, and the owner’s usage indicates that alert delay limits timely applications. Manual skimming is the primary discovery path; official marketplace API integration is deferred. Phase 6 is an engineering demonstration with a separate acceptance gate, not proof that the original value hypothesis succeeded.
+
 ## Product Principles
 
 - **Compliance boundary:** Process emails the user is authorized to receive. Do not scrape marketplace pages, bypass access controls, automate proposals, or imitate human browsing.
 - **Human-in-the-loop:** Automation triages; the user reviews shortlisted jobs and submits proposals manually.
 - **Explainable first:** Every classification must show the rules, inputs, contributions, and missing data behind it.
+- **Phase 6 AI explainability:** AI suggestions show input evidence, reasons, missing information and prompt/profile/model versions; do not imply that AI output is deterministic.
 - **Fail uncertain:** Missing or ambiguous data should produce `MAYBE` or `UNKNOWN`, not an unjustified rejection.
 - **Fixture-driven reliability:** Real, sanitized email fixtures and contract tests protect against template drift.
 - **Tenant-ready, not SaaS-first:** Include workspace ownership and isolation in the data model without building billing or complex tenant administration in the MVP.
@@ -45,6 +54,10 @@ This is a hypothesis to validate, not an assumption to defend. Phase 3 includes 
 - Commercial multi-user SaaS, subscriptions, billing, or public Upwork integration.
 - Depending on an Upwork API key. A future official adapter requires approved access.
 
+### Planned Post-MVP Scope — Phase 6
+
+Live AI Evaluation & Reports adds authored demo-mail retrieval, profile-specific AI suggestions, progress and downloadable reports, plus owner-only test email delivery. It does not introduce visitor contact collection, real-alert republication or a commercial SaaS. The detailed [Phase 6 specification](project_sheet.md#phase-6-live-ai-evaluation--reports) is in the project sheet; the existing MVP scope and evidence remain historical.
+
 ## Technical Baseline
 
 - **Backend:** Laravel 13 on PHP 8.4
@@ -55,6 +68,8 @@ This is a hypothesis to validate, not an assumption to defend. Phase 3 includes 
 - **Tenancy model:** Shared schema with mandatory `workspace_id` ownership and tested isolation
 
 Node.js is not a separate production service by default. A Node-based mail worker remains an ADR option only if the hosting environment or PHP mail tooling makes it materially safer or simpler.
+
+Phase 6 planned integration: a replaceable AI-provider adapter and durable, bounded background jobs within the Laravel monolith. Keep public demo and private source configuration separate; preserve deterministic scoring as the accepted baseline. Confirm the host execution mechanism during Slice 6.1 rather than presuming a new service or stack migration.
 
 ## Success Signals
 
@@ -77,6 +92,7 @@ Node.js is not a separate production service by default. A Node-based mail worke
 - A reviewer can run a safe demo without Gmail or Upwork credentials.
 - The repository contains architecture decisions, BDD scenarios, tests, seeded demo data, screenshots, and a concise deployment/runbook guide.
 - The project explains its compliance boundary and limitations honestly.
+- Phase 6 target: a visitor can trigger a bounded real demo-email/AI run, inspect explainable profile-specific results and download the report without providing credentials or an email address. Live, cached and static-demo evidence are clearly distinguished.
 
 ## Phased Delivery
 
@@ -194,6 +210,8 @@ Node.js is not a separate production service by default. A Node-based mail worke
 
 ### Phase 5 — Portfolio Release and Compliant Extensibility
 
+**Implementation status:** Complete. `v1.0.0` was published and verified on 2026-09-28. The project sheet records the separate public portfolio hosting move and acceptance on 2026-10-25. Phase 6 extends the completed release; its new runtime services require new evidence.
+
 **Hypothesis:** Operational evidence and honest architectural boundaries make the project stronger than feature breadth alone.
 
 **Capabilities:**
@@ -210,6 +228,37 @@ Node.js is not a separate production service by default. A Node-based mail worke
 - CI and security gates are green; no real credentials, tracking tokens, addresses, or private email content remain in repository history.
 - The release includes screenshots, a short architecture narrative, known limitations, and a rollback procedure.
 - Version `1.0.0` is tagged only after the demo and deployment smoke tests pass.
+
+### Phase 6: Live AI Evaluation & Reports (Planned)
+
+**Status:** Scope accepted for planning on 2026-10-26; implementation and acceptance are pending.
+
+**Hypothesis:** A visitor-triggered, real email-to-AI-to-report workflow makes the engineering demo more informative. It does not validate commercial usefulness or solve delayed job-alert discovery.
+
+**Capabilities:**
+
+- Manually fetch up to 20 latest eligible authored fictional alerts from a dedicated owner-controlled demo inbox over TLS. Keep the public demo, credentials, private mailbox and private data isolated; retain disabled private intake and do not introduce recurring public polling.
+- Evaluate with a real AI API using Marcel’s approved, versioned prompt and sanitized public profile. Show APPLY/MAYBE/SKIP, reasons, supporting evidence and unknowns; label the profile clearly. Preserve existing deterministic scores, human decisions and historical calibration.
+- Run bounded background work with visible progress, partial/failure states, idempotency, concurrency/request limits and an application-enforced hard daily spend cap covering retries. Treat message text as untrusted data and validate model output.
+- Publish an on-screen synthetic report and downloadable HTML report with matching stored results, timestamps and provenance. Demonstrate email only through an operator-only send to the verified owner test inbox. The Upwork-facing public flow collects no visitor email addresses.
+
+**Delivery slices:**
+
+- 6.1 — Resolve the actual prompt/public profile, publishable corpus, provider/model and data handling, host execution mechanism, numeric limits and owner-approved budget; record focused ADRs.
+- 6.2 — Implement bounded demo intake, durable run/item state and a replaceable AI adapter with schema validation, idempotency, retries, isolation and cost enforcement.
+- 6.3 — Add accessible progress, explanations and report download; preserve the existing review workflow and test refresh, stale responses, errors and expiry.
+- 6.4 — Verify operator-only owner delivery and a budgeted live staging run, then follow the existing candidate, smoke, rollback/disable and release process.
+
+**Exit criteria:**
+
+- Deterministic tests cover successful and partial runs, empty/duplicate/malicious inputs, malformed AI output, provider failures, isolation and concurrent cap enforcement. CI uses controlled adapters and makes no paid or mailbox calls.
+- A separately recorded live run verifies actual demo-mail retrieval, the selected AI provider, report consistency, one owner email and measured usage/cost. Cached output, adapter fakes and historical tests are never presented as new live evidence.
+- Browser/manual checks verify accessibility, clear synthetic/profile labels, progress and failure states; the private pipeline is unchanged and the seeded demo remains usable with live mode disabled.
+- The prompt/profile, provider/model, retention, numeric limits and runbook are documented. New feature acceptance and release evidence are complete; no evaluation-accuracy or commercial-effectiveness claim is inferred.
+
+**Deferred boundaries:** No marketplace scraping or official API integration, visitor-specific profiles, visitor prompt uploads, real-alert republication or public visitor-email sending. Genuine private AI evaluation is a separate operator task. Visitor delivery requires a later permitted-context, recipient-verification, consent, retention and abuse-control decision; neither is a Phase 6 release prerequisite.
+
+**Candidate BDD feature:** `docs/features/live_ai_evaluation_reports.feature`, mapped to PHPUnit/MariaDB, Playwright and explicit live operator checks. Detailed contracts and seven-day generated-report retention are in the [Phase 6 project sheet](project_sheet.md#phase-6-live-ai-evaluation--reports).
 
 ### Optional Post-MVP Extension — Reusable Tester Skill (Deferred)
 
@@ -240,6 +289,10 @@ This extension is not part of the MVP or its Definition of Done. Specify it only
 | Rule tuning hides suitable work                          | Lost opportunities                 | Explainable scoring, versioned profiles, conservative thresholds, user labels, explicit go/no-go metrics              |
 | Workspace scoping or stored email data leaks information | Privacy/security failure           | Mandatory ownership keys, policies/global scopes, isolation tests, minimal retention, secret and fixture sanitization |
 
+### Phase 6 risks and controls
+
+AI errors or injected email instructions: allowlisted inputs, no model tools, structured output validation and visible unknowns. Public-call abuse or runaway cost: bounded jobs, idempotency and atomic budget reservations. Privacy/content leakage: authored demo data and server-selected isolated sources. Provider outage or mail failure: honest partial/failure status, bounded retries and the retained seeded demo. Delayed-alert usefulness remains unproven.
+
 ## Assumptions to Validate
 
 - The provider permits scheduled commands and outbound IMAP over TLS.
@@ -248,6 +301,8 @@ This extension is not part of the MVP or its Definition of Done. Specify it only
 - The user can label at least 30 alerts with a final suitability decision for calibration.
 - MariaDB 11.4 and required PHP extensions are available in both staging and production.
 - Email processing of the user's own received alerts remains within applicable service terms; no marketplace page automation is introduced.
+- Phase 6 entry decisions: approve the actual prompt/public profile and publishable corpus; select the provider/model and data handling; verify outbound AI access and bounded background execution on the demo host.
+- Phase 6 activation requires concrete request/concurrency/token/time limits, an owner-approved hard daily budget, a verified owner test recipient and a documented disable/recovery path. Do not interpret this plan as completed verification.
 
 ## ADR Candidates
 
@@ -257,6 +312,8 @@ This extension is not part of the MVP or its Definition of Done. Specify it only
 - **ADR-004:** Scheduled IMAP polling versus a Node mail worker
 - **ADR-005:** Deterministic scoring before any optional AI-assisted evaluation
 - **ADR-006:** Minimal raw-email retention and fixture sanitization policy
+- Phase 6 ADR candidates (assign unused IDs after checking the repository index): separate AI suggestions and versioned prompt/profile from deterministic scoring; provider/model and data handling; durable bounded execution and spend enforcement.
+- Phase 6 ADR candidates: authored public-demo input and private-source isolation; report retention and operator-only email delivery. Broader visitor delivery remains deferred.
 
 ## Phase Definition of Done
 
@@ -264,7 +321,9 @@ A phase is complete only when its acceptance scenarios pass, unit/integration te
 
 ## Immediate Next Decision
 
-Proceed to the Phase 5 portfolio-release decision without presenting the completed Phase 4 demonstration as validated triage expansion. Phase 4 target-host acceptance passed on deployed candidate `65bf4ea`. The completed Phase 3 calibration remains historical evidence: 30 reviewed imports, 3.33% machine skip rate, 9.09% false-negative rate, and `targets_met=false`. No calibration-based GO is claimed.
+Begin Phase 6 Slice 6.1: finalize Marcel’s approved prompt/public profile, the authored demo inbox, AI provider/model, execution approach, numeric limits and hard daily budget. Then implement one slice at a time with tests, documentation and review. Phase 6 is planned, not implemented or accepted; the existing public demo and Phases 1-5 remain complete.
+
+**Historical checkpoint:** Phase 4 target-host acceptance passed on deployed candidate `65bf4ea`. The completed Phase 3 calibration remains historical evidence: 30 reviewed imports, 3.33% machine skip rate, 9.09% false-negative rate, and `targets_met=false`. No calibration-based GO is claimed.
 
 Preserve the prior Phase 2 soak and deployment records as historical evidence for their named commits. The polling-deadline correction closed through protected CI run `34269173609` and target-host verification of merge commit `161c97d`, but those checks do not prove an absolute database runtime bound.
 
