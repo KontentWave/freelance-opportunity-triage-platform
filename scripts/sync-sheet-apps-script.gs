@@ -1,11 +1,19 @@
 const GOOGLE_DOC_MIME = "application/vnd.google-apps.document";
 
-function syncConfig_() {
+function syncConfig_(document = "sheet") {
+  if (!["sheet", "roadmap"].includes(document)) {
+    throw new Error("Invalid document. Choose sheet or roadmap.");
+  }
   const properties = PropertiesService.getScriptProperties();
-  const docId = properties.getProperty("PROJECT_SHEET_DOC_ID");
+  const property = document === "sheet" ? "PROJECT_SHEET_DOC_ID" : "PROJECT_ROADMAP_DOC_ID";
+  const docId = properties.getProperty(property);
   const token = properties.getProperty("SECRET_TOKEN");
   if (!docId || !token) {
-    throw new Error("Set PROJECT_SHEET_DOC_ID and SECRET_TOKEN in Script Properties.");
+    throw new Error("Set " + property + " and SECRET_TOKEN in Script Properties.");
+  }
+  if (properties.getProperty("PROJECT_SHEET_DOC_ID") &&
+      properties.getProperty("PROJECT_SHEET_DOC_ID") === properties.getProperty("PROJECT_ROADMAP_DOC_ID")) {
+    throw new Error("PROJECT_SHEET_DOC_ID and PROJECT_ROADMAP_DOC_ID must identify different Google Docs.");
   }
   return { docId, token };
 }
@@ -48,8 +56,14 @@ function syncExport_(docId) {
 }
 
 function authorizeSync() {
-  const config = syncConfig_();
-  syncExport_(config.docId);
+  const sheet = syncConfig_();
+  syncExport_(sheet.docId);
+  const hasRoadmap = PropertiesService.getScriptProperties().getProperty("PROJECT_ROADMAP_DOC_ID");
+  if (hasRoadmap) {
+    syncExport_(syncConfig_("roadmap").docId);
+  } else {
+    console.log("Roadmap is not configured. Set PROJECT_ROADMAP_DOC_ID to enable roadmap synchronization.");
+  }
   const formats = JSON.parse(syncFetch_(
     "https://www.googleapis.com/drive/v3/about?fields=importFormats",
     { method: "get" }
@@ -57,7 +71,8 @@ function authorizeSync() {
   if (!formats || !(formats["text/markdown"] || []).includes(GOOGLE_DOC_MIME)) {
     throw new Error("This Drive account does not advertise Markdown-to-Google-Docs import.");
   }
-  console.log("Authorization, Markdown export and native Markdown import support verified. No document was modified.");
+  console.log("Authorization, Markdown export for " + (hasRoadmap ? "sheet and roadmap" : "sheet") +
+    ", and native Markdown import support verified. No document was modified.");
 }
 
 function doGet() {
@@ -68,18 +83,20 @@ function doPost(e) {
   let lock;
   try {
     const input = JSON.parse(e && e.postData ? e.postData.contents : "{}");
-    const config = syncConfig_();
+    const document = input && input.document !== undefined ? input.document : "sheet";
+    const config = syncConfig_(document);
     if (!input || input.token !== config.token) {
       return syncJson_({ ok: false, error: "Unauthorized." });
     }
-    if (!["pull", "push"].includes(input.action)) {
+    const validActions = document === "roadmap" ? ["pull-roadmap", "push-roadmap"] : ["pull", "push"];
+    if (!validActions.includes(input.action)) {
       return syncJson_({ ok: false, error: "Invalid sync action." });
     }
     lock = LockService.getScriptLock();
     lock.waitLock(30000);
     const current = syncExport_(config.docId);
-    if (input.action === "pull") {
-      return syncJson_({ ok: true, markdown: current.markdown, hash: current.hash });
+    if (input.action === "pull" || input.action === "pull-roadmap") {
+      return syncJson_({ ok: true, document: document, markdown: current.markdown, hash: current.hash });
     }
     if (typeof input.markdown !== "string" || !input.markdown.trim() ||
         /^\s*<(?:!doctype\s+html|html)\b/i.test(input.markdown) ||
@@ -115,7 +132,7 @@ function doPost(e) {
       throw new Error("Unexpected Drive update response. Inspect the document before retrying.");
     }
     const exported = syncExport_(config.docId);
-    return syncJson_({ ok: true, hash: exported.hash });
+    return syncJson_({ ok: true, document: document, hash: exported.hash });
   } catch (error) {
     return syncJson_({ ok: false, error: String(error.message || error) });
   } finally {

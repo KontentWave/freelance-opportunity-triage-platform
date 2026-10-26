@@ -34,13 +34,17 @@ export async function syncSheet({
     env = process.env,
     request = fetch,
 }) {
-    const [action, flag, ...extra] = args;
+    const [action, ...options] = args;
+    const force = options.at(-1) === "--force";
+    if (force) options.pop();
+    const [document = "sheet", ...extra] = options;
     if (
         !["pull", "push"].includes(action) ||
-        (flag !== undefined && !(action === "pull" && flag === "--force")) ||
+        !["sheet", "roadmap"].includes(document) ||
+        (force && action !== "pull") ||
         extra.length
     ) {
-        throw new Error("Usage: bash scripts/sync-sheet.sh pull [--force] | push");
+        throw new Error("Usage: bash scripts/sync-sheet.sh pull [sheet|roadmap] [--force] | push [sheet|roadmap]");
     }
 
     const config = await optionalJson(join(root, ".vscode/sync-sheet.json"));
@@ -62,8 +66,10 @@ export async function syncSheet({
         throw new Error("Use the deployed https://script.google.com/macros/s/.../exec URL without a query string.");
     }
 
-    const localPath = join(root, "docs/project_sheet.md");
-    const statePath = join(root, ".vscode/sync-sheet/state.json");
+    const relativePath = document === "sheet" ? "docs/project_sheet.md" : "docs/PROJECT_ROADMAP.md";
+    const localPath = join(root, relativePath);
+    const syncDirectory = document === "sheet" ? ".vscode/sync-sheet" : ".vscode/sync-sheet/roadmap";
+    const statePath = join(root, syncDirectory, "state.json");
     const state = await optionalJson(statePath);
     let local = null;
     try {
@@ -71,8 +77,8 @@ export async function syncSheet({
     } catch (error) {
         if (error.code !== "ENOENT") throw error;
     }
-    if (action === "pull" && state && local !== null && hash(local) !== state.localHash && flag !== "--force") {
-        throw new Error("Local edits detected. Push them first, or use pull --force to back them up and replace them.");
+    if (action === "pull" && state && local !== null && hash(local) !== state.localHash && !force) {
+        throw new Error(`Local edits detected in ${relativePath}. Push them first, or use pull ${document} --force to back them up and replace them.`);
     }
     if (action === "push" && (!state || !/^[a-f0-9]{64}$/.test(state.remoteHash))) {
         throw new Error("Pull once before pushing so remote changes can be detected.");
@@ -85,7 +91,8 @@ export async function syncSheet({
         method: "POST",
         headers: { "Content-Type": "application/json; charset=utf-8" },
         body: JSON.stringify({
-            action,
+            action: document === "roadmap" ? `${action}-roadmap` : action,
+            document,
             token,
             ...(action === "push" ? { markdown: local, baseHash: state.remoteHash } : {}),
         }),
@@ -105,6 +112,12 @@ export async function syncSheet({
     }
     if (result?.ok !== true) {
         throw new Error(`Sync failed: ${typeof result?.error === "string" ? result.error : "invalid response"}`);
+    }
+    if (
+        (document === "roadmap" && result.document !== document) ||
+        (result.document !== undefined && result.document !== document)
+    ) {
+        throw new Error("The server did not confirm the requested document. Deploy the updated Apps Script; no local file was replaced.");
     }
     if (!/^[a-f0-9]{64}$/.test(result.hash)) throw new Error("Missing or invalid remote content hash.");
 
@@ -130,7 +143,7 @@ export async function syncSheet({
             return "Google Doc content is unchanged since the last sync. Local Markdown formatting was preserved.";
         }
         if (local !== null && local !== result.markdown) {
-            const backup = join(root, ".vscode/sync-sheet/backups", `${randomUUID()}.md`);
+            const backup = join(root, syncDirectory, "backups", `${randomUUID()}.md`);
             await atomicWrite(backup, local);
         }
         await atomicWrite(localPath, result.markdown);
@@ -138,8 +151,8 @@ export async function syncSheet({
     }
     await atomicWrite(statePath, `${JSON.stringify({ remoteHash: result.hash, localHash: hash(local) }, null, 2)}\n`);
     return action === "pull"
-        ? "Pulled docs/project_sheet.md. Previous differing content was backed up under .vscode/sync-sheet/backups/."
-        : "Updated the existing native Google Doc. Local Markdown was preserved.";
+        ? `Pulled ${relativePath}. Previous differing content was backed up under ${syncDirectory}/backups/.`
+        : `Updated the existing native Google Doc for ${relativePath}. Local Markdown was preserved.`;
 }
 
 if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
