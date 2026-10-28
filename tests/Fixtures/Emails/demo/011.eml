@@ -1,0 +1,25 @@
+From: FOTP Fictional Alerts <demo-alerts@example.invalid>
+To: Demo Fixture <demo-inbox@example.invalid>
+Date: Tue, 27 Oct 2026 10:11:00 +0000
+Message-ID: <DEMO-011@fotp.example.invalid>
+Subject: FOTP Fictional alert: DEMO-011 - Specialist Rust performance engineering
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+{
+  "format": "fotp-authored-alert-v1",
+  "synthetic": true,
+  "source_id": "DEMO-011",
+  "title": "Specialist Rust performance engineering",
+  "description": "FICTIONAL DEMO, NOT A REAL LISTING. Essential requirement: independently lead low-level Rust lock-free memory optimization with established specialist production expertise. General QA or AI-assisted patching experience is not sufficient. Ten hours weekly; remote Slovakia accepted.",
+  "skills": ["Specialist Rust", "Lock-free systems"],
+  "contract_type": "hourly",
+  "hourly_min_usd": 80,
+  "hourly_max_usd": 100,
+  "hours_per_week_max": 10,
+  "required_devices": ["Windows desktop"],
+  "eligible_locations": ["Slovakia"],
+  "posted_at": "2026-10-27T09:56:00Z",
+  "proposal_count": 1
+}

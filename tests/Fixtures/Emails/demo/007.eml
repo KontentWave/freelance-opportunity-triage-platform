@@ -1,0 +1,25 @@
+From: FOTP Fictional Alerts <demo-alerts@example.invalid>
+To: Demo Fixture <demo-inbox@example.invalid>
+Date: Tue, 27 Oct 2026 10:07:00 +0000
+Message-ID: <DEMO-007@fotp.example.invalid>
+Subject: FOTP Fictional alert: DEMO-007 - Full-time manual QA rotation
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+{
+  "format": "fotp-authored-alert-v1",
+  "synthetic": true,
+  "source_id": "DEMO-007",
+  "title": "Full-time manual QA rotation",
+  "description": "FICTIONAL DEMO, NOT A REAL LISTING. Manual Windows regression testing with detailed bug reports. Mandatory forty-hour weekly availability, no part-time arrangement. Slovakia eligible. The testing work is relevant but the full-time requirement is nonnegotiable.",
+  "skills": ["Manual testing", "Bug reporting"],
+  "contract_type": "hourly",
+  "hourly_min_usd": 25,
+  "hourly_max_usd": 35,
+  "hours_per_week_max": 40,
+  "required_devices": ["Windows desktop"],
+  "eligible_locations": ["Slovakia"],
+  "posted_at": "2026-10-27T09:48:00Z",
+  "proposal_count": 1
+}

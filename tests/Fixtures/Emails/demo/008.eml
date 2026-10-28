@@ -1,0 +1,25 @@
+From: FOTP Fictional Alerts <demo-alerts@example.invalid>
+To: Demo Fixture <demo-inbox@example.invalid>
+Date: Tue, 27 Oct 2026 10:08:00 +0000
+Message-ID: <DEMO-008@fotp.example.invalid>
+Subject: FOTP Fictional alert: DEMO-008 - Physical iPhone checkout test
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+{
+  "format": "fotp-authored-alert-v1",
+  "synthetic": true,
+  "source_id": "DEMO-008",
+  "title": "Physical iPhone checkout test",
+  "description": "FICTIONAL DEMO, NOT A REAL LISTING. Test a native checkout on your own physical iPhone. A real iPhone is mandatory; emulators, Android phones and borrowed remote devices are not accepted. Five hours per week, Slovakia eligible.",
+  "skills": ["Manual mobile testing"],
+  "contract_type": "hourly",
+  "hourly_min_usd": 20,
+  "hourly_max_usd": 30,
+  "hours_per_week_max": 5,
+  "required_devices": ["Physical iPhone"],
+  "eligible_locations": ["Slovakia"],
+  "posted_at": "2026-10-27T09:50:00Z",
+  "proposal_count": 2
+}

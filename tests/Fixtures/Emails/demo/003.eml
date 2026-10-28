@@ -1,0 +1,25 @@
+From: FOTP Fictional Alerts <demo-alerts@example.invalid>
+To: Demo Fixture <demo-inbox@example.invalid>
+Date: Tue, 27 Oct 2026 10:03:00 +0000
+Message-ID: <DEMO-003@fotp.example.invalid>
+Subject: FOTP Fictional alert: DEMO-003 - Extend a Cypress regression checklist
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+{
+  "format": "fotp-authored-alert-v1",
+  "synthetic": true,
+  "source_id": "DEMO-003",
+  "title": "Extend a Cypress regression checklist",
+  "description": "FICTIONAL DEMO, NOT A REAL LISTING. Add two agreed acceptance cases to an existing Cypress suite and manually verify a settings screen. Review with our developer before merging. Ten hours per week maximum, Windows supported, remote from Slovakia. This is a bounded maintenance task, not test-platform architecture.",
+  "skills": ["Cypress", "Acceptance criteria"],
+  "contract_type": "hourly",
+  "hourly_min_usd": 16,
+  "hourly_max_usd": 24,
+  "hours_per_week_max": 10,
+  "required_devices": ["Windows desktop"],
+  "eligible_locations": ["Slovakia"],
+  "posted_at": "2026-10-27T09:40:00Z",
+  "proposal_count": 8
+}

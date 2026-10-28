@@ -1,0 +1,25 @@
+From: FOTP Fictional Alerts <demo-alerts@example.invalid>
+To: Demo Fixture <demo-inbox@example.invalid>
+Date: Tue, 27 Oct 2026 10:10:00 +0000
+Message-ID: <DEMO-010@fotp.example.invalid>
+Subject: FOTP Fictional alert: DEMO-010 - US-resident manual tester
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+{
+  "format": "fotp-authored-alert-v1",
+  "synthetic": true,
+  "source_id": "DEMO-010",
+  "title": "US-resident manual tester",
+  "description": "FICTIONAL DEMO, NOT A REAL LISTING. Test Windows workflows and write reproducible reports. Applicants must currently reside in the United States; Slovakia-based applicants are not eligible. Eight hours weekly, fully remote within the stated location.",
+  "skills": ["Manual testing"],
+  "contract_type": "hourly",
+  "hourly_min_usd": 30,
+  "hourly_max_usd": 40,
+  "hours_per_week_max": 8,
+  "required_devices": ["Windows desktop"],
+  "eligible_locations": ["United States only"],
+  "posted_at": "2026-10-27T09:54:00Z",
+  "proposal_count": 4
+}

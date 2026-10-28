@@ -1,0 +1,26 @@
+From: FOTP Fictional Alerts <demo-alerts@example.invalid>
+To: Demo Fixture <demo-inbox@example.invalid>
+Date: Tue, 27 Oct 2026 10:01:00 +0000
+Message-ID: <DEMO-001@fotp.example.invalid>
+Subject: FOTP Fictional alert: DEMO-001 - Checkout exploratory review
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+{
+  "format": "fotp-authored-alert-v1",
+  "synthetic": true,
+  "source_id": "DEMO-001",
+  "title": "Checkout exploratory review",
+  "description": "FICTIONAL DEMO, NOT A REAL LISTING. Review a small staging checkout on Windows. Deliver an exploratory session note, reproducible bug reports and verification of agreed fixes. Manual testing only; no automation required. Eight hours per week for two weeks. Remote applicants in Slovakia are eligible.",
+  "skills": ["Manual testing", "Bug reporting"],
+  "contract_type": "hourly",
+  "hourly_min_usd": 12,
+  "hourly_max_usd": 18,
+  "hours_per_week_max": 8,
+  "required_devices": ["Windows desktop"],
+  "eligible_locations": ["Slovakia"],
+  "posted_at": "2026-10-27T09:30:00Z",
+  "proposal_count": 3,
+  "payment_verified": true
+}

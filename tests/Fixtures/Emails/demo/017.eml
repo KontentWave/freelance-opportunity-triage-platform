@@ -1,0 +1,25 @@
+From: FOTP Fictional Alerts <demo-alerts@example.invalid>
+To: Demo Fixture <demo-inbox@example.invalid>
+Date: Tue, 27 Oct 2026 10:17:00 +0000
+Message-ID: <DEMO-017@fotp.example.invalid>
+Subject: FOTP Fictional alert: DEMO-017 - Android 13 phone exploratory pass
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+{
+  "format": "fotp-authored-alert-v1",
+  "synthetic": true,
+  "source_id": "DEMO-017",
+  "title": "Android 13 phone exploratory pass",
+  "description": "FICTIONAL DEMO, NOT A REAL LISTING. Explore sign-in and settings on a Samsung Galaxy A71 running Android 13. That exact device is accepted; no iOS or tablet testing. Deliver steps, expected and actual behavior and fix verification. Six hours weekly, Slovakia eligible.",
+  "skills": ["Exploratory testing", "Bug reporting"],
+  "contract_type": "hourly",
+  "hourly_min_usd": 12,
+  "hourly_max_usd": 18,
+  "hours_per_week_max": 6,
+  "required_devices": ["Samsung Galaxy A71 with Android 13"],
+  "eligible_locations": ["Slovakia"],
+  "posted_at": "2026-10-27T10:08:00Z",
+  "proposal_count": 3
+}

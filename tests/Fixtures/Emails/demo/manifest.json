@@ -1,0 +1,47 @@
+{
+  "corpus_version": "authored-demo-v2",
+  "format": "fotp-authored-alert-v1",
+  "prepared_at": "2026-10-27",
+  "provenance": "Newly authored fictional jobs for this engineering demonstration; no genuine alerts or marketplace listings were copied.",
+  "publication_status": "APPROVED_FOR_FUTURE_PUBLICATION_NOT_PUBLISHED",
+  "approval_date": "2026-10-27",
+  "evaluation_profile_version": "public-profile-v2",
+  "revision_note": "Owner-approved device correction includes an iPhone 11 with iOS 26.5. DEMO-008 now matches; the 20 email payloads, hashes and source namespace are unchanged.",
+  "source_namespace": "fotp-authored-demo-v1",
+  "sender": "demo-alerts@example.invalid",
+  "subject_prefix": "FOTP Fictional alert: ",
+  "message_id_pattern": "<DEMO-NNN@fotp.example.invalid>",
+  "body_canonicalization": "Recursive lexicographic object keys, original array order, JSON without insignificant whitespace, UTF-8, no trailing newline; no normalization of string content.",
+  "body_fields": [
+    "format", "synthetic", "source_id", "title", "description", "skills",
+    "contract_type", "hourly_min_usd", "hourly_max_usd", "hours_per_week_max",
+    "required_devices", "eligible_locations", "posted_at", "proposal_count",
+    "payment_verified", "client_rating", "client_spend_usd", "client_country"
+  ],
+  "items": [
+    {"file": "001.eml", "source_id": "DEMO-001", "normalized_body_sha256": "7dd0d81846f02cc7e73ba1270a04be5ca062532a5e19d483f59f16469ea4f774", "expected_band": "APPLY", "reason": "Bounded manual testing; automation not required."},
+    {"file": "002.eml", "source_id": "DEMO-002", "normalized_body_sha256": "f57aea65dabd62869ab2b2462f110f1ea51ca707648f551db069e098b5b2865a", "expected_band": "APPLY", "reason": "Supported bounded Playwright maintenance."},
+    {"file": "003.eml", "source_id": "DEMO-003", "normalized_body_sha256": "0a4c44638c8107cee8d24a023ba4d0a701bbcd4c67c98ba235c60d4a92e13f7f", "expected_band": "APPLY", "reason": "Supported bounded Cypress and acceptance work."},
+    {"file": "004.eml", "source_id": "DEMO-004", "normalized_body_sha256": "5f87b31a20eb8d0b588bad3781fc6a8f9ba1029270abe66f87a4aa5313ea601a", "expected_band": "APPLY", "reason": "Basic Postman is sufficient, not specialist API engineering."},
+    {"file": "005.eml", "source_id": "DEMO-005", "normalized_body_sha256": "852381e9523efd5e361c033fa29341f56c645eb6e4a7508ad94537107985c83c", "expected_band": "APPLY", "reason": "Requirements and verification; no private process details."},
+    {"file": "006.eml", "source_id": "DEMO-006", "normalized_body_sha256": "73e67e90a8e450e97ed4d570797fdecfc40dbe97366a1ef8ebcacdc043180c77", "expected_band": "APPLY", "reason": "Bounded AI-assisted task; no invented language specialism."},
+    {"file": "007.eml", "source_id": "DEMO-007", "normalized_body_sha256": "0a1757b039c80c3eadabf5d743cd7cd76fd7ec256d08d8cd02880c2634348ba6", "expected_band": "SKIP", "reason": "Mandatory full-time availability exceeds 20 hours/week."},
+    {"file": "008.eml", "source_id": "DEMO-008", "normalized_body_sha256": "5cfe86247ab7d2e39f25934ed1ad5086ee92e205c2cdf18a8c6167257f986a80", "expected_band": "APPLY", "reason": "Available iPhone supports this bounded manual task under public-profile-v2."},
+    {"file": "009.eml", "source_id": "DEMO-009", "normalized_body_sha256": "a188f1e40c8c3a130702a7665a4a3c293184a8e4a1ea22f9b3fedaa670f3a5a2", "expected_band": "SKIP", "reason": "Mandatory unavailable tablet."},
+    {"file": "010.eml", "source_id": "DEMO-010", "normalized_body_sha256": "f37332b5e303cfa520a77f7112625828f5946e372742429563b58c2550eb9dd4", "expected_band": "SKIP", "reason": "Explicit geographic ineligibility."},
+    {"file": "011.eml", "source_id": "DEMO-011", "normalized_body_sha256": "940c364c3f912a3c664d3867fe33d1195686404ca075c4085b7b849728a9592e", "expected_band": "SKIP", "reason": "Essential specialist capability absent from this public profile."},
+    {"file": "012.eml", "source_id": "DEMO-012", "normalized_body_sha256": "148a0803b38ef5ffb07b8490615172b626389b6dd09720dde22405eba93f6ac1", "expected_band": "APPLY", "reason": "Low rate is not a hard exclusion."},
+    {"file": "013.eml", "source_id": "DEMO-013", "normalized_body_sha256": "7d30f98f2e321ea5360d2c45fe01301bcf343f2423274eaa3b0b9c76ba6108c8", "expected_band": "MAYBE", "reason": "Availability needs clarification."},
+    {"file": "014.eml", "source_id": "DEMO-014", "normalized_body_sha256": "5a15af36e85c96c11497345bf02b206d7f7b7344c2445428e013087ffb1e191a", "expected_band": "MAYBE", "reason": "Device requirements need clarification."},
+    {"file": "015.eml", "source_id": "DEMO-015", "normalized_body_sha256": "28f96421799d2db2fecf792d158922e44df52367c0db01e2ca15f174b789cb40", "expected_band": "MAYBE", "reason": "Scope and essential capability expectations unknown."},
+    {"file": "016.eml", "source_id": "DEMO-016", "normalized_body_sha256": "157de8ad25c1436e56a3f83bf3571746f67b1cf6eb11d5f6a76cdacb040a0706", "expected_band": "MAYBE", "reason": "Stated geographic restriction is unspecified."},
+    {"file": "017.eml", "source_id": "DEMO-017", "normalized_body_sha256": "a9f062e9959cb73afef1c0fb2b1914e30c4b6844c44bc95357303652446a3702", "expected_band": "APPLY", "reason": "Explicit match to available Android device."},
+    {"file": "018.eml", "source_id": "DEMO-018", "normalized_body_sha256": "5551d505a4f837e41ae21a6bc2f29eb3ef51e279f9d5e268a5632d14751ce773", "expected_band": "SKIP", "reason": "Mandatory 25-hour requirement exceeds availability."},
+    {"file": "019.eml", "source_id": "DEMO-019", "normalized_body_sha256": "af8d1213d49b37fa7a9e39dd39563d69ffeeadc2e140892a849c0597e1ff6560", "expected_band": "APPLY", "reason": "Compatible but lower freshness/competition preference; not a hard exclusion."},
+    {"file": "020.eml", "source_id": "DEMO-020", "normalized_body_sha256": "5f66a507f24dd5f882e0abf5efa3b8dd4658c4a622d6ecff4387ad8b4e07626e", "expected_band": "MAYBE", "reason": "Material job requirements are absent; no invented client facts."}
+  ],
+  "separate_test_fixtures": [
+    {"file": "adversarial/invalid-json.eml", "expected": "Reject malformed JSON; never eligible."},
+    {"file": "adversarial/injected-instructions.eml", "expected": "Reject unapproved source identity at intake; a separately controlled adapter-boundary test can inject its description to prove no instruction following/tools and evidence validation."}
+  ]
+}

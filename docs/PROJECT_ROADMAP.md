@@ -249,6 +249,10 @@ Phase 6 planned integration: a replaceable AI-provider adapter and durable, boun
 - 6.3 — Add accessible progress, explanations and report download; preserve the existing review workflow and test refresh, stale responses, errors and expiry.
 - 6.4 — Verify operator-only owner delivery and a budgeted live staging run, then follow the existing candidate, smoke, rollback/disable and release process.
 
+**Slice 6.1 checkpoint — 2026-10-28: READY for bounded, offline-first Slice 6.2 implementation, not live activation.** The initial 2026-10-27 checkpoint was NOT READY; subsequent host checks and owner confirmations closed the planning gates. Both shared originals were retrieved again read-only on 2026-10-28 and matched the original baseline without replacing local edits. Approved: public v2 rubric/profile/prompt, OpenAI `gpt-6-luna` (owner-approved replacement; no reasoning/tools, `store=false`, default 30-minute caching), global USD 1.00/day at midnight UTC including retries/uncertainty, 20 items, one active/two queued runs, one provider request at a time / maximum 30 per minute, 30-minute run/queue deadline and seven-day reports. Revised 20-item estimates: USD 0.009 typical, 0.0688 maximum with retries, 0.075680 reserved including cache writes and 10% margin; not measured usage. The 20 fictional messages (`authored-demo-v2`) are approved for future publication, not published or sent now. The bounded scheduled database-worker design has sufficient host supporting evidence for implementation, not operating-worker acceptance.
+
+See the [readiness record and residual acceptance boundaries](runbooks/phase6-readiness.md), [authored-input ADR](adr/ADR-009-public-ai-demo-inputs.md), [provider/budget ADR](adr/ADR-010-demo-ai-provider-and-budget.md) and [execution/state ADR](adr/ADR-011-bounded-demo-execution.md). VERIFIED: public-host runtime/database configuration, bounded process/overlap controls, nearly three-hour unattended cron continuity, HTTPS/IMAP TLS egress, staged mailbox authentication, protected recipient syntax/separation and provider model-metadata access. OPERATOR-REPORTED: exclusive demo mailbox use, control/allowlisting of the staged owner recipient, dedicated API project, billing/Responses permission and no data-sharing opt-in with standard retention accepted. No console inspection, message retrieval, paid inference, delivery, application feature or deployment acceptance is claimed. Temporary cron probes are removed; runtime configuration remains unchanged.
+
 **Exit criteria:**
 
 - Deterministic tests cover successful and partial runs, empty/duplicate/malicious inputs, malformed AI output, provider failures, isolation and concurrent cap enforcement. CI uses controlled adapters and makes no paid or mailbox calls.
@@ -312,8 +316,7 @@ AI errors or injected email instructions: allowlisted inputs, no model tools, st
 - **ADR-004:** Scheduled IMAP polling versus a Node mail worker
 - **ADR-005:** Deterministic scoring before any optional AI-assisted evaluation
 - **ADR-006:** Minimal raw-email retention and fixture sanitization policy
-- Phase 6 ADR candidates (assign unused IDs after checking the repository index): separate AI suggestions and versioned prompt/profile from deterministic scoring; provider/model and data handling; durable bounded execution and spend enforcement.
-- Phase 6 ADR candidates: authored public-demo input and private-source isolation; report retention and operator-only email delivery. Broader visitor delivery remains deferred.
+- Phase 6 planning records: [ADR-009](adr/ADR-009-public-ai-demo-inputs.md) covers authored inputs, public profile and report/delivery boundaries; [ADR-010](adr/ADR-010-demo-ai-provider-and-budget.md) covers the provider/data contract and spend enforcement; [ADR-011](adr/ADR-011-bounded-demo-execution.md) covers conditional execution and durable state. Each distinguishes approved planning decisions from conditional execution and pending evidence. Broader visitor delivery remains deferred; ADR-006 remains reserved.
 
 ## Phase Definition of Done
 
@@ -321,7 +324,7 @@ A phase is complete only when its acceptance scenarios pass, unit/integration te
 
 ## Immediate Next Decision
 
-Begin Phase 6 Slice 6.1: finalize Marcel’s approved prompt/public profile, the authored demo inbox, AI provider/model, execution approach, numeric limits and hard daily budget. Then implement one slice at a time with tests, documentation and review. Phase 6 is planned, not implemented or accepted; the existing public demo and Phases 1-5 remain complete.
+Slice 6.1 is [ready for bounded implementation](runbooks/phase6-readiness.md#readiness-blockers-and-next-bounded-task) as of 2026-10-28. Obtain the owner's go-ahead for Slice 6.2: feature-owned run/item/attempt-budget state and isolated authored-email normalizer/discovery boundary, with offline dedupe/isolation/expiry/concurrent-reservation tests. Do not activate intake, paid AI, delivery or permanent scheduling automatically. Phase 6 application functionality remains planned, not implemented or accepted; the existing public demo and Phases 1-5 remain complete.
 
 **Historical checkpoint:** Phase 4 target-host acceptance passed on deployed candidate `65bf4ea`. The completed Phase 3 calibration remains historical evidence: 30 reviewed imports, 3.33% machine skip rate, 9.09% false-negative rate, and `targets_met=false`. No calibration-based GO is claimed.
 

@@ -1,0 +1,25 @@
+From: FOTP Fictional Alerts <demo-alerts@example.invalid>
+To: Demo Fixture <demo-inbox@example.invalid>
+Date: Tue, 27 Oct 2026 10:18:00 +0000
+Message-ID: <DEMO-018@fotp.example.invalid>
+Subject: FOTP Fictional alert: DEMO-018 - Mandatory twenty-five-hour QA cover
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+{
+  "format": "fotp-authored-alert-v1",
+  "synthetic": true,
+  "source_id": "DEMO-018",
+  "title": "Mandatory twenty-five-hour QA cover",
+  "description": "FICTIONAL DEMO, NOT A REAL LISTING. Provide manual Windows QA cover for exactly twenty-five hours each week. The mandatory minimum is twenty-five and cannot be reduced to twenty. Slovakia eligible. Relevant testing experience does not remove this availability conflict.",
+  "skills": ["Manual testing", "Verification"],
+  "contract_type": "hourly",
+  "hourly_min_usd": 22,
+  "hourly_max_usd": 30,
+  "hours_per_week_max": 25,
+  "required_devices": ["Windows desktop"],
+  "eligible_locations": ["Slovakia"],
+  "posted_at": "2026-10-27T10:10:00Z",
+  "proposal_count": 1
+}

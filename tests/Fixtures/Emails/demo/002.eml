@@ -1,0 +1,25 @@
+From: FOTP Fictional Alerts <demo-alerts@example.invalid>
+To: Demo Fixture <demo-inbox@example.invalid>
+Date: Tue, 27 Oct 2026 10:02:00 +0000
+Message-ID: <DEMO-002@fotp.example.invalid>
+Subject: FOTP Fictional alert: DEMO-002 - Stabilize three Playwright checks
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+{
+  "format": "fotp-authored-alert-v1",
+  "synthetic": true,
+  "source_id": "DEMO-002",
+  "title": "Stabilize three Playwright checks",
+  "description": "FICTIONAL DEMO, NOT A REAL LISTING. Reproduce three flaky browser checks, improve selectors and document verification steps. Existing setup and developer support are provided. No framework redesign or specialist language expertise required. Work on Windows, up to ten hours weekly. Slovakia is eligible.",
+  "skills": ["Playwright", "Reproduction", "Verification"],
+  "contract_type": "hourly",
+  "hourly_min_usd": 20,
+  "hourly_max_usd": 28,
+  "hours_per_week_max": 10,
+  "required_devices": ["Windows desktop"],
+  "eligible_locations": ["Slovakia"],
+  "posted_at": "2026-10-27T09:35:00Z",
+  "proposal_count": 5
+}

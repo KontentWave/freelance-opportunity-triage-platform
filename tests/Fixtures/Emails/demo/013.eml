@@ -1,0 +1,25 @@
+From: FOTP Fictional Alerts <demo-alerts@example.invalid>
+To: Demo Fixture <demo-inbox@example.invalid>
+Date: Tue, 27 Oct 2026 10:13:00 +0000
+Message-ID: <DEMO-013@fotp.example.invalid>
+Subject: FOTP Fictional alert: DEMO-013 - QA support with unspecified hours
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+{
+  "format": "fotp-authored-alert-v1",
+  "synthetic": true,
+  "source_id": "DEMO-013",
+  "title": "QA support with unspecified hours",
+  "description": "FICTIONAL DEMO, NOT A REAL LISTING. Help with Windows exploratory testing and fix verification. Weekly availability and meeting expectations will be discussed; no upper bound is provided. Slovakia eligible. Do not infer either part-time or full-time from this brief.",
+  "skills": ["Exploratory testing"],
+  "contract_type": "hourly",
+  "hourly_min_usd": 15,
+  "hourly_max_usd": 25,
+  "hours_per_week_max": null,
+  "required_devices": ["Windows desktop"],
+  "eligible_locations": ["Slovakia"],
+  "posted_at": "2026-10-27T10:00:00Z",
+  "proposal_count": 2
+}

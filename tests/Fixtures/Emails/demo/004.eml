@@ -1,0 +1,25 @@
+From: FOTP Fictional Alerts <demo-alerts@example.invalid>
+To: Demo Fixture <demo-inbox@example.invalid>
+Date: Tue, 27 Oct 2026 10:04:00 +0000
+Message-ID: <DEMO-004@fotp.example.invalid>
+Subject: FOTP Fictional alert: DEMO-004 - Basic Postman smoke checks
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+{
+  "format": "fotp-authored-alert-v1",
+  "synthetic": true,
+  "source_id": "DEMO-004",
+  "title": "Basic Postman smoke checks",
+  "description": "FICTIONAL DEMO, NOT A REAL LISTING. Use a supplied Postman collection to check documented success and validation responses. Record mismatches and retest fixes; basic Postman knowledge is sufficient. No scripting framework or load testing. Six hours weekly, Windows, Slovakia eligible.",
+  "skills": ["Postman", "Manual API testing"],
+  "contract_type": "hourly",
+  "hourly_min_usd": 10,
+  "hourly_max_usd": 15,
+  "hours_per_week_max": 6,
+  "required_devices": ["Windows desktop"],
+  "eligible_locations": ["Slovakia"],
+  "posted_at": "2026-10-27T09:42:00Z",
+  "proposal_count": 2
+}

@@ -1,0 +1,25 @@
+From: FOTP Fictional Alerts <demo-alerts@example.invalid>
+To: Demo Fixture <demo-inbox@example.invalid>
+Date: Tue, 27 Oct 2026 10:16:00 +0000
+Message-ID: <DEMO-016@fotp.example.invalid>
+Subject: FOTP Fictional alert: DEMO-016 - Regional eligibility unspecified
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+{
+  "format": "fotp-authored-alert-v1",
+  "synthetic": true,
+  "source_id": "DEMO-016",
+  "title": "Regional eligibility unspecified",
+  "description": "FICTIONAL DEMO, NOT A REAL LISTING. Run a small Windows regression checklist, eight hours weekly. This contract has geographic eligibility restrictions, but eligible countries are absent from the alert. Ask whether Slovakia qualifies; do not infer acceptance or exclusion.",
+  "skills": ["Manual testing"],
+  "contract_type": "hourly",
+  "hourly_min_usd": 16,
+  "hourly_max_usd": 20,
+  "hours_per_week_max": 8,
+  "required_devices": ["Windows desktop"],
+  "eligible_locations": null,
+  "posted_at": "2026-10-27T10:06:00Z",
+  "proposal_count": 6
+}

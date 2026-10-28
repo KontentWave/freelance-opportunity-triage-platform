@@ -1,0 +1,25 @@
+From: FOTP Fictional Alerts <demo-alerts@example.invalid>
+To: Demo Fixture <demo-inbox@example.invalid>
+Date: Tue, 27 Oct 2026 10:15:00 +0000
+Message-ID: <DEMO-015@fotp.example.invalid>
+Subject: FOTP Fictional alert: DEMO-015 - Unbounded product build brief
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+{
+  "format": "fotp-authored-alert-v1",
+  "synthetic": true,
+  "source_id": "DEMO-015",
+  "title": "Unbounded product build brief",
+  "description": "FICTIONAL DEMO, NOT A REAL LISTING. Help finish our web product using AI-assisted development. Deliverables, stack, specialist expectations and acceptance criteria are not yet defined. Up to twelve hours weekly on Windows, Slovakia eligible. Clarify scope rather than assuming either expertise or impossibility.",
+  "skills": ["AI-assisted delivery"],
+  "contract_type": "hourly",
+  "hourly_min_usd": null,
+  "hourly_max_usd": null,
+  "hours_per_week_max": 12,
+  "required_devices": ["Windows desktop"],
+  "eligible_locations": ["Slovakia"],
+  "posted_at": "2026-10-27T10:04:00Z",
+  "proposal_count": null
+}
