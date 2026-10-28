@@ -1,0 +1,25 @@
+From: FOTP Fictional Alerts <demo-alerts@example.invalid>
+To: Demo Fixture <demo-inbox@example.invalid>
+Date: Tue, 27 Oct 2026 10:20:00 +0000
+Message-ID: <DEMO-020@fotp.example.invalid>
+Subject: FOTP Fictional alert: DEMO-020 - Incomplete testing request
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+{
+  "format": "fotp-authored-alert-v1",
+  "synthetic": true,
+  "source_id": "DEMO-020",
+  "title": "Incomplete testing request",
+  "description": "FICTIONAL DEMO, NOT A REAL LISTING. Looking for help testing a product. Scope, required devices, location rules, hours, rate, client facts, posting age and proposal count are not supplied. Do not manufacture evidence of suitability or incompatibility.",
+  "skills": [],
+  "contract_type": null,
+  "hourly_min_usd": null,
+  "hourly_max_usd": null,
+  "hours_per_week_max": null,
+  "required_devices": null,
+  "eligible_locations": null,
+  "posted_at": null,
+  "proposal_count": null
+}

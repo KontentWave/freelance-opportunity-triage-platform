@@ -1,0 +1,25 @@
+From: FOTP Fictional Alerts <demo-alerts@example.invalid>
+To: Demo Fixture <demo-inbox@example.invalid>
+Date: Tue, 27 Oct 2026 10:12:00 +0000
+Message-ID: <DEMO-012@fotp.example.invalid>
+Subject: FOTP Fictional alert: DEMO-012 - Low-rate bounded manual smoke test
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+{
+  "format": "fotp-authored-alert-v1",
+  "synthetic": true,
+  "source_id": "DEMO-012",
+  "title": "Low-rate bounded manual smoke test",
+  "description": "FICTIONAL DEMO, NOT A REAL LISTING. Execute a supplied ten-step Windows smoke checklist and report reproducible failures. Four hours weekly at most, Slovakia eligible. The offered rate is low, but no additional specialist skill, device or availability is required.",
+  "skills": ["Manual testing", "Bug reporting"],
+  "contract_type": "hourly",
+  "hourly_min_usd": 5,
+  "hourly_max_usd": 7,
+  "hours_per_week_max": 4,
+  "required_devices": ["Windows desktop"],
+  "eligible_locations": ["Slovakia"],
+  "posted_at": "2026-10-27T09:58:00Z",
+  "proposal_count": 7
+}

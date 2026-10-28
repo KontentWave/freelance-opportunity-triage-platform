@@ -1,0 +1,25 @@
+From: FOTP Fictional Alerts <demo-alerts@example.invalid>
+To: Demo Fixture <demo-inbox@example.invalid>
+Date: Tue, 27 Oct 2026 10:09:00 +0000
+Message-ID: <DEMO-009@fotp.example.invalid>
+Subject: FOTP Fictional alert: DEMO-009 - Physical Android tablet review
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+{
+  "format": "fotp-authored-alert-v1",
+  "synthetic": true,
+  "source_id": "DEMO-009",
+  "title": "Physical Android tablet review",
+  "description": "FICTIONAL DEMO, NOT A REAL LISTING. Verify a tablet-only layout on a physical Android tablet that you already own. A phone or desktop responsive mode is not a substitute. Four hours per week. Slovakia eligible.",
+  "skills": ["Exploratory testing"],
+  "contract_type": "hourly",
+  "hourly_min_usd": 12,
+  "hourly_max_usd": 20,
+  "hours_per_week_max": 4,
+  "required_devices": ["Physical Android tablet"],
+  "eligible_locations": ["Slovakia"],
+  "posted_at": "2026-10-27T09:52:00Z",
+  "proposal_count": 3
+}

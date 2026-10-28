@@ -1,0 +1,25 @@
+From: FOTP Fictional Alerts <demo-alerts@example.invalid>
+To: Demo Fixture <demo-inbox@example.invalid>
+Date: Tue, 27 Oct 2026 10:06:00 +0000
+Message-ID: <DEMO-006@fotp.example.invalid>
+Subject: FOTP Fictional alert: DEMO-006 - Bounded validation-message update
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+{
+  "format": "fotp-authored-alert-v1",
+  "synthetic": true,
+  "source_id": "DEMO-006",
+  "title": "Bounded validation-message update",
+  "description": "FICTIONAL DEMO, NOT A REAL LISTING. Update two specified validation messages using supplied examples, add an acceptance check and document verification. AI-assisted implementation is permitted and a maintainer reviews the small patch. Specialist language expertise is not required. Six hours weekly, Windows, Slovakia eligible.",
+  "skills": ["AI-assisted delivery", "Acceptance testing"],
+  "contract_type": "hourly",
+  "hourly_min_usd": 14,
+  "hourly_max_usd": 22,
+  "hours_per_week_max": 6,
+  "required_devices": ["Windows desktop"],
+  "eligible_locations": ["Slovakia"],
+  "posted_at": "2026-10-27T09:46:00Z",
+  "proposal_count": 4
+}

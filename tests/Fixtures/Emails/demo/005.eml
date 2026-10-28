@@ -1,0 +1,25 @@
+From: FOTP Fictional Alerts <demo-alerts@example.invalid>
+To: Demo Fixture <demo-inbox@example.invalid>
+Date: Tue, 27 Oct 2026 10:05:00 +0000
+Message-ID: <DEMO-005@fotp.example.invalid>
+Subject: FOTP Fictional alert: DEMO-005 - Clarify acceptance criteria
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+{
+  "format": "fotp-authored-alert-v1",
+  "synthetic": true,
+  "source_id": "DEMO-005",
+  "title": "Clarify acceptance criteria",
+  "description": "FICTIONAL DEMO, NOT A REAL LISTING. Turn six ambiguous feature requests into reviewable requirements and acceptance examples, then manually verify the agreed staging behavior. No particular proprietary process is requested. Twelve hours weekly maximum, remote Slovakia and Windows accepted.",
+  "skills": ["Requirements", "Acceptance criteria", "Verification"],
+  "contract_type": "hourly",
+  "hourly_min_usd": 18,
+  "hourly_max_usd": 25,
+  "hours_per_week_max": 12,
+  "required_devices": ["Windows desktop"],
+  "eligible_locations": ["Slovakia"],
+  "posted_at": "2026-10-27T09:44:00Z",
+  "proposal_count": 6
+}

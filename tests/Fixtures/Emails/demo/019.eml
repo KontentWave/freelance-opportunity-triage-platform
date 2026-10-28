@@ -1,0 +1,25 @@
+From: FOTP Fictional Alerts <demo-alerts@example.invalid>
+To: Demo Fixture <demo-inbox@example.invalid>
+Date: Tue, 27 Oct 2026 10:19:00 +0000
+Message-ID: <DEMO-019@fotp.example.invalid>
+Subject: FOTP Fictional alert: DEMO-019 - Older competitive but compatible QA task
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+{
+  "format": "fotp-authored-alert-v1",
+  "synthetic": true,
+  "source_id": "DEMO-019",
+  "title": "Older competitive but compatible QA task",
+  "description": "FICTIONAL DEMO, NOT A REAL LISTING. Reproduce five specified Windows UI issues, write reports and verify fixes. Five hours weekly, Slovakia eligible. The supplied fictional posting is two weeks old and has ninety proposals. Those are preference signals, not hard exclusions; do not invent that the job is closed.",
+  "skills": ["Bug reporting", "Verification"],
+  "contract_type": "hourly",
+  "hourly_min_usd": 18,
+  "hourly_max_usd": 24,
+  "hours_per_week_max": 5,
+  "required_devices": ["Windows desktop"],
+  "eligible_locations": ["Slovakia"],
+  "posted_at": "2026-10-13T10:00:00Z",
+  "proposal_count": 90
+}
