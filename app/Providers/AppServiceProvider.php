@@ -2,10 +2,14 @@
 
 namespace App\Providers;
 
+use App\Domain\DemoAi\EvaluationProvider;
+use App\Domain\DemoAi\InputTokenBound;
 use App\Domain\Mailbox\Contracts\MailboxClient;
 use App\Domain\Mailbox\Contracts\MonotonicClock;
 use App\Domain\Mailbox\Data\MailboxConfiguration;
 use App\Domain\Opportunities\Contracts\OpportunityEmailParser;
+use App\Infrastructure\DemoAi\OpenAiEvaluationProvider;
+use App\Infrastructure\DemoAi\OpenAiInputTokenBound;
 use App\Infrastructure\Email\UpworkJobAlertParser;
 use App\Infrastructure\Email\WebklexImapMailboxClient;
 use App\Infrastructure\Time\SystemMonotonicClock;
@@ -19,6 +23,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->bind(EvaluationProvider::class, OpenAiEvaluationProvider::class);
+        $this->app->bind(InputTokenBound::class, OpenAiInputTokenBound::class);
         $this->app->bind(OpportunityEmailParser::class, UpworkJobAlertParser::class);
         $this->app->singleton(
             MailboxConfiguration::class,

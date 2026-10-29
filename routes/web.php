@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\SessionController;
+use App\Http\Controllers\DemoAiRunController;
 use App\Http\Controllers\DemoSessionController;
 use App\Http\Controllers\OpportunityEnrichmentController;
 use App\Http\Controllers\OpportunityEvaluationController;
@@ -27,6 +28,9 @@ Route::get('/demo', [DemoSessionController::class, 'create'])->name('demo');
 Route::post('/demo-session', [DemoSessionController::class, 'store'])->name('demo-session.store');
 
 Route::middleware(['auth', 'review.workspace'])->group(function (): void {
+    Route::get('/demo-ai/admission-key', [DemoAiRunController::class, 'create'])->middleware('throttle:6,1')->name('demo-ai.create');
+    Route::post('/demo-ai/runs', [DemoAiRunController::class, 'store'])->name('demo-ai.store');
+    Route::get('/demo-ai/runs/{run}', [DemoAiRunController::class, 'show'])->name('demo-ai.show');
     Route::post('/logout', [SessionController::class, 'destroy'])->name('logout');
 
     Route::get('/opportunities', [OpportunityReviewController::class, 'index'])->name('opportunities.index');

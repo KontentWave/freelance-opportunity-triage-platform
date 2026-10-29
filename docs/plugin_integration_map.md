@@ -1,0 +1,42 @@
+# Integration boundaries
+
+## Phase 6.2 local backend - 2026-10-28
+
+No runtime plugins or external services were installed. This map records the Laravel integration seams and risky couplings discovered during the offline slice.
+
+| Boundary / hook | Owned state or configuration | Dependency and isolation |
+| --- | --- | --- |
+| `AppServiceProvider::register` | `EvaluationProvider`, `InputTokenBound` bindings | Real OpenAI Responses adapter and, after the 2026-10-29 continuation, policy-gated `OpenAiInputTokenBound`; disabled/empty defaults reject before provider requests. Existing private `OpportunityEmailParser` / `MailboxClient` bindings unchanged |
+| `DemoAiLedger` | `demo_ai_runs`, `demo_ai_items`, `demo_ai_attempts`, `demo_ai_budgets`, `demo_ai_control` | Guarded default demo MariaDB; no opportunities, deterministic scores, enrichment, feedback or calibration writes |
+| `ApprovedDemoInputs` / `DemoEmailNormalizer` | `resources/demo-ai/public-v2.json`, `tests/Fixtures/Emails/demo/manifest.json` | Public v2 snapshots and authored-demo-v2; runtime currently requires the committed manifest in the release (existing release packager includes tests). Expected bands are not used to generate model results |
+| `BoundedDemoMailbox` / `DemoImapProtocol` | `DEMO_AI_MAILBOX_KEY/HOST/PORT/USERNAME/PASSWORD/FOLDER` | Webklex 6.2.0, MIME parser 4.0.5, shared monotonic-clock contract and deadline protocol primitives; Webklex EXAMINE `validatedData()` supplies UIDVALIDITY/UIDNEXT. Shared deadline exceptions map to a safe demo timeout, with socket reset even on failure; no private importer or forward checkpoint discovery |
+| `OpenAiEvaluationProvider` | `DEMO_AI_OPENAI_KEY`, fixed model/pricing configuration | Laravel HTTP / Guzzle 8.2.0; fixed HTTPS endpoint; no implicit SDK/POST retries, redirects, tools, stored responses or model fallback |
+| `ProcessDemoAiRun` after-commit dispatch | Queue connection `demo-ai`, queue `demo-ai`, existing `jobs` table | Explicit database driver/retry_after=150; deployed default `sync` remains unchanged. Payload contains run ID, not content or credentials; database failures raise a safe code without retaining SQL bindings in failed-job exceptions |
+| Status polling and scheduler overlap | Cache store `demo-ai`, existing `cache` / `cache_locks` | Bound to guarded default demo DB, not `DB_CACHE_CONNECTION` / private overrides. Global scheduler cache selection unchanged |
+| HTTP web routes | `/demo-ai/admission-key`, `/demo-ai/runs`, `/demo-ai/runs/{run}` | Existing authenticated demo user/workspace; session-owned random owner token survives session-ID rotation; HMAC ownership/IP keys; normal web CSRF remains enabled; no arbitrary source/provider/profile/recipient |
+| Scheduler / recovery | `DEMO_AI_ENABLED=false`, `DEMO_AI_SCHEDULER_ENABLED=false`, `demo-ai:recover` | Disabled hooks only; bounded timeout-wrapped database worker and 180-second overlap locks. No recurring public mailbox poll, host cron installation or worker activation |
+| UTC rollover / seven-day cleanup | Minimal non-content attempts/budget identities survive | Singleton control lock precedes sorted budget-day locks, then run/item/attempt locks. Sum all outstanding day reservations; cleanup/kill switch/stale leases cannot release uncertain attempts. Later recovery/settlement cannot extend the original finalized retention deadline; accounting blockage also cancels queued intake |
+
+### Known acceptance boundary
+
+Authoritative actual-corpus counts remain an acceptance blocker, not live evidence. Earlier tests substitute the token-bound contract; the 2026-10-29 tests additionally exercise the real counting adapter with faked HTTP. Neither proves production corpus counts. Production rejects counting while its policy evidence is absent. A future corpus change needs new approval/hash/version and a review of the independent hard-requirement predicates. The manifest is trusted server content, never a request-selected file.
+
+A response settled on a different UTC day from its last dispatch authorization remains uncertain even with measured usage: suspension or connection establishment may have moved actual dispatch across midnight. Evidence-referenced reconciliation must explicitly supply the verified dispatch day; that day's budget row is created and locked before run/item/attempt state, and no new provider work follows reconciliation. This avoids assigning a delayed request to the previous day's spending allowance.
+
+UI/report rendering/download and owner delivery remain 6.3/6.4 work. No shared documents, host settings or real external data were changed.
+
+## Token-counting integration boundary - 2026-10-29
+
+Owner-approved bounded offline integration; authenticated counting approval is conditional on zero-charge and acceptable data-handling evidence that is still absent. No external count or inference was performed; dependencies, model, rates and caps remain unchanged.
+
+| Seam | Discovered coupling / remaining evidence requirement |
+| --- | --- |
+| `InputTokenBound` / `OpenAiInputTokenBound` | Official `/v1/responses/input_tokens` counts instructions, input, reasoning and `text.format` schema including server framing. Local `assertAvailable()` requires `DEMO_AI_COUNTING_ENABLED` and `DEMO_AI_COUNTING_POLICY_EVIDENCE_SHA256`; absent approved policy evidence retains `demo_ai.token_bound_unverified`. Fixed endpoint, 3/5-second connect/total timeout, 4 KiB response ceiling, no redirects/retries or unknown-field omission. |
+| `OpenAiEvaluationProvider` | `prepare()` is local only. `evaluate()` obtains one count, binds it to the full canonical request hash, and rechecks request/policy identity locally before inference. No token count is cached or reused across changed requests. Output stays capped at 1,440 tokens, input at 8,000; truncation is explicitly disabled. |
+| `ProcessDemoAi` / `DemoAiLedger` | Count is inside the committed attempt/provider fence, not before claim. Same `demo_ai_control`, budgets, snapshots and original deadline; two-second wait followed by fresh UTC/kill-switch/fence/snapshot authorization. No database locks during HTTP/waiting. Count and inference both consume the existing rolling request allowance. |
+| `demo_ai_attempts` / job budget | Nullable `inference_authorized_at` added to the existing undeployed migration; count/hash/policy provenance stored in `request_provenance`. Initial operation and inference timestamps both count toward 30/minute. A 40-second monotonic work budget reserves five seconds within the existing 45-second job for settlement; inference timeout is shortened as necessary. Stale process loss still retains the full uncertain liability. |
+| Existing HTTP client / provider policy | No SDK/tokenizer is necessary. The 2026-10-29 public-policy recheck establishes API-wide no-training-unless-opted-in and default abuse logs up to 30 days with legal/harm-prevention exceptions, but not explicit zero-charge counting or counting-specific application-state/cache retention and controls. Responses pricing being "not priced separately" is not a free-counting guarantee; Responses creation's `store=false` is not a counting retention control. Evidence identity remains an operator reference, not fabricated verification. No authenticated call is permitted under the current absent evidence. The undated model alias and absence of a count-to-inference server lock remain documented limitations. |
+
+See [source evidence and implemented boundary](adr/ADR-010-demo-ai-provider-and-budget.md#whole-input-counting-approval-gate). Counting responses in offline tests cannot establish actual corpus counts. 6.2 stays incomplete and 6.3 blocked pending policy evidence and conditionally authorized counting-only corpus verification.
+
+The [policy follow-up and owner-send support draft](runbooks/phase6-readiness.md#slice-62-provider-policy-follow-up---2026-10-29) record the remaining questions. This documentation-only continuation made zero authenticated requests and changed no hooks, tables, dependencies, configuration or evidence hash. Future counting-only verification must use the actual approved snapshot/request builder without invoking `evaluate()` or the processing path that can proceed to inference.

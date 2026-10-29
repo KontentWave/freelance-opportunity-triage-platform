@@ -31,6 +31,15 @@ return [
 
     'connections' => [
 
+        'demo-ai' => [
+            'driver' => 'database',
+            'connection' => null,
+            'table' => 'jobs',
+            'queue' => 'demo-ai',
+            'retry_after' => 150,
+            'after_commit' => true,
+        ],
+
         'sync' => [
             'driver' => 'sync',
         ],
