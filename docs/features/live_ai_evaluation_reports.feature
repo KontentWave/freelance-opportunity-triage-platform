@@ -118,6 +118,10 @@ Feature: Bounded authored-alert AI evaluation against the approved public profil
     And all twenty actual constructed corpus requests have authoritative count evidence
     And counting failures and request changes after counting reject before inference
     And controlled count stubs alone do not establish production acceptance
+    # Actual 2026-10-29 evidence: docs/runbooks/phase6-readiness.md
+    # Twenty frozen requests measured under one-request plus 19-request exceptions;
+    # DEMO-001 reused, range 1086-1127, all pass. Production policy remains pending.
+    And measured corpus counts and experimental consent do not establish zero-charge or retention policy
 
   @pending @slice63 @ui
   Scenario: Accessible progress and matching escaped HTML report download

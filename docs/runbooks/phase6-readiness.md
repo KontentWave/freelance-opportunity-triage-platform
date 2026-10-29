@@ -2,6 +2,8 @@
 
 **Assessment date:** 2026-10-28 (initial assessment 2026-10-27). **Readiness: READY for bounded, offline-first Slice 6.2 implementation; not live activation.**
 
+**Latest evidence - 2026-10-29:** [All 20 actual authored requests have measured counts](#owner-authorized-remaining-19-counts---2026-10-29), reusing DEMO-001 without recounting. All pass 8,000; maximum 1,127. This closes the frozen-corpus measurement gap only. Counting billing/endpoint retention and production policy remain unverified; **6.2 is incomplete, 6.3 blocked, production disabled**. Earlier sections retain their dated authorization/evidence scope.
+
 Planning, local fixture preparation and explicitly authorized bounded host feasibility probes only. No application behavior, dependencies, migrations, permanent runtime configuration/schedules, intake, delivery or deployment changed. Following separate explicit owner approval, a short temporary shell-crontab probe was installed, observed and removed with exact restoration of the original absent crontab. The owner subsequently approved a four-hour-bounded heartbeat continuity probe; 176 pre-reconnection minute samples were verified on his return and the probe was stopped early and fully removed at 15:43:24 UTC. No application schedule was activated or temporary probe schedule retained. Under later separate owner approval, an inert owner-only staging directory with four empty credential/address files was prepared outside the application/webroot; no live settings or secrets were installed. No paid AI calls, mailbox retrieval/population, email sends, commits, pushes or publication are authorized or claimed. The seeded demo and completed Phases 1-5 remain unchanged.
 
 Evidence labels describe a check: **VERIFIED / OPERATOR-REPORTED / NOT VERIFIED**. Decision labels independently describe consent: **APPROVED / PROPOSED / PENDING**. Reading provider documentation verifies what it states, not that a specific account supports it.
@@ -356,3 +358,107 @@ Fresh local validation with the patched installed dependency:
 Tests used a fresh disposable MariaDB **11.4.13** helper with no existing data volume mounted, bound only to **127.0.0.1:3307**. Before tests, `SELECT DATABASE(), VERSION()` verified `freelance_opportunity_triage_platform_test` and MariaDB; the repository database-safety test passed. Only that disposable `_test` database was migrated by test setup. The helper was stopped and removed after validation; temporary coverage output was deleted. No private/deployed database or original test container was changed.
 
 This supersedes the earlier outstanding MIME-audit result and initial-commit secret-scan gap, not the provider-policy gate. **6.2 remains incomplete; 6.3 remains blocked.** Counting/feature/scheduler defaults, empty policy-evidence hash, `demo_ai.token_bound_unverified`, model, pricing, budget and caps are unchanged. No authenticated counting/inference, mailbox retrieval/population, email, public-host operation, deployment or shared-document synchronization was performed. No merge or auto-merge is authorized by this remediation.
+
+## Owner-authorized single counting experiment - 2026-10-29
+
+After draft PR #76 was separately approved and merged as `f1d0d60b410888b11512ea0888ced550eee59f5a`, post-merge [main CI 40932711881](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/40932711881) passed. This does not close 6.2.
+
+The owner reported receiving an automated support reply about ChatGPT export/deletion. It did not answer the API endpoint inquiry and is **not policy evidence**. The owner then explicitly approved **exactly one counting-only experiment despite unverified charges and endpoint-specific retention**, followed by separate approval for narrowly scoped SSH execution using the existing protected staged provider key. This is a new, one-off exception to the earlier pre-request conditions, not evidence that counting is free, a production-policy approval, or permission to perform the other 19 counts.
+
+### Actual request and measured result
+
+The real `DemoAiLedger::admit()` generated a run-approved snapshot in a fresh disposable `_test` database with queue execution faked. The actual `DemoEmailNormalizer` read approved authored source **DEMO-001**, and the real `OpenAiEvaluationProvider::prepare()` constructed the complete request from that stored snapshot, including instructions/profile, normalized input, strict schema and all fixed settings. The complete canonical request was frozen before network access. No deployed run or mailbox content was read.
+
+An isolated preparation-only token contract permitted local construction under the explicit experiment authorization; it could not return a token bound or authorize inference. Production counting remained disabled with no evidence hash. The existing policy-gated counting adapter and `evaluate()` were **not** invoked or modified. A separate bounded counting-only transport used precisely the adapter's input-affecting field projection from the actual full request, not reconstructed prompt/schema text. Its canonical payload hash and complete request hash were independently matched to the returned sanitized receipt.
+
+| Evidence | Actual result |
+| --- | --- |
+| Operation / model / source | One `POST /v1/responses/input_tokens`; `gpt-6-luna`; DEMO-001 |
+| UTC request window | **2026-10-29 18:54:19-18:54:20 UTC** |
+| HTTP / TLS / duration | **200**; TLS verification result **0**; cURL error **0**; **1.212175 seconds** |
+| Exact model-input count | **1,116 tokens**; within the unchanged **8,000-input** ceiling |
+| Output | No inference or generated output; complete inference-request output cap remains **1,440** |
+| Provider request ID | `req_592041177e5f45c38c541cebc03d71a6` |
+| Actual disposable run ID | `01m64g5g9qasj35d7bbzp8q07x`; local preparation only, rolled back and helper removed |
+| Complete canonical request SHA-256 | `4441c7293c7b13349777dca3faabfdc19b8fbf659255beb12dc9889fcf2f85b6` |
+| Canonical counting-payload SHA-256 | `301b7f2d84def840dcf74f71de9fd5c56dd2a8f2a0467b58d45e6f6df847263a` |
+| Actual run-approved snapshot SHA-256 | `6e86ee19893acc264f1b501374e6aac989352ea239846ea592f5394d8e6b18ba` |
+| Normalized input SHA-256 | `c0480494c7ea3288489cf9dbd0bb36e52e8816a26e10ebb5a1a6b17243c229c9` |
+| Approved decoded-body SHA-256 | `7dd0d81846f02cc7e73ba1270a04be5ca062532a5e19d483f59f16469ea4f774` |
+| Snapshot/version-set hash | `55ee8a891c370160ea9675cda495e2568236fc806f1de1919ad4171209e60e44` |
+| Billing / retention | **NOT VERIFIED**; no billing-console or endpoint-retention evidence was obtained |
+
+The key stayed in host process memory and was not printed, copied locally, installed in application configuration or included in the retained public snapshot/sanitized receipt. Staging ownership and 0700/0600 permissions were required before reading it. The fixed HTTPS count request had 3/5-second connect/total timeouts, a 4 KiB response bound, verified TLS, no proxy, redirects, retries, model substitution or inference path. No remote file or configuration was created or changed.
+
+The fresh local MariaDB **11.4.13** helper had no existing data volume mounted and exposed only **127.0.0.1:3307**. `SELECT DATABASE(), VERSION()` and the repository safety test verified `freelance_opportunity_triage_platform_test` before preparation. The two offline safety/preparation tests passed **19 assertions** and sent no HTTP; their preparation contract supplied no fake count. The helper and both temporary probe programs were removed. The frozen approved/public snapshot, one-attempt marker and sanitized result remain in session evidence. The first local launcher failed before executing because its `python` command was unavailable; using the existing system Python subsequently launched the sole SSH/count attempt. No additional provider operation resulted from that launcher failure.
+
+**Allowance used: 1 of 1 newly authorized requests. Actual corpus evidence: 1 of 20; the other 19 remain unverified and are not authorized under this exception.** No inference, mailbox retrieval/population, email, private/deployed database access, unrelated host probe, application worker/scheduler, deployment, dependency change or shared-document synchronization occurred. Production defaults, empty policy-evidence hash and `demo_ai.token_bound_unverified` are unchanged. No persistent feature/counting switch was enabled. This successful count establishes endpoint access and this request's input size, **not zero charge, acceptable production retention, all-corpus acceptance or 6.2 completion**. Further requests or a revised production-policy decision require explicit owner authorization.
+
+## Owner-authorized remaining 19 counts - 2026-10-29
+
+**Measured frozen corpus: VERIFIED, 20/20 pass. Production policy: NOT VERIFIED. Slice 6.2 remains incomplete; do not begin 6.3 or activate production.**
+
+### Authorization, preservation and offline preparation
+
+The owner explicitly extended the earlier experimental exception to **at most 19 additional counting-only requests, one each for DEMO-002 through DEMO-020**, accepting still-unverified counting charges and endpoint-specific retention solely for this bounded experiment. Narrow SSH execution through the existing `fotp-public-demo` alias was authorized only to count using the existing staged key. This consent is not production-policy evidence or permission for inference, retries, extra requests, changed limits or deployment.
+
+The initial worktree contained the five uncommitted documentation changes recording the preceding single-count experiment. They were preserved on new branch `evidence/phase6-2-remaining-counts`, based on merged commit `f1d0d60b410888b11512ea0888ced550eee59f5a`; nothing was merged during this task. Repository instructions, the requested Phase 6 records and relevant Laravel guidance were read first. `.ai/rules` remains absent. Morph search was unavailable; workspace semantic search and bounded direct reads were used. PHP 8.4.12 / Composer 2.9.5 and installed Laravel 13.36.0 / Boost 2.10.3 were verified; no setup or dependency changes were needed.
+
+Offline checks validated the retained DEMO-001 attempt marker, sanitized HTTP receipt, frozen full request, normalized input/raw/body hashes, approved snapshot and version-set hashes. Rebuilding DEMO-001 with the **actual production normalizer and request builder** reproduced the frozen canonical request byte-for-byte; it was **not sent again**.
+
+The exact retained `approved_snapshot` from the real, previously rolled-back disposable run `01m64g5g9qasj35d7bbzp8q07x` was reused directly, not reconstructed from prose or simplified prompt/schema content. Its canonical hash is **`6e86ee19893acc264f1b501374e6aac989352ea239846ea592f5394d8e6b18ba`**; the unchanged full public/manifest/parser/schema version-set hash is **`55ee8a891c370160ea9675cda495e2568236fc806f1de1919ad4171209e60e44`**. The current approved resources matched that frozen snapshot/version set offline before any new request.
+
+For each source, `DemoEmailNormalizer::parse()` verified the actual committed authored MIME/body against the approved manifest and supplied the normalized input to `OpenAiEvaluationProvider::prepare()` with that frozen snapshot. A preparation-only token contract allowed **local construction only** and threw if asked for any count; it supplied neither a fake count nor policy-evidence hash. A minimal in-memory application/configuration container avoided application boot, environment-file/credential reads and all database access. **No new database or run was needed:** these are measurements of frozen requests, not processing or authorization of an active run; the earlier run's expired deadline was not extended.
+
+The full canonical request includes instructions/profile/version metadata, actual normalized input, strict `ai-evaluation-v1` schema and every fixed setting. The actual counting payload is the adapter's unchanged projection of `model`, `instructions`, `input`, `reasoning`, `text`, `tools` and `truncation`; it is independently hashed. Generation/retention-only settings are not unsupported counting parameters. Full requests retain **`gpt-6-luna`, `reasoning.effort=none`, no tools, `store=false`, no stream/background, default service tier, disabled truncation and the 1,440-output cap**. The input ceiling remains **8,000**.
+
+### Transport, attempts and complete evidence table
+
+**Additional requests attempted: 19/19. Successful: 19. Failed/invalid/oversized/uncertain: 0. Retries: 0. Inference: 0.** All additional operations were solely `POST https://api.openai.com/v1/responses/input_tokens`, between **19:08:53 and 19:09:53 UTC**. DEMO-001 below reuses the previous receipt.
+
+The remote PHP program was supplied through SSH stdin, created no remote file, and required the staged directory/file to be owned by the executing account with exact **0700/0600** permissions, no symlinks, and an unchanged file identity on opening. The key was read only into host process memory, never printed, copied, persisted elsewhere or installed in application configuration. Transport used verified TLS (all verification results **0**), 3/5-second connect/total limits, a **4 KiB** response-body ceiling and bounded headers, no proxy, redirects or retries. SSH had bounded connection/liveness limits; the remote process had a 15-second outer timeout and the local launcher a 30-second bound. All HTTP statuses were **200**, cURL errors **0**, SSH exits **0**, with no stderr.
+
+An exclusive, flushed and `fsync`-persisted batch marker prevented automatic reentry; an exclusive per-source marker recorded both hashes **before** each SSH launch. Any uncertain launch/outcome would consume an allowance slot and stop the batch. Each sanitized receipt was durably written before proceeding. Requests ran sequentially, with a **2.1-second monotonic wait after the preceding operation and receipt completed**, not just between launch commands. Independent receipt validation found a minimum recorded finish-to-next-start gap of **2 seconds** at timestamp precision and at most **19 operations in any rolling minute**, within 30/minute.
+
+All timestamps below are **2026-10-29 UTC**. PASS is an individual measured positive input count **<=8,000**, not production acceptance.
+
+| Source | Exact input tokens | <=8,000 | UTC start-finish | Provider request ID | Complete canonical request SHA-256 | Actual canonical counting-payload SHA-256 |
+| --- | ---: | --- | --- | --- | --- | --- |
+| DEMO-001 | 1,116 | PASS | 18:54:19-18:54:20 | `req_592041177e5f45c38c541cebc03d71a6` | `4441c7293c7b13349777dca3faabfdc19b8fbf659255beb12dc9889fcf2f85b6` | `301b7f2d84def840dcf74f71de9fd5c56dd2a8f2a0467b58d45e6f6df847263a` |
+| DEMO-002 | 1,120 | PASS | 19:08:53-19:08:54 | `req_a2488e6042c94d139946456406219772` | `1f5fa9be6810a74c8fa376482a65692705f0e677dd36d314ecb49e3d58ad664a` | `8e34432c5e66289fe560bf84e375527fabf62823d80e848391809e9065864494` |
+| DEMO-003 | 1,120 | PASS | 19:08:57-19:08:57 | `req_363daff293df4cfa9be552b0625abca7` | `a630d32b64ecc1c7980ba66f32b33e06f76b7c3f626a6d5e2a0f042b6fa2b4cb` | `03eddb86807af5adb5989e3350900f5f7f70274444e21ed05e192d5f858afe07` |
+| DEMO-004 | 1,117 | PASS | 19:09:00-19:09:00 | `req_bd5690a06d2a4d81ab616d64dce8cff7` | `b5f3d8fff3c01a27ab9a13b953d354a967857d85602d15d4033399517782bb8a` | `ed3d4c7173c254434b8164cd47b03705309daac013d9aab80ed6ef5140db6816` |
+| DEMO-005 | 1,110 | PASS | 19:09:03-19:09:04 | `req_1548a296168a48e79d93ad4d9f978b4b` | `7f9ef8e7ca4c0315b5a1fe48580120ec360fc45a15a572de997b275613f8839c` | `83ea9bc766331aa222fb040183aa1c912576a8f596bf474d49a96ef749323651` |
+| DEMO-006 | 1,119 | PASS | 19:09:06-19:09:07 | `req_c4299d5f18fb4b05afd547e77df7a8be` | `b0eb07dec74d6e57278f61302431779d4b71a7ea4cdc83b473b639dacc31ccd2` | `faf3d4bbaeefe9784777fb729155d5a95876709d441fb9b99716b30f5eaafd7f` |
+| DEMO-007 | 1,110 | PASS | 19:09:10-19:09:10 | `req_e5c4d55ef6d04debbddf7243ce711e68` | `70043e6747c9a24d796ba8c222fe64982c113c675cb7de82daa1d9a177b5b28f` | `53b994a0e8f2fd8ac1924e82078e595b9070492ecf87f9d169f4bb58af4fa0dc` |
+| DEMO-008 | 1,109 | PASS | 19:09:13-19:09:13 | `req_12f2518347a54a0d9d660a1b66de560e` | `ae1b83e1326b3c128fab48e064ba32669ba94cf4e10b64d5c4f05a68f9a20cc7` | `c7b0d2e3cc0fa36c3a1b7b236cfcbc319177a4068bc65e26b4384ab7d8b7882c` |
+| DEMO-009 | 1,104 | PASS | 19:09:16-19:09:17 | `req_4a7a63ece4f74a1dbb9a0294eb95a5c9` | `dd9ab5310957b8df060f87f099db3be49a36ba00f54566df16eac8ebad4b762a` | `f3a8758375444d3185aa50d28b6240d6eba9143de47fac677202dbf8eceb9641` |
+| DEMO-010 | 1,104 | PASS | 19:09:20-19:09:20 | `req_65e92641315c454b804284a97400510e` | `19ad5fbc61224574286a0988eb64bc0e8b2a7472c929e2d73b076e6ec12bea1d` | `984125007f40c784aacf79212d24c1e27d7645217f53c7fd8532c83caf1a565a` |
+| DEMO-011 | 1,111 | PASS | 19:09:23-19:09:23 | `req_25a8fe36d3754e1d804dbecb0c6c1fe6` | `d24c2267db9a0deb06a1c3f8cf1fcae3cebba67632f9d80a9d99aae1af4df9e6` | `9886421f8d3b912666f13f616929e7916851a18ec88d6aa2d5f1e52d16ee509c` |
+| DEMO-012 | 1,113 | PASS | 19:09:26-19:09:26 | `req_407aff041e7744efbef5e26f1bb5b264` | `32bfc4a4b873c8ae4553bea2746b38c3ca1c1c73590cc8d1a664aa59ef3cfd65` | `108f6a28a5cbc27529412f30ca68f01351cd3dee40cf50d4b366b7d2d6e203b5` |
+| DEMO-013 | 1,110 | PASS | 19:09:29-19:09:30 | `req_d707e6f6ac6f45af88f7326bf7ef0964` | `d32e9badc983ba2a5da1e756e19e9ff4f7369710eaa7b563da8dfe6d0773943b` | `6ab1f755f349cb4f5d932fb6c3769faf0950dfb615ea0aabf066485cf2663a8a` |
+| DEMO-014 | 1,104 | PASS | 19:09:33-19:09:33 | `req_5fde2f6538d3406d8fba8c31fcf1df23` | `99b4cb79127532fe8cc44caee4e579f71debeb3930244901ed887cf1d20e2e1e` | `b4269c16e2c9ce32902168faa32410610c69f82ac655390a8537741fc899dd52` |
+| DEMO-015 | 1,117 | PASS | 19:09:36-19:09:36 | `req_e9da1633b6d0401cacc230fde16aa1ab` | `b9f78042b3c9e4a8106aaf603e00f544d85a5d6f008b9b1586b01c59964c05ee` | `33baf199113296dc7a74cdc77f54064d4f2f0678efc53457fca9149fd9a6fda6` |
+| DEMO-016 | 1,102 | PASS | 19:09:39-19:09:40 | `req_27a866a5341847338b0da02f13c2f379` | `69c6dd3dd38a390722bf5e1772ca9f96d51d386507a9ee9607d6e577c58349d6` | `967697f28de84575def4112db97d1efcfcff34d0c339a0f4b5c95f0f86206112` |
+| DEMO-017 | 1,127 | PASS | 19:09:42-19:09:43 | `req_836485ae39f04ce9b9b0b3930ccf56d1` | `052fdd260650bec87427afe955ad106e90e0f8bb1a2f96ec008c0ed06fa22d7b` | `ef19bf05c881f7d3e590db693d078386d50f474d2005e3bf4c1c9da078fce67f` |
+| DEMO-018 | 1,110 | PASS | 19:09:46-19:09:46 | `req_f975c25ac0de4b5a88a49fc2236d0db9` | `0d42c2682a080e163c833868a64fe1fa10ae561d888d63de4167130deb0c770c` | `c80880a002ba95c88387d333a490840489210061cc90db5942e96b77ecc12432` |
+| DEMO-019 | 1,123 | PASS | 19:09:49-19:09:49 | `req_8316601fed714de2ab6c24625df1053b` | `d951a47f8c1da5837fe5e9b720ce4dcfb890fdf971e4e3d3ca3d6d71969b6433` | `3887781f7644f01a9a591eef2cfdbbd65ae1c032b13a873f5939fb3f6546bf5b` |
+| DEMO-020 | 1,086 | PASS | 19:09:52-19:09:53 | `req_aa91343bf42245a2abac3e2bc9c1de83` | `490c2570881f5bb558137596279be1d891d04d7d21c544d6a387dd14098c9b7a` | `4a52c33cb8a21e7e7ef26e7dbaeb9b1820d168613708af60ecb6c05346bbb6ae` |
+
+**Minimum: 1,086 (DEMO-020). Maximum: 1,127 (DEMO-017). Total across the 20 individually measured requests: 22,232.** Every source passes independently; the maximum is 6,873 below the unchanged input ceiling. These are exact provider-reported input counts, not generated output, cost measurements, recommendation accuracy or a bound for changed/future requests. The undated model alias and absence of a count-to-inference server lock remain limitations.
+
+### Billing observations versus policy and remaining gates
+
+| Evidence class | Finding | What it does not establish |
+| --- | --- | --- |
+| VERIFIED measurement | 20 complete frozen requests have authenticated HTTP 200 counts, individually tied to canonical full-request and actual counting-payload hashes. | No inference, output quality/latency/usage acceptance or changed-input authorization. |
+| OPERATOR-REPORTED billing observation | After the **earlier DEMO-001 request**, the owner reported no visible balance decrease; the supplied screenshot displayed **USD 10.00**. | Not a fresh balance check after these 19 requests, an agent-inspected billing ledger, measured zero cost or proof counting is universally free; rounding/delay cannot be excluded. |
+| NOT VERIFIED policy | Explicit zero charges, including unsuccessful counts, cache/input/per-request fees, and endpoint-specific application-state/cache retention/deletion controls remain unestablished. | Experimental consent, successful counts and an unchanged displayed balance are not production-policy evidence. General documented API training/abuse defaults remain distinct from endpoint-specific state policy. |
+
+The additional experimental allowance is **fully consumed (19/19)**. Production's `demo_ai.token_bound_unverified` guard and disabled feature/counting/scheduler defaults remain unchanged; **no policy-evidence hash was created**, and no model, price, budget, cap or retry-policy change was made. Corpus measurement is now complete for these frozen requests, but production counting still requires its separate policy decision/evidence. **Do not mark 6.2 complete, begin 6.3, invoke `evaluate()`, or enable production.**
+
+### Validation and cleanup
+
+Before/after offline validation checked all complete canonical request and payload hashes, the frozen bundle identity, immutable snapshot/input identities, prior receipt, unique source/request/provider IDs, 19 exclusive attempt markers and 19 receipts, positive integer counts against 8,000, fixed caps/model, TLS/HTTP/SSH status, timestamps, spacing and rolling frequency. All checks passed. Temporary preparation/transport/validation PHP programs passed syntax checks. No application implementation was changed, so application suites/static/coverage checks were not rerun or represented as fresh evidence.
+
+The temporary programs were removed after validation. Frozen public preparation data, durable no-repeat markers and sanitized receipts remain in this session's evidence directory; the previous session's three original evidence files were not altered. No temporary database/container/helper was required, no remote file was created, and no background process was left running. No mailbox retrieval/population, email, private/deployed database access or migrations, worker/scheduler activation, host/application changes, deployment or shared-document synchronization occurred.
