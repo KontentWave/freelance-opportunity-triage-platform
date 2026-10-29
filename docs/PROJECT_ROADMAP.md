@@ -233,6 +233,8 @@ Phase 6 planned integration: a replaceable AI-provider adapter and durable, boun
 
 **Status:** Scope accepted for planning on 2026-10-26; implementation and acceptance are pending.
 
+**Current slice status - 2026-10-29:** **6.2 backend/offline acceptance is complete under the recorded counting-risk exception.** Review of PR #77 at `48f565f4e045d90210576f16f3b9b095dc64443d` found no concrete blocking gap; Marcel approved documenting closure and proceeding through final-head CI and merge. Implementation [CI run 40941293342](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/40941293342) passed all three jobs, including 284 PHPUnit tests / 2,264 assertions and coverage gates; independent controlled provider/normalizer checks passed 52 tests / 340 assertions. The [acceptance record](runbooks/phase6-readiness.md#slice-62-acceptance-closure---2026-10-29) preserves the exception: USD 1.00/day bounds modeled inference, not unknown counting fees/total provider charges. No further support response or corpus recount is required. **6.3 is not started; production remains disabled; Phase 6 overall acceptance remains pending.** Earlier checkpoints below are historical.
+
 **Hypothesis:** A visitor-triggered, real email-to-AI-to-report workflow makes the engineering demo more informative. It does not validate commercial usefulness or solve delayed job-alert discovery.
 
 **Capabilities:**
@@ -338,7 +340,7 @@ A phase is complete only when its acceptance scenarios pass, unit/integration te
 
 ## Immediate Next Decision
 
-The owner's 2026-10-28 go-ahead produced the [local 6.2 backend foundation](runbooks/phase6-readiness.md#local-slice-62-implementation-checkpoint---2026-10-28). Close its material whole-input token-proof blocker before marking 6.2 complete or progressing to 6.3. Do not bypass the rejecting production token-bound binding, change dependencies/model/pricing without approval, or activate intake, paid AI, delivery or permanent scheduling automatically. Phase 6 is not accepted; the existing public demo and Phases 1-5 remain complete.
+Slice 6.2 backend/offline acceptance is [closed under the recorded counting-risk exception](runbooks/phase6-readiness.md#slice-62-acceptance-closure---2026-10-29). Complete the owner-authorized documentation/CI/merge workflow for PR #77 without starting 6.3. UI/progress/reports require a subsequent task; live host/inference/delivery/release acceptance remains 6.4. Preserve disabled defaults and do not activate intake, paid AI, delivery or permanent scheduling automatically. The unchanged USD 1.00/day ledger bounds modeled inference, not unknown total provider charges. Phase 6 overall is not accepted; the existing public demo and Phases 1-5 remain complete.
 
 **Historical checkpoint:** Phase 4 target-host acceptance passed on deployed candidate `65bf4ea`. The completed Phase 3 calibration remains historical evidence: 30 reviewed imports, 3.33% machine skip rate, 9.09% false-negative rate, and `targets_met=false`. No calibration-based GO is claimed.
 

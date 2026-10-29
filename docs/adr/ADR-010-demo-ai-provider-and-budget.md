@@ -3,6 +3,7 @@
 - **Date:** 2026-10-27
 - **Decision owner:** Marcel
 - **Status:** APPROVED for planning; model metadata access VERIFIED and account/data settings OPERATOR-REPORTED on 2026-10-28; paid inference acceptance deferred
+- **6.2 acceptance update (2026-10-29):** Backend/offline scope ACCEPTED under the recorded counting-risk exception; USD 1.00/day bounds modeled inference only, not unknown total provider charges. [Review evidence and owner-approved closure](../runbooks/phase6-readiness.md#slice-62-acceptance-closure---2026-10-29). Production/live inference acceptance remains deferred.
 - **Scope:** Planning, not account access verification or permission for paid calls
 
 ## Decision and current sources

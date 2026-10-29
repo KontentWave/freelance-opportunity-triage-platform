@@ -3,6 +3,7 @@
 - **Date:** 2026-10-27
 - **Decision owner:** Marcel
 - **Status:** APPROVED planning design and detailed limits; bounded host mechanism empirically supported, integrated application acceptance PENDING
+- **6.2 acceptance update (2026-10-29):** Backend/offline scope ACCEPTED under ADR-010's counting-risk exception; [review evidence and owner-approved closure](../runbooks/phase6-readiness.md#slice-62-acceptance-closure---2026-10-29). Integrated worker/PEEK/live-service acceptance remains 6.4; no schedule or runtime activation.
 - **Scope:** Slice 6.1 design and authorized temporary host probes; no application worker/schedule/configuration activation
 
 ## Context and recommendation
