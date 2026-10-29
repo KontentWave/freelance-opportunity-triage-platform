@@ -2,6 +2,7 @@
 
 namespace App\Infrastructure\DemoAi;
 
+use App\Domain\DemoAi\CountingPolicy;
 use App\Domain\DemoAi\DemoAiException;
 use App\Domain\DemoAi\InputTokenBound;
 use GuzzleHttp\Exception\GuzzleException;
@@ -12,13 +13,11 @@ use Psr\Http\Message\ResponseInterface;
 
 final class OpenAiInputTokenBound implements InputTokenBound
 {
+    public function __construct(private readonly CountingPolicy $policy) {}
+
     public function assertAvailable(): void
     {
-        if (config('demo_ai.counting_enabled') !== true
-            || ! is_string(config('demo_ai.counting_policy_evidence_sha256'))
-            || preg_match('/^[a-f0-9]{64}$/D', config('demo_ai.counting_policy_evidence_sha256')) !== 1) {
-            throw new DemoAiException('demo_ai.token_bound_unverified');
-        }
+        $this->policy->assertAvailable();
         if (! is_string(config('demo_ai.api_key')) || config('demo_ai.api_key') === ''
             || config('demo_ai.model') !== 'gpt-6-luna'
             || config('demo_ai.pricing_version') !== 'openai-standard-2026-10-27') {

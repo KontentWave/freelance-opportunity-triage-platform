@@ -2,6 +2,7 @@
 
 namespace App\Infrastructure\DemoAi;
 
+use App\Domain\DemoAi\CountingPolicy;
 use App\Domain\DemoAi\DemoAiException;
 use App\Domain\DemoAi\EvaluationOutput;
 use App\Domain\DemoAi\EvaluationProvider;
@@ -23,6 +24,7 @@ final class OpenAiEvaluationProvider implements EvaluationProvider
         private readonly EvaluationOutput $output,
         private readonly InputTokenBound $tokens,
         private readonly MonotonicClock $clock,
+        private readonly CountingPolicy $countingPolicy,
     ) {}
 
     public function prepare(array $input, array $approved): array
@@ -58,20 +60,20 @@ final class OpenAiEvaluationProvider implements EvaluationProvider
                 throw new DemoAiException('demo_ai.deadline');
             }
             $requestHash = hash('sha256', CanonicalJson::encode($request));
-            $countingPolicy = config('demo_ai.counting_policy_evidence_sha256');
+            $countingPolicy = $this->countingPolicy->snapshot();
             $bound = $this->tokens->upperBound($request);
             if ($bound < 1 || $bound > 8000) {
                 throw new DemoAiException('demo_ai.input_token_limit');
             }
             if ($request !== $this->prepare($input, $approved)
-                || config('demo_ai.counting_policy_evidence_sha256') !== $countingPolicy) {
+                || $this->countingPolicy->snapshot() !== $countingPolicy) {
                 throw new DemoAiException('demo_ai.request_changed');
             }
             if (! $authorizeInference(['input_tokens' => $bound, 'request_sha256' => $requestHash])) {
                 throw new DemoAiException('demo_ai.dispatch_cancelled');
             }
             if ($request !== $this->prepare($input, $approved)
-                || config('demo_ai.counting_policy_evidence_sha256') !== $countingPolicy) {
+                || $this->countingPolicy->snapshot() !== $countingPolicy) {
                 throw new DemoAiException('demo_ai.request_changed');
             }
             $timeout = min(25.0, $deadline - $this->clock->now());

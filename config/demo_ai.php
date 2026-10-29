@@ -11,7 +11,9 @@ return [
     'mailbox_folder' => env('DEMO_AI_MAILBOX_FOLDER'),
     'api_key' => env('DEMO_AI_OPENAI_KEY'),
     'counting_enabled' => (bool) env('DEMO_AI_COUNTING_ENABLED', false),
+    'counting_policy_mode' => env('DEMO_AI_COUNTING_POLICY_MODE', 'verified_zero_charge'),
     'counting_policy_evidence_sha256' => env('DEMO_AI_COUNTING_POLICY_EVIDENCE_SHA256'),
+    'counting_risk_acceptance_reference' => env('DEMO_AI_COUNTING_RISK_ACCEPTANCE_REFERENCE'),
     'model' => 'gpt-6-luna',
     'pricing_version' => 'openai-standard-2026-10-27',
 ];

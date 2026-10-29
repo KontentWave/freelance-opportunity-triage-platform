@@ -244,6 +244,79 @@ final class DemoAiLedgerTest extends TestCase
         $this->assertSame(3784, (int) DB::table('demo_ai_budgets')->sum('reserved_micro_usd'));
     }
 
+    #[Test]
+    public function it_preserves_unknown_counting_costs_after_uncertain_inference_retention_and_reconciliation(): void
+    {
+        $this->travelTo(CarbonImmutable::parse('2026-10-29 12:00:00 UTC'));
+        [$ledger, $run, $item] = $this->selectedRun();
+        config([
+            'demo_ai.counting_enabled' => true, 'demo_ai.counting_policy_mode' => 'owner_accepted_risk',
+            'demo_ai.counting_policy_evidence_sha256' => null,
+            'demo_ai.counting_risk_acceptance_reference' => 'ADR-010:2026-10-29:accepted-counting-risk',
+        ]);
+        $attempt = $ledger->claim($item->id, ['model' => 'gpt-6-luna']);
+        $this->assertTrue($ledger->authorizeDispatch($attempt->id));
+        $this->travel(2)->seconds();
+        $this->assertTrue($ledger->authorizeDispatch($attempt->id, [
+            'input_tokens' => 1127, 'request_sha256' => $attempt->request_provenance['request_sha256'],
+        ]));
+
+        $ledger->settle($attempt->id, new ProviderOutcome(null, null, null, 'demo_ai.provider_uncertain', uncertain: true));
+
+        $this->assertDatabaseHas('demo_ai_control', ['blocked' => true, 'attempt_id' => $attempt->id]);
+        $this->assertSame(1892, (int) DB::table('demo_ai_budgets')->sum('reserved_micro_usd'));
+        $this->travel(8)->days();
+        $ledger->recover();
+        $this->assertNull($run->fresh()->approved_snapshot);
+        $this->assertSame('unverified', $attempt->fresh()->request_provenance['counting_cost_status']);
+        $this->assertNull($attempt->fresh()->request_provenance['counting_cost_micro_usd']);
+
+        $ledger->reconcile($attempt->id, 175, hash('sha256', 'offline inference billing evidence'), '2026-10-29');
+
+        $provenance = DemoAiAttempt::query()->findOrFail($attempt->id)->request_provenance;
+        $this->assertSame('inference_only', $provenance['settled_cost_scope']);
+        $this->assertSame('unverified', $provenance['counting_cost_status']);
+        $this->assertNull($provenance['counting_cost_micro_usd']);
+        $this->assertSame('2026-10-29T12:00:00+00:00', $provenance['counting_authorized_at']);
+        $this->assertDatabaseHas('demo_ai_budgets', ['day' => '2026-10-29', 'reserved_micro_usd' => 0, 'settled_micro_usd' => 175]);
+        $this->assertDatabaseHas('demo_ai_control', ['blocked' => false, 'attempt_id' => null]);
+        Queue::assertPushed(ProcessDemoAiRun::class, 2);
+    }
+
+    /** @return array<string, array{bool}> */
+    public static function riskRevocationStages(): array
+    {
+        return ['before count' => [false], 'after count' => [true]];
+    }
+
+    #[Test]
+    #[DataProvider('riskRevocationStages')]
+    public function it_rechecks_owner_acceptance_before_counting_and_before_inference(bool $countAuthorized): void
+    {
+        [$ledger, $run, $item] = $this->selectedRun();
+        config([
+            'demo_ai.counting_enabled' => true, 'demo_ai.counting_policy_mode' => 'owner_accepted_risk',
+            'demo_ai.counting_policy_evidence_sha256' => null,
+            'demo_ai.counting_risk_acceptance_reference' => 'ADR-010:2026-10-29:accepted-counting-risk',
+        ]);
+        $attempt = $ledger->claim($item->id, ['model' => 'gpt-6-luna']);
+        if ($countAuthorized) {
+            $this->assertTrue($ledger->authorizeDispatch($attempt->id));
+            $this->travel(2)->seconds();
+        }
+        config(['demo_ai.counting_risk_acceptance_reference' => null]);
+
+        $authorized = $ledger->authorizeDispatch($attempt->id, $countAuthorized ? [
+            'input_tokens' => 1127, 'request_sha256' => $attempt->request_provenance['request_sha256'],
+        ] : null);
+
+        $this->assertFalse($authorized);
+        $this->assertNull($attempt->fresh()->inference_authorized_at);
+        $this->assertSame($countAuthorized ? 'unverified' : 'not_dispatched', $attempt->fresh()->request_provenance['counting_cost_status']);
+        $this->assertSame('ADR-010:2026-10-29:accepted-counting-risk', $attempt->fresh()->request_provenance['counting_policy']['risk_acceptance_reference']);
+        Queue::assertPushed(ProcessDemoAiRun::class, 2);
+    }
+
     /** @return array<string, array{string}> */
     public static function changedSnapshots(): array
     {

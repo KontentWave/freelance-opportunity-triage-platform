@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Sleep;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use RuntimeException;
 use Tests\TestCase;
@@ -114,6 +115,73 @@ final class ProcessDemoAiTest extends TestCase
         $this->assertDatabaseHas('demo_ai_budgets', ['settled_micro_usd' => 0, 'reserved_micro_usd' => 0]);
         $this->assertDatabaseCount('demo_ai_attempts', 1);
         Http::assertSentCount(1);
+    }
+
+    /** @return array<string, array{string, int, ?int, string}> */
+    public static function riskAcceptedCounts(): array
+    {
+        return [
+            'connection failure' => ['', 0, null, 'demo_ai.count_failed'],
+            'server error' => ['{}', 503, null, 'demo_ai.count_failed'],
+            'invalid count' => ['{"object":"response.input_tokens","input_tokens":0}', 200, null, 'demo_ai.count_invalid'],
+            'oversized input' => ['{"object":"response.input_tokens","input_tokens":8001}', 200, null, 'demo_ai.input_token_limit'],
+            'success' => ['{"object":"response.input_tokens","input_tokens":1000}', 200, 175, ''],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('riskAcceptedCounts')]
+    public function it_records_unverified_counting_fees_separately_and_never_treats_them_as_zero(
+        string $countBody, int $countStatus, ?int $inferenceCost, string $failure,
+    ): void {
+        Sleep::fake(syncWithCarbon: true);
+        $this->freezeTime();
+        $run = $this->admit();
+        config([
+            'demo_ai.counting_enabled' => true, 'demo_ai.counting_policy_mode' => 'owner_accepted_risk',
+            'demo_ai.counting_policy_evidence_sha256' => null,
+            'demo_ai.counting_risk_acceptance_reference' => 'ADR-010:2026-10-29:accepted-counting-risk',
+        ]);
+        $this->mailbox([1 => file_get_contents(base_path('tests/Fixtures/Emails/demo/001.eml'))]);
+        Http::preventStrayRequests();
+        $responses = ['https://api.openai.com/v1/responses/input_tokens' => $countStatus === 0
+            ? Http::failedConnection() : Http::response($countBody, $countStatus)];
+        if ($inferenceCost !== null) {
+            $responses['https://api.openai.com/v1/responses'] = Http::response([
+                'model' => 'gpt-6-luna', 'service_tier' => 'default', 'status' => 'completed',
+                'usage' => ['input_tokens' => 1000, 'input_tokens_details' => ['cached_tokens' => 0, 'cache_write_tokens' => 1000], 'output_tokens' => 100],
+                'output' => [['type' => 'message', 'content' => [['type' => 'output_text', 'text' => json_encode([
+                    'source_id' => 'DEMO-001', 'recommendation' => 'APPLY',
+                    'reasons' => [['criterion_id' => 'scope_fit', 'explanation' => 'Bounded manual testing.',
+                        'evidence' => [['field' => 'input.description', 'quote' => 'Manual testing only; no automation required.']]]],
+                    'missing_information' => [],
+                ], JSON_THROW_ON_ERROR)]]]],
+            ]);
+        }
+        Http::fake($responses);
+        $process = app(ProcessDemoAi::class);
+
+        $process->execute($run->id);
+        $process->execute($run->id);
+        $process->execute($run->id);
+
+        $attempt = DemoAiAttempt::query()->sole();
+        $this->assertSame($inferenceCost !== null ? 'completed' : 'failed', $run->fresh()->status);
+        $this->assertSame($failure === '' ? null : $failure, $attempt->failure_code);
+        $this->assertSame('known', $attempt->status);
+        $this->assertSame('inference_only', $attempt->request_provenance['settled_cost_scope']);
+        $this->assertSame('unverified', $attempt->request_provenance['counting_cost_status']);
+        $this->assertNull($attempt->request_provenance['counting_cost_micro_usd']);
+        $this->assertNotEmpty($attempt->request_provenance['counting_authorized_at']);
+        $this->assertSame([
+            'mode' => 'owner_accepted_risk', 'evidence_sha256' => null,
+            'risk_acceptance_reference' => 'ADR-010:2026-10-29:accepted-counting-risk',
+        ], $attempt->request_provenance['counting_policy']);
+        $this->assertDatabaseHas('demo_ai_budgets', ['settled_micro_usd' => $inferenceCost ?? 0, 'reserved_micro_usd' => 0]);
+        $this->assertDatabaseHas('demo_ai_control', ['blocked' => false, 'attempt_id' => null]);
+        $this->assertDatabaseCount('demo_ai_attempts', 1);
+        Http::assertSentCount($inferenceCost !== null ? 2 : 1);
+        Sleep::assertSleptTimes($inferenceCost !== null ? 1 : 0);
     }
 
     #[Test]

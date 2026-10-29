@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Domain\DemoAi\ApprovedDemoInputs;
+use App\Domain\DemoAi\CountingPolicy;
 use App\Domain\DemoAi\DemoAiException;
 use App\Domain\DemoAi\EvaluationOutput;
 use App\Domain\DemoAi\InputTokenBound;
@@ -173,7 +174,7 @@ final class OpenAiEvaluationProviderTest extends TestCase
         config(['demo_ai.api_key' => 'offline-test-key']);
         $tokens = $this->createStub(InputTokenBound::class);
         $tokens->method('upperBound')->willReturn(8001);
-        $provider = new OpenAiEvaluationProvider(new EvaluationOutput, $tokens, app(MonotonicClock::class));
+        $provider = new OpenAiEvaluationProvider(new EvaluationOutput, $tokens, app(MonotonicClock::class), app(CountingPolicy::class));
         $input = $this->input();
         $approved = app(ApprovedDemoInputs::class)->snapshot();
 
@@ -226,7 +227,7 @@ final class OpenAiEvaluationProviderTest extends TestCase
         config(['demo_ai.api_key' => 'offline-test-key']);
         $tokens = $this->createStub(InputTokenBound::class);
         $tokens->method('upperBound')->willReturn(7000);
-        $provider = new OpenAiEvaluationProvider(new EvaluationOutput, $tokens, app(MonotonicClock::class));
+        $provider = new OpenAiEvaluationProvider(new EvaluationOutput, $tokens, app(MonotonicClock::class), app(CountingPolicy::class));
         $input = $this->input();
         $approved = app(ApprovedDemoInputs::class)->snapshot();
 
