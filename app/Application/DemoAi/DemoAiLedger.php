@@ -3,6 +3,7 @@
 namespace App\Application\DemoAi;
 
 use App\Domain\DemoAi\ApprovedDemoInputs;
+use App\Domain\DemoAi\CountingPolicy;
 use App\Domain\DemoAi\DemoAiException;
 use App\Domain\DemoAi\ProviderOutcome;
 use App\Domain\Mailbox\Contracts\MonotonicClock;
@@ -28,6 +29,7 @@ final class DemoAiLedger
         private readonly ApprovedDemoInputs $approved,
         private readonly DemoAiConfiguration $configuration,
         private readonly MonotonicClock $clock,
+        private readonly CountingPolicy $countingPolicy,
     ) {}
 
     public function admit(string $workspace, string $sessionHash, string $ipHash, string $key): DemoAiRun
@@ -236,6 +238,9 @@ final class DemoAiLedger
                     'requested_model' => 'gpt-6-luna', 'request_sha256' => hash('sha256', CanonicalJson::encode($request)),
                     'service_tier' => 'default', 'reasoning_effort' => 'none', 'store' => false,
                     'cache_lifetime' => 'default-30m', 'max_input_tokens' => 8000, 'max_output_tokens' => 1440,
+                    'counting_policy' => $this->countingPolicy->snapshot(),
+                    'counting_cost_status' => 'not_dispatched', 'counting_cost_micro_usd' => 0,
+                    'settled_cost_scope' => 'inference_only',
                 ],
                 'dispatched_at' => $now,
             ]);
@@ -320,7 +325,8 @@ final class DemoAiLedger
                 && $attempt->status === 'in_flight' && (int) $slot->fence === $attempt->fence
                 && $slot->lease_until !== null && CarbonImmutable::parse($slot->lease_until, 'UTC')->greaterThan(CarbonImmutable::now('UTC')->addSeconds(25))
                 && $run->status === 'running' && $run->deadline_at->greaterThan(CarbonImmutable::now('UTC')->addSeconds(25));
-            if (! $authorized || $attempt->inference_authorized_at !== null) {
+            if (! $authorized || $attempt->inference_authorized_at !== null
+                || ($attempt->request_provenance['counting_policy'] ?? null) !== $this->countingPolicy->snapshot()) {
                 return false;
             }
             $now = CarbonImmutable::now('UTC');
@@ -346,7 +352,15 @@ final class DemoAiLedger
                 DB::table('demo_ai_budgets')->where('day', $day)->increment('reserved_micro_usd', self::ATTEMPT_RESERVATION);
                 $attempt->update(['dispatch_day' => $day]);
             }
-            $attempt->update($inputCount === null ? ['dispatched_at' => $now] : [
+            $acceptedRisk = $attempt->request_provenance['counting_policy']['mode'] === CountingPolicy::ACCEPTED_RISK;
+            $attempt->update($inputCount === null ? [
+                'dispatched_at' => $now,
+                'request_provenance' => array_replace($attempt->request_provenance, [
+                    'counting_authorized_at' => $now->toIso8601String(),
+                    'counting_cost_status' => $acceptedRisk ? 'unverified' : 'policy_zero_charge',
+                    'counting_cost_micro_usd' => $acceptedRisk ? null : 0,
+                ]),
+            ] : [
                 'inference_authorized_at' => $now,
                 'request_provenance' => $attempt->request_provenance + [
                     'input_count' => $inputCount,

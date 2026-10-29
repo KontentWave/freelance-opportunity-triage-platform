@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Domain\DemoAi\ApprovedDemoInputs;
+use App\Domain\DemoAi\CountingPolicy;
 use App\Domain\DemoAi\DemoAiException;
 use App\Domain\DemoAi\EvaluationOutput;
 use App\Domain\DemoAi\ProviderOutcome;
@@ -195,6 +196,94 @@ final class OpenAiInputTokenBoundTest extends TestCase
     }
 
     #[Test]
+    public function it_counts_under_explicit_owner_risk_acceptance_without_zero_charge_evidence(): void
+    {
+        config([
+            'demo_ai.api_key' => 'offline-test-key', 'demo_ai.counting_enabled' => true,
+            'demo_ai.counting_policy_mode' => 'owner_accepted_risk',
+            'demo_ai.counting_policy_evidence_sha256' => null,
+            'demo_ai.counting_risk_acceptance_reference' => 'ADR-010:2026-10-29:accepted-counting-risk',
+        ]);
+        Http::preventStrayRequests();
+        Http::fake(['https://api.openai.com/v1/responses/input_tokens' => Http::response([
+            'object' => 'response.input_tokens', 'input_tokens' => 1127,
+        ])]);
+        $provider = app(OpenAiEvaluationProvider::class);
+        $input = $this->input();
+        $request = $provider->prepare($input, app(ApprovedDemoInputs::class)->snapshot());
+
+        $bound = app(OpenAiInputTokenBound::class)->upperBound($request);
+
+        $this->assertSame(1127, $bound);
+        $this->assertNull(config('demo_ai.counting_policy_evidence_sha256'));
+        Http::assertSent(fn (Request $sent): bool => $sent['model'] === 'gpt-6-luna'
+            && $sent['truncation'] === 'disabled' && $sent['text']['format']['strict'] === true);
+        Http::assertSentCount(1);
+    }
+
+    /** @return array<string, array{array<string, mixed>}> */
+    public static function invalidRiskPolicies(): array
+    {
+        return [
+            'disabled' => [['demo_ai.counting_enabled' => false]],
+            'missing acceptance' => [['demo_ai.counting_risk_acceptance_reference' => null]],
+            'arbitrary acceptance' => [['demo_ai.counting_risk_acceptance_reference' => 'approved']],
+            'array acceptance' => [['demo_ai.counting_risk_acceptance_reference' => ['approved']]],
+            'mixed evidence and acceptance' => [['demo_ai.counting_policy_evidence_sha256' => str_repeat('a', 64)]],
+            'unknown mode' => [['demo_ai.counting_policy_mode' => 'automatic']],
+            'array mode' => [['demo_ai.counting_policy_mode' => ['owner_accepted_risk']]],
+            'array evidence' => [['demo_ai.counting_policy_evidence_sha256' => []]],
+            'risk reference in verified mode' => [['demo_ai.counting_policy_mode' => 'verified_zero_charge',
+                'demo_ai.counting_policy_evidence_sha256' => str_repeat('a', 64)]],
+        ];
+    }
+
+    /** @param array<string, mixed> $configuration */
+    #[Test]
+    #[DataProvider('invalidRiskPolicies')]
+    public function it_rejects_missing_ambiguous_or_malformed_risk_authorization_before_http(array $configuration): void
+    {
+        config([
+            'demo_ai.api_key' => 'offline-test-key', 'demo_ai.counting_enabled' => true,
+            'demo_ai.counting_policy_mode' => 'owner_accepted_risk',
+            'demo_ai.counting_policy_evidence_sha256' => null,
+            'demo_ai.counting_risk_acceptance_reference' => 'ADR-010:2026-10-29:accepted-counting-risk',
+        ]);
+        config($configuration);
+        Http::preventStrayRequests();
+        try {
+            app(OpenAiInputTokenBound::class)->assertAvailable();
+            $this->fail('Invalid risk acceptance was used.');
+        } catch (DemoAiException $exception) {
+            $this->assertSame('demo_ai.token_bound_unverified', $exception->failureCode);
+        }
+        Http::assertNothingSent();
+    }
+
+    #[Test]
+    public function it_rejects_switching_to_risk_acceptance_after_counting_even_if_both_policies_are_valid(): void
+    {
+        $this->allowOfflineCounting();
+        Http::preventStrayRequests();
+        Http::fake(['https://api.openai.com/v1/responses/input_tokens' => Http::response([
+            'object' => 'response.input_tokens', 'input_tokens' => 1127,
+        ])]);
+
+        $outcome = $this->evaluate(function (array $count): bool {
+            config([
+                'demo_ai.counting_policy_mode' => 'owner_accepted_risk',
+                'demo_ai.counting_policy_evidence_sha256' => null,
+                'demo_ai.counting_risk_acceptance_reference' => 'ADR-010:2026-10-29:accepted-counting-risk',
+            ]);
+
+            return true;
+        });
+
+        $this->assertUnsentFailure($outcome, 'demo_ai.request_changed');
+        Http::assertSentCount(1);
+    }
+
+    #[Test]
     public function it_rejects_new_request_fields_instead_of_silently_omitting_them_from_counting(): void
     {
         $this->allowOfflineCounting();
@@ -266,7 +355,7 @@ final class OpenAiInputTokenBoundTest extends TestCase
         ])]);
         $clock = $this->createStub(MonotonicClock::class);
         $clock->method('now')->willReturnOnConsecutiveCalls(0.0, 41.0);
-        $provider = new OpenAiEvaluationProvider(app(EvaluationOutput::class), app(OpenAiInputTokenBound::class), $clock);
+        $provider = new OpenAiEvaluationProvider(app(EvaluationOutput::class), app(OpenAiInputTokenBound::class), $clock, app(CountingPolicy::class));
         $input = $this->input();
         $approved = app(ApprovedDemoInputs::class)->snapshot();
 

@@ -107,10 +107,10 @@ Feature: Bounded authored-alert AI evaluation against the approved public profil
       And missing CSRF is rejected
       And status polling is limited to one request per two seconds
 
-  @pending @slice62-blocker
+  @slice62 @counting-policy
   Scenario: Prove the hard token ceiling for the entire actual provider input
-    Given operator-reviewed authoritative evidence explicitly establishes zero-charge counting
-    And counting-specific data handling is established and acceptable before any authenticated count
+    Given counting uses either verified zero-charge policy or explicit recorded owner risk acceptance
+    And unverified counting charges and retention are not relabelled as verified provider policy
     And an approved exact server-side count or documented conservative full-request bound
     When approved instructions, profile, schema, input and provider framing are counted
     Then every permitted dispatch is proven to fit at most eight thousand input tokens
@@ -118,6 +118,22 @@ Feature: Bounded authored-alert AI evaluation against the approved public profil
     And all twenty actual constructed corpus requests have authoritative count evidence
     And counting failures and request changes after counting reject before inference
     And controlled count stubs alone do not establish production acceptance
+    # Actual 2026-10-29 evidence: docs/runbooks/phase6-readiness.md
+    # Twenty frozen requests measured under one-request plus 19-request exceptions;
+    # DEMO-001 reused, range 1086-1127, all pass. Production policy remains pending.
+    And measured corpus counts and experimental consent do not establish zero-charge or retention policy
+
+    # tests/Feature/OpenAiInputTokenBoundTest.php, ProcessDemoAiTest.php, DemoAiLedgerTest.php
+    Scenario: Preserve the accepted-risk decision without claiming free counting
+      Given protected configuration explicitly references the owner's recorded counting risk acceptance
+      And the policy-evidence hash is empty and counting still requires separate enablement
+      When a counting request succeeds or fails under controlled HTTP
+      Then its potentially incurred counting fee remains null and unverified in durable attempt provenance
+      And settlement of known inference cost never claims to settle unknown counting fees
+      And uncertain inference retains its reservation and dispatch block until evidence-referenced reconciliation
+      And content cleanup and inference reconciliation preserve unknown counting fees
+      And policy revocation or replacement prevents further authorized dispatch
+      And the unchanged one-dollar ledger bounds modeled inference rather than unknown total provider charges
 
   @pending @slice63 @ui
   Scenario: Accessible progress and matching escaped HTML report download

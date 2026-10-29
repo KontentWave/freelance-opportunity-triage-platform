@@ -5,6 +5,8 @@ namespace App\Domain\DemoAi;
 final readonly class ProviderOutcome
 {
     /**
+     * Cost and uncertainty describe inference; counting billing is recorded separately on the attempt.
+     *
      * @param  array<string, mixed>|null  $result
      * @param  array<string, int>|null  $usage
      */
