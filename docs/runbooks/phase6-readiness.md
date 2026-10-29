@@ -338,3 +338,21 @@ Failures, changed snapshots, oversized inputs or the need for additional request
 This continuation changed documentation only; application suites, coverage, static checks and dependency audits were **not rerun**. The 265-test / 2,134-assertion and other results above remain historical evidence, not fresh validation. Fresh `command -v gitleaks` found no executable: secret scanning remains outstanding, and no tooling was installed. The previously reported unchanged `symfony/mime` v8.1.7 advisory **PKSA-wtxr-p26d-nn42 / CVE-2026-45070** remains an unresolved validation gate; dependency remediation needs separate approval.
 
 No mailbox, email, host probe, database, migration, worker, scheduler, deployment, shared-document synchronization, commit or push operation occurred. No temporary runtime helper was started.
+
+## Draft PR CI and approved MIME remediation - 2026-10-29
+
+The owner subsequently authorized checkpointing the existing work on `checkpoint/phase-6-2-guarded-backend` and opening draft [PR #76](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/76), not merging or activation. Initial commit `82f5593d3858a8d616f422088c4290a7e8be77e7` preserved all 49 intended files. [CI run 40930388336](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/40930388336) passed the MariaDB test/build/browser/coverage job and **Gitleaks secret scan**. Quality passed Composer validation, formatting and static analysis but failed only at `composer audit --locked` for the previously reported MIME advisory. This is fresh CI evidence for that commit, not a local Gitleaks installation or a passed overall run.
+
+After inspecting the failure, the owner explicitly approved a minimal MIME patch update, validation, commit and push on the current draft PR. [Symfony's corrected advisory](https://symfony.com/cve-2026-45070) identifies **8.1.10**, not the earlier incorrectly listed releases, as the first fixed 8.1 version for **CVE-2026-45070 / PKSA-wtxr-p26d-nn42**. Existing Laravel/Mailer constraints permit this patch. Composer updated **only `symfony/mime` v8.1.7 to v8.1.10** in the lock file; no manifest constraint, other package, audit suppression or application source was changed. Composer scripts were skipped to avoid unrelated application/asset actions.
+
+Fresh local validation with the patched installed dependency:
+
+- Composer strict validation and `composer audit --locked` passed; **no security vulnerability advisories found**.
+- Focused database-safety, private parser/transport and demo normalization/mailbox regression: **46 tests / 537 assertions passed**.
+- Full PHPUnit regression: **265 tests / 2,134 assertions passed**.
+- Coverage gates passed: overall **89.74%** (3,264/3,637), parser/domain **93.64%** (221/236), triage **96.90%** (344/355).
+- PHPStan passed with zero errors. No application/test PHP source was edited; no new local formatting, frontend/browser or Gitleaks run is claimed. Updated-head CI must be evaluated separately.
+
+Tests used a fresh disposable MariaDB **11.4.13** helper with no existing data volume mounted, bound only to **127.0.0.1:3307**. Before tests, `SELECT DATABASE(), VERSION()` verified `freelance_opportunity_triage_platform_test` and MariaDB; the repository database-safety test passed. Only that disposable `_test` database was migrated by test setup. The helper was stopped and removed after validation; temporary coverage output was deleted. No private/deployed database or original test container was changed.
+
+This supersedes the earlier outstanding MIME-audit result and initial-commit secret-scan gap, not the provider-policy gate. **6.2 remains incomplete; 6.3 remains blocked.** Counting/feature/scheduler defaults, empty policy-evidence hash, `demo_ai.token_bound_unverified`, model, pricing, budget and caps are unchanged. No authenticated counting/inference, mailbox retrieval/population, email, public-host operation, deployment or shared-document synchronization was performed. No merge or auto-merge is authorized by this remediation.
