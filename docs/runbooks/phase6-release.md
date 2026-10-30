@@ -1,12 +1,12 @@
 # Phase 6.4 owner delivery and bounded release acceptance
 
-**2026-10-30: offline implementation; live/release acceptance PENDING.** This is an execution proposal, not authorization or evidence of live success. The public feature, counting, scheduler and owner-delivery switches remain disabled. Phases 1-5, previous releases, historical audits and the unsuccessful product-feasibility result are unchanged.
+**2026-10-30: offline implementation and protected integration COMPLETE; live/release acceptance PENDING.** The owner approved the grouped execution sequence below, but exact-main artifact retrieval was blocked by the tool authorization gate before host mutation or live dispatch. The public feature, counting, scheduler and owner-delivery switches remain disabled. Phases 1-5, previous releases, historical audits and the unsuccessful product-feasibility result are unchanged.
 
 ## Baseline and candidate
 
 - Repository baseline: `eaa26d1f8b81ed3fcd6d2f2fca81ac7339677c15`, including merged 6.3 PR #78. Existing 6.3 CI and the guarded shared-original comparison are recorded in [readiness](phase6-readiness.md#slice-63-final-integration-outcome---2026-10-30).
 - Review branch: `feat/phase64-owner-delivery`. The exact frozen PR-head SHA and passing protected checks must accompany the grouped approval. Any code change invalidates that candidate's checks.
-- [Draft PR #80](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/80) preserves the sequential implementation commit `7d4de79` and documentation commit `65f2d5c`. No auto-merge is enabled. The final approval candidate is the PR's frozen final head with its own checks, not an earlier documentation checkpoint.
+- [PR #80](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/80) preserves sequential implementation `7d4de79` and documentation `65f2d5c` / `b15f544`. Following grouped owner approval, normal protected squash merge completed at **2026-10-30T20:02:37Z**, yielding exact main candidate **`19c92a463b99b8eee21469ad290399875ac08102`**. Its [own post-merge CI 41120132226](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/41120132226) succeeded. No protections were bypassed.
 - Normal protected integration, never bypass: Quality, Tests / MariaDB 11.4 and Secret scan at the final PR head. After authorized merge, obtain the resulting **exact main SHA** and passing push CI. Download only its `release-candidate-<sha>-<attempt>` artifact, strictly verify the four files/checksums/inventory, and record its archive digest. PR-head results are not release evidence for a different main revision.
 - Proposed unused version: **v1.0.2**, following the existing publication validator's `v1.0.<patch>` convention. No versioning-policy expansion, tag overwrite or publication is authorized by this document. The exact main archive, not a local rebuild or the old v1.0.1 archive, must pass acceptance.
 
@@ -67,6 +67,10 @@ VERIFIED: [CI 41118856780](https://github.com/KontentWave/freelance-opportunity-
 
 Task infrastructure was cleaned after validation: exact container `116c405882df284a7047742ab1142e51b7d3dc8b8e38509aee9344260fdf9976`, task label, loopback binding and SQL hostname/database were reverified before removing only that disposable container/anonymous volume. Ports 3307, 8011, 8012 and 8013 were confirmed closed. No unrelated container, deployed database or host process was changed.
 
+### Final PR-head and post-merge verification
+
+VERIFIED: final PR head **`b15f54425ce58e9989e4d04a866e34861e333357`** passed its own [CI 41119464142](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/41119464142), then merged main candidate **`19c92a463b99b8eee21469ad290399875ac08102`** independently passed [CI 41120132226](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/41120132226). Both completed Quality, Tests / MariaDB 11.4 and Secret scan successfully; fresh locked installations/build, audits, **320 tests / 2,555 assertions**, **24 browser tests**, **90.44% / 93.64% / 96.90%** coverage and inventory/candidate validation passed. Logs were inspected, not inferred from the previous head. Exact archive download/checksum/host acceptance remains **NOT VERIFIED**; a green CI artifact producer is not a downloaded/deployed artifact.
+
 ## Protected read-only feasibility
 
 VERIFIED on 2026-10-30 through the existing `fotp-public-demo` SSH alias, with strict known-host checking and no host changes:
@@ -84,16 +88,16 @@ Official model and pricing pages were re-read on 2026-10-30: `gpt-6-luna`, Respo
 
 [Official Websupport client configuration](https://www.websupport.sk/podpora/kb/nastavenie-posty-v-outlooku-2019/) was also checked: outgoing SMTP uses port **465, SSL/TLS**, with the exact server supplied in the owner's control panel. Do not invent the outgoing hostname from the known IMAP hostname, disable provider protections or assume SMTP authentication from historical IMAP success. The grouped decision can authorize reuse of the protected demo-mailbox credentials/From if the owner chooses; otherwise stage separate SMTP settings in a 0600 `~/.fotp-phase61-operator/smtp.env` file, never chat. No authentication or send was performed.
 
-## One grouped execution decision
+## Approved grouped execution decision and remaining gate
 
-**PENDING:** authorize the frozen PR candidate's normal merge; exact resulting main push CI/artifact verification; the setup/acceptance/rollback/release sequence below; at most one owner report email; and the deliberate opt-in after acceptance. No action may bypass a failed audit/check, change code/model/rates/caps, use private/retired targets, or repeat the run to improve results.
+**APPROVED by the owner in this session:** full bounded plan, normal protected merge, exact resulting main CI/archive verification, public-demo-only backup/migrations/loopback staging, authorized corpus APPEND, one bounded acceptance run, at most one owner report email, disable/code rollback, and conditional opt-in/v1.0.2 publication only after successful acceptance and owner receipt. Do not request these permissions again unless the scope/material assumptions change. No action may bypass a failed audit/check, change code/model/rates/caps, use private/retired targets, or repeat the run to improve results.
 
-Collect together:
+Owner inputs and decisions:
 
-1. Approval of this bounded sequence and proposed unused **v1.0.2**, or keep everything disabled/offline.
-2. Protected SMTP host, port 465/587, credentials and approved From, supplied through owner-only host files/environment, **not chat**. The pre-existing staged recipient stays the sole destination; do not ask for it again.
-3. Approval to create/use a dedicated folder **`FOTP-Authored-Demo-Phase6`** in the previously approved demo mailbox and IMAP APPEND the exact 20 committed `authored-demo-v2` RFC822 files (or an owner import of those same files). No SMTP fabrication, real alerts, unrelated folder edits or weakening approved hashes.
-4. Permission for protected on-demand demo backup/recovery preparation and a temporary bounded loopback staging server/scheduler, plus a short public code-switch/rollback maintenance window. No private changes.
+1. Full sequence and unused **v1.0.2** conditionally approved, not published.
+2. Reuse of the protected **dedicated project demo-mailbox** credentials and mailbox identity as From approved. The owner supplied **`smtp.m1.websupport.sk:465`** (OPERATOR-REPORTED; no SMTP connection/authentication/send yet). The initially reported ready `smtp.env` file was actually absent; the subsequent explicit hostname/port resolves that input without requesting any secret in chat. Existing protected recipient remains the sole approved destination.
+3. Creation/use of **`FOTP-Authored-Demo-Phase6`** and IMAP APPEND of exactly the 20 approved RFC822 files authorized, **not executed**. No fabricated marketplace sends, real alerts or unrelated mailbox edits.
+4. Protected backup/recovery preparation, bounded loopback staging/scheduler and short public code-switch/rollback window authorized, **not executed**. Read-only follow-up confirmed `mariadb-dump`, Composer and the staging port available.
 
 ### Bounded operations and budget
 
@@ -128,3 +132,5 @@ Collect together:
 ## Actual live/release outcome
 
 **NOT VERIFIED / NOT EXECUTED:** corpus population/retrieval, paid count/inference, live worker/scheduler, SMTP acceptance, owner receipt, migration/backup/restore, host changes, disable/code rollback rehearsal, activation and release publication. Newly incurred inference/email cost is **USD 0** because none was executed; unknown historical counting charges remain unverified. No new release or owner receipt is claimed. Phase 6 cannot be marked complete until these applicable criteria have actual evidence.
+
+**Concrete blocker:** the tool authorization layer refused the exact-main candidate download/preparation call and reported that it could not obtain the required runtime permission. The operation was not retried through another path/tool/location. Read-only GitHub inspection independently verified the merged candidate's green CI afterward. Owner approval remains recorded; this is a runtime execution-permission limitation, not missing owner consent or a reason to reopen counting policy. Resume at exact candidate artifact verification only after that execution gate is available, preserving the existing one-run/one-email allowance. No paid allowance was consumed and no host/helper/scheduler cleanup is outstanding.
