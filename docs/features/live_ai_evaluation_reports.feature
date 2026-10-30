@@ -135,9 +135,102 @@ Feature: Bounded authored-alert AI evaluation against the approved public profil
       And policy revocation or replacement prevents further authorized dispatch
       And the unchanged one-dollar ledger bounds modeled inference rather than unknown total provider charges
 
-  @pending @slice63 @ui
-  Scenario: Accessible progress and matching escaped HTML report download
-    Then the stored read-only report and download agree across refresh and expiry
+  @slice63 @ui @offline
+  Rule: Submission intents and progress survive browser recovery without new evaluation
+
+    # tests/Feature/DemoAiReportTest.php:
+    # it_restores_the_server_issued_intent_and_run_without_a_second_admission
+    # it_replays_an_old_tab_intent_without_admitting_again_after_the_current_version_changes
+    # it_requires_a_new_intent_when_approved_inputs_change_before_the_first_submission
+    # tests/Browser/demo-ai.spec.js: real browser to Laravel intake...
+    # ambiguous admission retry..., a fresh intent..., admission pending...
+    # fixed-coordinate preparation clicks..., idle expiry requires...,
+    # renewal replaces expiry timers..., unmount cancels delayed preparation...
+    Scenario: Restore a server-issued intent and its authorized run
+      Given the existing demo session owns a server-issued version-bound submission key
+      When double clicks, an ambiguous network response, reload or re-entry occurs
+      Then admission reuses that key and returns the same run without another evaluation
+      And preparing a fresh intent and submitting it require deliberate actions
+      And changing approved inputs before first submission requires explicit renewal
+      And pending admission is not represented as a successful evaluation
+      And preparation clicks one hundred, two hundred and three hundred milliseconds apart never admit or schedule work
+      And an admission activation during Retry-After is ignored rather than submitted later
+
+    # tests/Feature/DemoAiRunEndpointTest.php:
+    # it_rejects_an_expired_first_submission_and_renews_only_on_explicit_preparation
+    # tests/Feature/DemoAiReportTest.php:
+    # it_restores_the_server_issued_intent_and_run_without_a_second_admission
+    # tests/Browser/demo-ai.spec.js: idle expiry requires..., renewal replaces...,
+    # unmount cancels delayed preparation...
+    Scenario: Expire an idle unsubmitted intent locally without starting work
+      Given an unsubmitted server intent remains idle until its expiry
+      Then the expiry notice and explicit preparation action appear without any network failure or click
+      And Evaluate is unavailable until deliberate renewal
+      And renewal restores keyboard focus to a separate Evaluate action
+      And no cooldown or expiry callback submits admission
+      And replaced timers cannot expire a newer intent
+      And unmount cancels local timers and ignores late intent responses
+      And the backend still rejects expired first submissions but replays existing owned runs
+
+    # tests/Browser/demo-ai.spec.js: renders completed/partial/failed/rejected...
+    # polls sequentially..., temporary failure..., restores selected runs...
+    # admission rate limiting..., stops polling on 410/401/404...
+    Scenario: Show actual states with bounded sequential status recovery
+      Given queued and running work has actual stored counts
+      When status fetches are slow, rate limited, unavailable or out of order
+      Then requests never overlap and polling waits at least two seconds and Retry-After
+      And three consecutive temporary failures pause until deliberate resume
+      And wrong-run responses cannot replace the selected run
+      And completed empty, partial, failed and rejected states are explicit
+      And terminal, expired and unauthorized runs stop polling without new admission
+
+  @slice63 @report @offline
+  Rule: Screen and download use one frozen public report
+
+    # tests/Feature/DemoAiReportTest.php:
+    # it_serves_identical_escaped_self_contained_html_from_the_stored_snapshot_without_external_work
+    # it_uses_historical_versions_profile_prompt_input_and_provider_provenance_not_current_configuration
+    # it_does_not_rewrite_a_finalized_report_after_late_settlement_or_recovery
+    # it_does_not_reconstruct_a_pre_snapshot_historical_report_during_late_settlement
+    # it_reports_numeric_zero_counts_for_admission_and_a_rejected_run_without_evaluation
+    # tests/Browser/demo-ai.spec.js: real browser to Laravel intake...
+    Scenario: Render stored public evidence without reevaluation or unsafe HTML
+      Given finalization stored a demo-report-v1 representation of inputs and validated results
+      When the owning session opens or downloads the report
+      Then both HTML bodies are identical and no intake or provider operation is performed
+      And fictional data and Marcel's approved public profile are clearly identified
+      And stored versions, profile, prompt, provider provenance and actual counts are used
+      And recommendations, reasons, evidence, missing information and unevaluated items are explicit
+      And alert timestamps are separate from evaluation time and seven-day expiry
+      And hostile text is escaped with no scripts, remote assets, tracking or fabricated listing links
+      And the download has a safe filename, defensive headers and a self-contained print stylesheet
+      And stored public prompt paragraphs are visible in print without interaction
+      And later accounting settlement and recovery cannot rewrite finalized report content
+      And historical finalized runs without a snapshot are not reconstructed
+
+    # tests/Feature/DemoAiReportTest.php:
+    # it_denies_foreign_sessions_workspaces_private_mode_and_guests_without_record_disclosure
+    # it_expires_all_report_surfaces_at_exactly_seven_days_and_purges_only_feature_content
+    # tests/Browser/demo-ai.spec.js: real browser to Laravel intake..., stops polling...
+    Scenario: Enforce ownership before expiry and preserve unresolved accounting
+      Given only the server-configured workspace and owning demo session may inspect a run
+      When a different session or workspace requests status, report or download
+      Then foreign and missing records return indistinguishable not-found responses
+      And session loss is explicit
+      And an owned report expires at exactly seven days on every read surface
+      And cleanup removes only feature content, not unrelated history or uncertain liabilities
+
+    # tests/Browser/demo-ai.spec.js: disabled mode, keyboard...
+    # temporary failure recovers..., a fresh intent...
+    # tests/Browser/review-dashboard.spec.js: both existing journeys
+    # Interactive Chromium visual inspection: docs/runbooks/phase6-readiness.md, 6.3 section
+    Scenario: Preserve accessible private and seeded journeys
+      Given live mode is disabled or unavailable
+      Then the seeded queue remains clearly static and usable
+      And keyboard access, deliberate-action focus and polite status announcements remain usable
+      And polling never steals focus
+      And narrow viewports, long content and 200 percent zoom remain readable without horizontal overflow
+      And the existing private and seeded review regressions still pass
 
   @pending @slice64 @live
   Scenario: Authorized integrated staging, owner delivery and release acceptance

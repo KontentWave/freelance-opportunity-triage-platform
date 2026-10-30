@@ -28,9 +28,13 @@ Route::get('/demo', [DemoSessionController::class, 'create'])->name('demo');
 Route::post('/demo-session', [DemoSessionController::class, 'store'])->name('demo-session.store');
 
 Route::middleware(['auth', 'review.workspace'])->group(function (): void {
+    Route::get('/demo-ai', [DemoAiRunController::class, 'index'])->name('demo-ai.index');
     Route::get('/demo-ai/admission-key', [DemoAiRunController::class, 'create'])->middleware('throttle:6,1')->name('demo-ai.create');
+    Route::post('/demo-ai/admission-key', [DemoAiRunController::class, 'create'])->middleware('throttle:6,1')->name('demo-ai.intent');
     Route::post('/demo-ai/runs', [DemoAiRunController::class, 'store'])->name('demo-ai.store');
     Route::get('/demo-ai/runs/{run}', [DemoAiRunController::class, 'show'])->name('demo-ai.show');
+    Route::get('/demo-ai/runs/{run}/report', [DemoAiRunController::class, 'report'])->name('demo-ai.report');
+    Route::get('/demo-ai/runs/{run}/report.html', [DemoAiRunController::class, 'report'])->name('demo-ai.download');
     Route::post('/logout', [SessionController::class, 'destroy'])->name('logout');
 
     Route::get('/opportunities', [OpportunityReviewController::class, 'index'])->name('opportunities.index');

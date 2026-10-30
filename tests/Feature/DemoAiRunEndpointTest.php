@@ -75,6 +75,33 @@ final class DemoAiRunEndpointTest extends TestCase
     }
 
     #[Test]
+    public function it_rejects_an_expired_first_submission_and_renews_only_on_explicit_preparation(): void
+    {
+        $this->configureUser();
+        Queue::fake([ProcessDemoAiRun::class]);
+        $key = $this->getJson('/demo-ai/admission-key')->assertOk()->json('idempotency_key');
+        $until = time();
+        $this->withSession(['demo_ai_keys' => [$key => $until]]);
+
+        $this->getJson('/demo-ai/admission-key')->assertOk()->assertJsonPath('idempotency_key', $key)
+            ->assertJsonPath('key_expires_at', $until)->assertJsonPath('run', null);
+        $this->postJson('/demo-ai/runs', ['idempotency_key' => $key])->assertUnprocessable()
+            ->assertJsonValidationErrors('idempotency_key')
+            ->assertJsonPath('errors.idempotency_key.0', 'Request a current server-issued admission key.');
+        $fresh = $this->postJson('/demo-ai/admission-key')->assertOk()->assertJsonPath('run', null)
+            ->json('idempotency_key');
+
+        $this->assertNotSame($key, $fresh);
+        $this->assertDatabaseCount('demo_ai_runs', 0);
+        $this->assertDatabaseCount('demo_ai_budgets', 0);
+        Queue::assertNothingPushed();
+
+        $this->postJson('/demo-ai/runs', ['idempotency_key' => $fresh])->assertAccepted();
+        $this->assertDatabaseCount('demo_ai_runs', 1);
+        Queue::assertPushed(ProcessDemoAiRun::class, 1);
+    }
+
+    #[Test]
     public function it_enforces_csrf_on_the_real_web_trigger(): void
     {
         $this->configureUser();

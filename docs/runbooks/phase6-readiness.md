@@ -2,9 +2,9 @@
 
 **Assessment date:** 2026-10-28 (initial assessment 2026-10-27). **Readiness: READY for bounded, offline-first Slice 6.2 implementation; not live activation.**
 
-**Latest evidence/decision - 2026-10-29:** **Slice 6.2 is ACCEPTED for its backend/offline scope under the recorded counting-risk exception**, following the [acceptance review and owner approval](#slice-62-acceptance-closure---2026-10-29). [All 20 actual authored requests have measured counts](#owner-authorized-remaining-19-counts---2026-10-29), reusing DEMO-001 without recounting; all pass 8,000, maximum 1,127. The [accepted-risk implementation](#accepted-risk-backend-implementation---2026-10-29) preserves unknown counting fees independently of inference accounting. **6.3 is not started and production remains disabled.** Provider billing/endpoint retention remain unverified; another support answer is not required. Earlier sections retain their dated authorization/evidence scope.
+**Latest evidence/decision - 2026-10-30:** **6.1 readiness is established; 6.2 backend/offline scope is ACCEPTED under the recorded counting-risk exception and merged**, with [final-head and post-merge green CI](#slice-62-final-integration-outcome---2026-10-29). [6.3 implementation and offline validation are complete after acceptance-review remediation; protected branch/PR integration is authorized](#slice-63-bounded-completion-and-integration-authorization---2026-10-30). This is not live/overall owner acceptance or deployment. **6.4 remains unstarted and overall live/release acceptance remains pending; production stays disabled.** [All 20 actual authored requests have measured counts](#owner-authorized-remaining-19-counts---2026-10-29), reusing DEMO-001; maximum 1,127 against 8,000. Unknown counting fees remain separate from modeled inference accounting; billing/endpoint retention remain unverified and another support answer is not required. Earlier sections retain their dated scope.
 
-Planning, local fixture preparation and explicitly authorized bounded host feasibility probes only. No application behavior, dependencies, migrations, permanent runtime configuration/schedules, intake, delivery or deployment changed. Following separate explicit owner approval, a short temporary shell-crontab probe was installed, observed and removed with exact restoration of the original absent crontab. The owner subsequently approved a four-hour-bounded heartbeat continuity probe; 176 pre-reconnection minute samples were verified on his return and the probe was stopped early and fully removed at 15:43:24 UTC. No application schedule was activated or temporary probe schedule retained. Under later separate owner approval, an inert owner-only staging directory with four empty credential/address files was prepared outside the application/webroot; no live settings or secrets were installed. No paid AI calls, mailbox retrieval/population, email sends, commits, pushes or publication are authorized or claimed. The seeded demo and completed Phases 1-5 remain unchanged.
+**Historical Slice 6.1 scope:** planning, local fixture preparation and explicitly authorized bounded host feasibility probes only. No application behavior, dependencies, migrations, permanent runtime configuration/schedules, intake, delivery or deployment changed in that slice. Following separate explicit owner approval, a short temporary shell-crontab probe was installed, observed and removed with exact restoration of the original absent crontab. The owner subsequently approved a four-hour-bounded heartbeat continuity probe; 176 pre-reconnection minute samples were verified on his return and the probe was stopped early and fully removed at 15:43:24 UTC. No application schedule was activated or temporary probe schedule retained. Under later separate owner approval, an inert owner-only staging directory with four empty credential/address files was prepared outside the application/webroot; no live settings or secrets were installed. No paid AI calls, mailbox retrieval/population, email sends, commits, pushes or publication were authorized or claimed by that scope. The seeded demo and completed Phases 1-5 remain unchanged.
 
 Evidence labels describe a check: **VERIFIED / OPERATOR-REPORTED / NOT VERIFIED**. Decision labels independently describe consent: **APPROVED / PROPOSED / PENDING**. Reading provider documentation verifies what it states, not that a specific account supports it.
 
@@ -528,3 +528,141 @@ The review traced the [6.2 specification](../project_sheet.md#62--implement-boun
 **Accepted limitation:** the unchanged USD 1.00/day ledger bounds modeled inference only, not unknown counting fees or total provider charges. Counting fees remain null/unverified independently of inference settlement, cleanup and reconciliation. Owner acceptance is not zero-charge/retention evidence; the reported USD 10.00 balance and disabled recharge remain OPERATOR-REPORTED, not a guaranteed provider hard cap. No further support email is required.
 
 At this recording checkpoint, merge remains conditional on green CI for the documentation-closure head; the final-head check and merge outcome belong to PR #77's durable GitHub record. This closure changes repository documentation only. No dependency, model, price, numeric cap, environment value or feature/counting/scheduler default changes. No authenticated provider/SSH request, mailbox retrieval/population, email, deployment, production activation or shared-document synchronization. UI/progress/reports remain unstarted 6.3 work; integrated host worker/PEEK, live inference usage/quality/latency, owner delivery and release/disable acceptance remain 6.4. Phase 6 overall is not accepted.
+
+## Slice 6.2 final integration outcome - 2026-10-29
+
+Verified read-only with GitHub CLI PR metadata, workflow metadata and logs during 6.3 baseline establishment. These are **existing 6.2 results**, not newly executed 6.3 validation. The preceding closure checkpoint remains historical.
+
+| Record | Exact commit / outcome |
+| --- | --- |
+| [PR #77](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/77) | MERGED at `2026-10-29T19:57:51Z`; final head `69567c7e907cb846184ed8ff16dbc8970911ef74`; merge `0f397c8baf9cb3fbb71273446cba10bcacbf5b6d` |
+| [Final-head CI 40944466153](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/40944466153) | Completed / success at the exact final head; Quality, Tests / MariaDB 11.4 and Secret scan all success |
+| [Post-merge main CI 40944766901](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/40944766901) | Completed / success at the exact merge commit; the same three jobs all success |
+| Both runs' test/coverage logs | 284 PHPUnit tests / 2,264 assertions; 89.82% overall, 93.64% parser/domain, 96.90% triage; two Playwright regressions passed |
+
+This closes the conditional final-head/merge pointer above. It does not activate runtime settings, verify counting charges/retention, or accept live inference, owner delivery or release. The counting-risk exception and existing modeled-inference-only ceiling remain unchanged.
+
+## Slice 6.3 progress and reports - 2026-10-29
+
+**Local implementation and offline validation for acceptance review; not owner acceptance, live integration or deployment.** Started from clean merged `main` at `0f397c8baf9cb3fbb71273446cba10bcacbf5b6d`, not an earlier blocked checkpoint. Instructions, relevant Laravel/testing/frontend skills, ADRs 009-011, specifications and existing review/auth/ledger surfaces were read. `.ai/rules` is absent; Morph is unavailable in exposed tools, so workspace semantic search and bounded direct reads were used. Existing Boost 2.10.3 was already installed; no setup/dependency change was needed.
+
+### Guarded shared-original comparison
+
+Before sheet/roadmap edits, retrieved both originals using the established authorized sync endpoint's **read-only** `pull` / `pull-roadmap` actions, with explicit document identity and verified content SHA-256. No pull replacement, force flag, synchronization-state update or push was used.
+
+| Document | Retrieved export SHA-256 | Comparison and preservation |
+| --- | --- | --- |
+| Sheet | `8b0c1c9692a423b3c0ffab2ff739e46d6433ae4b40923182d6eb33577bc42c41` | Different from initial `0995305e...` and saved sync remote `261db228...`; local pre-edit SHA-256 `5548cbce7443e47f828f79914f2099e0830493aa1658782f798ae6071e9c6682` matched saved local state. The **entire Phase 6 text matched** the repository after normalizing Google-export escaping, whitespace and rewritten relative-link prefixes. Out-of-scope shared formatting/text differences (including an unrelated heading suffix) were not imported, overwritten or "fixed". No material Phase 6 decision conflict remained. Only authorized local Phase 6 hunks were edited. |
+| Roadmap | `10ce119dc3f834b56351ee75928207cf9528024f2869755004166c347862fc21` | Matches the recorded shared baseline; local pre-edit SHA-256 `b5a0dc05175cb842fca8749976f489c707150f144f6988fae4f786d53022f898` retains subsequent repository checkpoints. No local edit or state file was replaced. |
+
+An initial roadmap probe omitted explicit document identity and was rejected by the client's response verification; corrected read-only retrieval verified it. This did not change either original or local state. Shared publication remains unauthorized; the existing whole-document replacement workflow was not used.
+
+### Implemented routes and visitor behavior
+
+| Route / surface | Contract |
+| --- | --- |
+| Demo queue link and `GET /demo-ai` | Existing authenticated demo workspace/session boundary. Clearly fictional alerts, Marcel's public profile, human-review caveat and return to the unchanged seeded queue. Disabled mode remains usable with honest static labeling and no trigger. |
+| `GET /demo-ai/admission-key` | Restores one server-issued current intent/key and its existing owned run. Does not admit or dispatch work. Key TTL remains 30 minutes for first submission; existing runs remain recoverable after key expiry. |
+| CSRF-protected `POST /demo-ai/admission-key` | Explicitly prepares a fresh intent, not evaluation. Refuses replacement of a queued/running current run. Uses the existing six-per-minute issuance throttle. |
+| Existing `POST /demo-ai/runs` | Same admission, CSRF, ownership, queue/rate/budget controls. Double clicks and ambiguous retries reuse the issued key. Issued version identity is retained per key: changes before first submission require deliberate renewal; retries find the original run rather than re-evaluating under a newer version. Initial/rejected counts are numeric zeros, matching stored schema defaults. |
+| Existing `GET /demo-ai/runs/{run}` | Stored counts/states and stored profile/prompt versions, safe visitor explanations and report URLs. Sequential polling >=2 seconds; numeric and HTTP-date Retry-After honored, 15-second request timeout, exponential temporary-error waits, pause after three consecutive failures, explicit same-run resume. Abort/generation and response-ID guards prevent stale selection replacement. Terminal/expired/session-denied runs stop polling. Reload/re-entry checks the same authorized run without admission. |
+| `GET /demo-ai/runs/{run}/report` and `/report.html` | Identical read-only server-rendered HTML body from a stored `demo-report-v1` snapshot. Normal owning demo session/workspace required; foreign/missing 404 before content/expiry checks, session loss uses existing auth, owned expiry 410 with useful text. Unfinished or pre-snapshot historical report absence is 409, never rebuilt from current configuration. Download: safe ULID filename, HTML content type, private/no-store, nosniff, no-referrer and restrictive CSP. |
+
+Only the key lifecycle/status/report extensions were added; no visitor email/recipient/sending/prompt/mailbox/provider selector, private source, fallback, scheduler or worker activation. All numeric limits, reservations, retries, provider/model, approved public criteria and disabled defaults remain unchanged. The new provider name is stored in **attempt provenance only**, not added to AI instructions: existing frozen corpus requests/count evidence are not changed or recounted.
+
+### Immutable report and retention
+
+New nullable `demo_ai_runs.report_snapshot` stores the shared representation atomically at finalization or rejection. It includes actual counts/run dates/expiry, stored public profile/rubric/prompt and versions/hashes, ordered item inputs/results, failure/uncertainty state and per-attempt provider/model/request/settings/time provenance. Alert posted time is distinct from evaluation authorization/settlement. Missing provenance is "not recorded", not invented. Public v2's iPhone 11, bounded AI-assisted development, no fixed minimum rate and conditional-application/clarification MAYBE meaning are preserved. No private context is loaded.
+
+Both HTML routes render that representation with escaped text, fictional/synthetic labels, individual APPLY/MAYBE/SKIP explanations/evidence/missing information, explicit unevaluated work and inline print CSS. There are no scripts, remote assets, tracking, fabricated listing links or new AI/intake calls. Final report content is immutable even if a late known outcome updates the **existing mutable ledger state**. Recovery/reconciliation still settle or preserve liabilities normally; neither rewrites a generated report nor extends its original expiry.
+
+The existing seven-day cleanup also nulls `report_snapshot`, retaining minimal attempt/budget/control identities and unresolved accounting. No unrelated history is deleted. This migration adds a nullable column only; do not run its destructive `down()` during code rollback. Existing finalized runs without this representation deliberately remain report-unavailable rather than being silently reconstructed or rerun.
+
+Counting charges and endpoint-specific retention remain unverified. **USD 1.00/day bounds modeled inference, not guaranteed total provider charges.** Unknown counting fees stay separate from inference settlement. Visitor reports do not introduce misleading price promises or burden visitors with internal accounting details.
+
+### Verification and browser evidence
+
+Local runtime/tooling: PHP **8.4.12**, Composer **2.9.5**, Laravel **13.36.0**, Boost **2.10.3**, Node **24.21.0**, Vue **3.5.43**, Tailwind **4.3.3**, installed Vite **8.3.0**, Playwright **1.63.0**, Vue Vite plugin **6.0.9**. `npm ls` identified installed tool versions older than manifest constraints (also optional Multiplex 0.4.3); installed tools successfully built/tested the feature. No package/lock changes or new dependency were authorized or made. A fresh locked install/new protected CI is not claimed.
+
+All database setup/checks used a task-owned **MariaDB 11.4.13** disposable container bound only to `127.0.0.1:3307`, database `freelance_opportunity_triage_platform_test`, with **no host data volume**. `SELECT DATABASE(), VERSION()` and `MariaDbTestingEnvironmentTest` verified it before setup. No deployed database was used. Browser helpers additionally refuse non-e2e, nonlocal or non-MySQL/MariaDB `_test` configuration.
+
+After validation, the current Docker endpoint no longer exposed the original task container. The verified loopback test instance was shut down through SQL after checking its exact MariaDB version and this slice's migration; port 3307 was confirmed closed. Application helpers are stopped. Removal of the stopped container could not be confirmed through the changed Docker endpoint; no other container was stopped or removed.
+
+| Check actually executed | Result |
+| --- | --- |
+| Focused report/intent/auth/accounting/provider regressions during implementation | Passed after in-scope adjustments; unchanged late-settlement behavior retained while freezing only the report |
+| Full `vendor/bin/phpunit --coverage-clover build/logs/clover.xml` | 295 tests / 2,385 assertions passed on disposable MariaDB; after the final print-template adjustment, the focused report suite also passed (11 tests / 121 assertions) |
+| Existing Clover gates | 90.08% overall, 93.64% parser/domain, 96.90% triage; existing >=80% / >=90% / >=90% thresholds passed |
+| `npm run test:e2e` | 18 Chromium tests passed: 16 new progress/report scenarios plus two existing private/seeded journeys |
+| Real browser-to-application boundary | Actual HTTP/session/CSRF/routes, ledger/admission, MIME normalization, bounded intake, counting/Responses adapter construction and output validation; only IMAP and outbound HTTP controlled. Duplicate replay returns the same run. Cross-session/workspace denial, matching HTML/download and hostile explanation rendering verified. No paid/mailbox traffic. |
+| PHPStan / `vendor/bin/pint --dirty --format agent` | Passed |
+| `npm run build`, JavaScript syntax checks | Passed; no separate frontend linter/type-check script is installed |
+| `composer validate --strict`, `composer audit --locked`, `npm audit --audit-level=high` | Passed; both audits reported no advisories/vulnerabilities |
+| `npm run test:release`, `npm run test:sync-sheet`, `bash -n scripts/sync-sheet.sh` | Six release-contract and 25 synchronization tests passed; shell syntax passed. No candidate publication or shared document write. |
+| Local Gitleaks | **Unavailable** (`gitleaks: command not found`); no new 6.3 CI secret-scan result is claimed. Historical green 6.2 scans above are not substituted. |
+| Complete diff / whitespace review | Reviewed all changed/new code, tests and documentation; `git diff --check` passed |
+
+One attempted parallel rerun allowed PHPUnit migration setup and Playwright's `migrate:fresh` to overlap on the same disposable database; it failed with table/deadlock errors. This was test orchestration, not a passing application result. Subsequent full PHPUnit and Playwright runs were serialized and passed. Initial test-fixture CSRF/static-type issues and initial report-late-settlement/focus/state issues were corrected and reverified, not retained as unresolved gaps.
+
+Browser automation checks keyboard access, deliberate new-intent focus, polite status announcements, focus preservation while polling, slow/no-overlap requests, Retry-After seconds/date, temporary recovery/pause, refresh/re-entry, wrong-run responses, expired/lost/foreign sessions, all terminal states, hostile text, 320px layout and 200% CSS zoom. It captures no external browser requests on the real controlled journey.
+
+An exact print-media assertion caught the stored prompt remaining hidden inside a closed disclosure, which the earlier visual inspection had opened first. The report now renders its public prompt paragraphs without a disclosure. The final complete 18-test browser run verifies prompt visibility in print without interaction, as well as identical screen/download bodies.
+
+Additional operator-style local Chromium inspection activated demo entry and submission with the keyboard, completed a controlled run, and captured/reviewed desktop and 320px summary screenshots plus long report/200%-zoom and print-media screenshots. Counts/expiry/actions, synthetic/profile labeling and literal hostile text remained readable; no horizontal overflow, executable/remote elements or outside-origin browser requests were found. Desktop progress was then made explicitly single-column for reading order. These are **local desktop-browser/viewport/zoom/print-media checks**, not physical mobile-device, assistive-technology or printer testing. The integrated browser tool could not reach the loopback helper (connection refused), so the installed local Playwright Chromium was used for this inspection; no wider network listener/host change was introduced. The temporary helper is stopped after inspection.
+
+### Remaining limitations and precise 6.4 handoff
+
+6.3 is **ready for acceptance review**, not accepted by the owner or deployed. Local secret scanning is unavailable and new protected CI has not run; rerun the existing locked protected gates during separately authorized integration. Historical pre-snapshot terminal runs intentionally have no reconstructed report. Session loss is not bypassed by a bearer URL.
+
+Do not implement or activate 6.4 here. Its separate work remains: operator-only allowlisted owner delivery from the same stored report, delivery identity and ambiguous-send handling; separately authorized bounded staging checks of actual inbox/PEEK flags, selected provider inference/quality/latency/usage and the integrated bounded worker/scheduler; counting-risk wording and unverified fees/retention retained; disable/recovery/isolation checks; then exact candidate, host smoke, rollback and opt-in release through the existing process. No new support inquiry or approval gate for ordinary 6.3 work is introduced.
+
+No real provider/counting request, mailbox retrieval/population, email send, private data access, host/cron/worker change, deployment, commit, push, PR publication or shared-original replacement was performed. Feature/counting/scheduler defaults remain disabled. Phases 1-5, deployment/audit closures and dated 6.1/6.2 findings remain historical.
+
+## Slice 6.3 acceptance-finding remediation - 2026-10-30
+
+Surgical local remediation of preparation click-through and idle intent expiry only. This does not record owner acceptance or start 6.4. The preceding implementation evidence and the separately supplied acceptance-review results are historical, not substitutes for the executions below.
+
+### Baseline and behavior changes
+
+HEAD remained the recorded merged baseline `0f397c8baf9cb3fbb71273446cba10bcacbf5b6d`. The complete tracked diff and all eight untracked implementation files were inspected before editing; existing implementation/documentation was preserved. Instructions, relevant skills, Phase 6 specifications, ADRs 009-011 and integration seams were read. `.ai/rules` and Morph were unavailable; workspace semantic search and bounded direct reads were used. Existing Boost was already installed. No dependency installation, manifest/lock change or shared-original operation was performed.
+
+- **Preparation click-through:** keep the preparation control in place, disabled after successful preparation, with Evaluate as a separate control below it. Focus still moves to Evaluate after deliberate preparation. Admission activations during cooldown are rejected, never queued for later execution. The focusable Evaluate control exposes `aria-disabled` during cooldown and explains that another explicit activation is needed. A submission establishes its own two-second minimum cooldown even after an ambiguous connection failure; numeric and HTTP-date Retry-After can extend it. Same-intent retries remain explicit and use the original key.
+- **Idle expiry:** a local deadline timer updates reactive time at cooldown/key-expiry boundaries, without polling or admission HTTP. Expired unsubmitted intents hide Evaluate, announce expiry and require explicit preparation. Submission rechecks actual time, including when a background-tab timer has been delayed. Renewal replaces the deadline timer; unmount clears it as well as existing request/delayed-action timers and aborts in-flight requests. Generation guards continue to reject late responses.
+- Backend expiry and existing-run replay remain unchanged. The replay regression now explicitly expires the session key: Carbon time travel alone does not advance PHP's native `time()` used by admission validation.
+
+### Regression evidence and newly executed checks
+
+Both new primary browser regressions were run against the original UI and failed: preparation clicks triggered admission, and idle expiry left the ready message visible. Final results below are after remediation. Intermediate browser-fixture corrections accounted for Playwright waiting on `aria-disabled`, normal focus loss when clicking a disabled control, and the expanded real journey's bounded 60-second timeout; these attempts were not reported as passing checks.
+
+| Newly executed check | Exact outcome |
+| --- | --- |
+| Focused safety/report/endpoint PHPUnit | **18 tests / 178 assertions passed** |
+| Full PHPUnit with PCOV / Clover | **296 tests / 2,405 assertions passed** |
+| Existing coverage gates | **90.11% overall / 93.64% parser-domain / 96.90% triage**, passing >=80% / >=90% / >=90% |
+| Full installed Chromium Playwright suite | **24 tests passed**, including both unchanged private/seeded journeys |
+| Preparation regressions | Fixed-coordinate clicks **100/200/300ms** apart, after initial cooldown, produce no admission immediately or after another 2.3 seconds. Separate Evaluate double-click submits exactly once. |
+| Real browser-to-Laravel journey | The same three click gaps use actual routes/session/CSRF/admission ledger, with no browser response mocks. CLI-only guarded ledger observation proves **no change to run/attempt/job counts** after preparation; each deliberate submission then creates exactly one rejected run under the unchanged five-minute limit, with no new attempt/job. Original successful intake/counting/provider/output-validation/report/reload/re-entry/replay checks also pass. All provider/counting HTTP is faked, stray HTTP blocked, IMAP controlled. |
+| Expiry/lifecycle regressions | Idle expiry updates without a click/failure; keyboard renewal focuses Evaluate; premature activation does not submit later; renewal survives the old expiry deadline. Unmount cancels delayed preparation, ignores a late renewal response and leaves no automatic admission or stale replacement after re-entry. |
+| Backend regressions | Expired first submission rejects without run/budget/queue work; explicit renewal alone creates no run, followed by one deliberate admission. Expired-key existing-run replay and historical-version replay still pass. |
+| PHPStan / `vendor/bin/pint --dirty --format agent` | **Passed**, zero PHPStan errors |
+| Production Vite build / JS and PHP syntax / shell syntax / whitespace | **Passed** |
+| `composer validate --strict` / locked Composer audit / npm high-severity audit | **Passed**; no reported advisories/vulnerabilities |
+| Existing release / sheet-sync contracts | **6 / 25 tests passed**; no release or document publication |
+
+Installed PHP 8.4.12, Laravel 13.36.0, Boost 2.10.3, PHPUnit 13.4.4, PCOV 1.0.12, Node 24.21.0 and Vue 3.5.43 were used. `npm ls --depth=0` again reports the existing manifest mismatch for Playwright 1.63.0, Vite 8.3.0, Vue Vite plugin 6.0.9 and optional Multiplex 0.4.3; its validation exits nonzero. No fresh locked install or new protected CI result is claimed. Local Gitleaks and Syft are unavailable; no new secret-scan, SBOM/candidate generation, physical-device, assistive-technology, live-service or deployed-host acceptance result is claimed.
+
+### Disposable infrastructure and scope
+
+Initial loopback ports 3307 and 8013 were closed. The current Docker endpoint exposed unrelated stopped containers, which were left untouched. A new task-labelled MariaDB **11.4.13** container `72f89ea0eb325c1bafb41f07e676684e7e3989c080c193733da225e41501ce80` used only loopback 3307, an anonymous disposable volume and `freelance_opportunity_triage_platform_test`. Database/version/hostname and the repository safety guard were verified before migration/setup. PHPUnit and browser setup/migrations were serialized; no deployed database was used.
+
+After validation, exact container ID/task label/loopback binding and SQL hostname/version/database were reverified. Only this container and its anonymous volume were removed. Application test helpers stopped normally; ports **3307, 8013, 8011 and 8012** were confirmed closed. Historical container-removal uncertainty is not rewritten or treated as authorization to remove older containers.
+
+Both reported findings are resolved by local regression evidence; 6.3 is ready for **renewed owner acceptance review**, not accepted. Existing live worker/PEEK/provider/owner-delivery/release limitations and pre-snapshot historical-report absence remain unchanged. USD 1.00/day continues to bound modeled inference, not unknown counting fees or guaranteed total provider charges; endpoint retention remains unverified. Public profile/rubric, numeric limits and disabled feature/counting/scheduler defaults are preserved. No real provider/counting request, mailbox retrieval/population, email send, host/worker/cron change, deployment, commit, push, PR publication, shared synchronization or 6.4 work occurred.
+
+## Slice 6.3 bounded completion and integration authorization - 2026-10-30
+
+Following the remediation results above, the owner requested any necessary documentation, a new branch, commit, push, PR merge and return to `main`. **6.3 progress/reports implementation and offline validation are complete; both reported acceptance-review findings are resolved.** This closes the bounded implementation work, not live/overall owner acceptance, deployment, release or Phase 6 as a whole. Slice 6.4 remains unstarted.
+
+The local final implementation passed 296 PHPUnit tests / 2,405 assertions, 24 Chromium tests, coverage 90.11% overall / 93.64% parser-domain / 96.90% triage and the other gates enumerated above. These checks are not a fresh locked install or protected CI result. Integration must pass the existing **Quality**, **Tests / MariaDB 11.4** and **Secret scan** checks at the exact PR head without bypass; the PR's durable GitHub record will hold the final-head CI, merge SHA and integration outcome. No new runtime or dependency changes are authorized by this integration.
+
+The earlier implementation/remediation checkpoints remain historical, including their then-pending publication and acceptance statements. Current scope preserves the counting-risk exception, approved public profile/rubric, disabled defaults and deferred live-service/owner-delivery/release limitations. Repository documentation updates do not authorize shared-original synchronization or replacement.
