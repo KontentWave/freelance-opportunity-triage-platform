@@ -16,4 +16,11 @@ return [
     'counting_risk_acceptance_reference' => env('DEMO_AI_COUNTING_RISK_ACCEPTANCE_REFERENCE'),
     'model' => 'gpt-6-luna',
     'pricing_version' => 'openai-standard-2026-10-27',
+    'owner_delivery' => [
+        'enabled' => (bool) env('DEMO_AI_OWNER_DELIVERY_ENABLED', false),
+        'recipient' => env('DEMO_AI_OWNER_RECIPIENT'),
+        'allowlist_sha256' => env('DEMO_AI_OWNER_RECIPIENT_SHA256'),
+        'version' => env('DEMO_AI_OWNER_RECIPIENT_VERSION'),
+        'verification_reference' => env('DEMO_AI_OWNER_VERIFICATION_REFERENCE'),
+    ],
 ];

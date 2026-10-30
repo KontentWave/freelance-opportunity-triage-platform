@@ -42,6 +42,10 @@ APPROVED: no visitor email collection or sending endpoint. Later owner delivery 
 
 ## Consequences
 
+### 6.4 owner-delivery implementation
+
+`demo-ai:deliver-owner {run}` is operator-only, synchronous and sends the existing `demo-report-v1` snapshot through the same escaped HTML representation as the screen/download. No queue mail job, public sending route or recipient argument exists. Protected configuration supplies the sole address, exact allowlist digest, version and owner verification reference; the existing owner-control attestation is OPERATOR-REPORTED, not machine-verified inbox receipt. See the [delivery states and execution plan](../runbooks/phase6-release.md). Actual transport acceptance and owner receipt remain NOT VERIFIED.
+
 AI results need their own immutable snapshots, not overwrites of deterministic scores, enrichment or feedback. Source/prompt/profile changes require new version/hash identities. A deliberate new run may re-evaluate approved sources; HTTP retries and job redelivery may not duplicate paid work. No real-alert republication, capability invention, profile personalization or private-source fallback is permitted.
 
 ## References

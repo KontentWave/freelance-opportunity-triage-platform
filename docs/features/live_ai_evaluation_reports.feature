@@ -232,6 +232,30 @@ Feature: Bounded authored-alert AI evaluation against the approved public profil
       And narrow viewports, long content and 200 percent zoom remain readable without horizontal overflow
       And the existing private and seeded review regressions still pass
 
+  @slice64 @offline
+  Rule: Owner delivery is separate, operator-only and never blindly repeated
+
+    # tests/Feature/DemoAiOwnerDeliveryTest.php
+    Scenario: Send only the existing unexpired public synthetic snapshot to the configured owner
+      Given protected verified-owner configuration matches its exact allowlist and version
+      When the operator selects an existing finalized public demo report
+      Then HTML and its safe attachment match the stored report representation
+      And fictional/profile labels, timestamps, failures, unknowns and escaped content are preserved
+      And missing, expired, purged, unavailable, foreign and private reports refuse
+      And no arbitrary recipient option or public sending route exists
+
+    # tests/Feature/DemoAiOwnerDeliveryTest.php
+    Scenario: Serialize delivery and preserve ambiguous external outcomes
+      Given real concurrent MariaDB delivery requests for one report
+      When one command claims sending before the controlled transport
+      Then at most one message reaches that transport
+      And repeated commands and recipient-version rotation cannot send again
+      And evaluation queue redelivery has no mail job to repeat
+      And preparation failure, transport uncertainty and stale sending remain durable without retries
+      And recovery and separately recorded operator receipt never send or rewrite SMTP state
+      And AI results, provider-call counts, accounting, expiry and unrelated history are unchanged
+      And content cleanup preserves unresolved delivery and inference liabilities
+
   @pending @slice64 @live
   Scenario: Authorized integrated staging, owner delivery and release acceptance
     Then actual demo PEEK flag preservation and inference usage are verified
