@@ -8,6 +8,8 @@
 
 **Deployment context:** The [project sheet](project_sheet.md) records the public portfolio move to [https://fotp.kontentwave.com/demo](https://fotp.kontentwave.com/demo) on 2026-10-25 and the unchanged REL-01/REL-03/REL-04 closures. These and the baseline deployment statements above are historical records, not newly repeated checks.
 
+**Subsequent 6.4 integration checkpoint:** [PR #80](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/80) merged as `19c92a463b99b8eee21469ad290399875ac08102`; [its own post-merge CI](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/41120132226) passed 320 PHPUnit tests / 2,555 assertions, 24 browser tests, coverage, build, audits and required checks. Operator delivery and offline validation/integration are complete. The owner approved the full bounded execution plan and dedicated-corpus APPEND, but the tool authorization layer blocked candidate retrieval before any host mutation, paid run or email. Existing authorization remains valid; see the [precise resume point](runbooks/phase6-release.md#actual-liverelease-outcome). Live/release acceptance remains pending, no allowance consumed, feature disabled and v1.0.2 not published.
+
 ## Vision
 
 Build a portfolio-quality personal tool that converts job-alert emails delivered to the user's own mailbox into an explainable, prioritized review queue. The platform should reduce low-value manual browsing while leaving all marketplace access, final judgment, and proposal submission under human control.
