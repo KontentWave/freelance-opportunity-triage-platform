@@ -56,6 +56,10 @@ After host/process loss, recover only unstarted work with valid reservations and
 
 ## Acceptance boundary
 
+### 6.4 delivery persistence and code rollback
+
+The additive `demo_ai_deliveries` migration implements separate delivery state with **run-level primary uniqueness**, deliberately stronger than the planned `(run, report hash, recipient configuration version)` tuple. Hash/version identities remain recorded, but configuration rotation cannot authorize a duplicate copy. The synchronous operator command commits `sending` before SMTP; process loss or transport ambiguity remains uncertain without automatic resend. Recovery/receipt commands never send. No mail job is queued, so evaluation queue redelivery cannot resend a report. See the [state contract and approval-gated execution plan](../runbooks/phase6-release.md). Code rollback preserves all feature migrations/rows and sent/uncertain liabilities; `down()` is destructive and is not a production rollback procedure.
+
 Slice 6.2 requires offline tests for reservation races, workspace/session isolation, idempotency, bounded scans, unknown/refusal/malformed results, expired/partial runs and kill-switch recovery. Worker/scheduler execution on the correct host, effective provider access, PEEK behavior and one recipient delivery need separate evidence and authorization. No host configuration, schedules, jobs, migrations, paid calls or emails are activated by this ADR.
 
 ## Local implementation details - 2026-10-28

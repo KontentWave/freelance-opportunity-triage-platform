@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added operator-only, default-disabled delivery of immutable synthetic AI reports through verified TLS SMTP, with durable duplicate protection, uncertain-outcome recovery and separately recorded owner receipt. No visitor recipients, sending route, queued mail retries or AI reruns.
+- Recorded merged Phase 6.3 integration evidence and the approval-gated Phase 6.4 acceptance/release/rollback plan. Live acceptance, owner receipt and publication remain pending.
+
 ## v1.0.1 - 2026-10-25
 
 - Extended the manually approved portfolio publication workflow to unused stable `v1.0.<patch>` versions, retaining exact-candidate validation and existing-tag/release refusal.

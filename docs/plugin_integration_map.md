@@ -62,3 +62,16 @@ The owner decision reports **USD 10.00 balance with automatic recharging disable
 Validation, read-only shared-original comparison, local scanner limitation and exact deferred 6.4 work are recorded in the [6.3 runbook continuation](runbooks/phase6-readiness.md#slice-63-progress-and-reports---2026-10-29). No runtime enablement, owner delivery or deployment is included.
 
 **2026-10-30 bounded completion:** both acceptance-review UI findings are remediated and implementation/offline validation is complete. The [authorized branch/PR integration](runbooks/phase6-readiness.md#slice-63-bounded-completion-and-integration-authorization---2026-10-30) uses the unchanged protected CI gates; it introduces no additional hook, shared table, config key, dependency or runtime activation. Live/overall owner acceptance and 6.4 remain separate.
+
+## Phase 6.4 operator delivery boundary - 2026-10-30
+
+| Seam | Owned state/configuration and risky coupling |
+| --- | --- |
+| `demo-ai:deliver-owner` / `OwnerReportDelivery` | Operator CLI only; no route, UI, recipient override or mail queue job. `DemoAiConfiguration` enforces server-selected demo workspace/MariaDB; existing immutable report and `review.ai-report` are reused verbatim as HTML/attachment. Expiry/private/foreign/absent snapshots refuse. No ledger processing or provider/intake calls. |
+| `demo_ai_deliveries` additive migration | Run primary key/FK restricts deletion; report/HTML hashes, HMAC recipient/config identity, version and hashed attestation/receipt references survive report cleanup. Run lock plus committed prepared/sending claim serializes concurrent commands; configuration rotation cannot create another copy. Existing feature accounting/history tables are not mutated. |
+| Protected `DEMO_AI_OWNER_*` configuration | Delivery disabled by default; exact recipient digest allowlist, configuration version and verification reference required. Actual values remain host-only. Existing owner attestation is not a machine receipt; separate timestamp/hash records explicit operator receipt. |
+| Laravel `MailManager::build` / Symfony SMTP | Shared existing `mail.mailers.smtp` credentials and valid From; isolated mailer avoids global recipient overrides, log/failover/round-robin. Fixed port 465/587, required verified TLS, ten-second timeout. Real controlled transport exercises HTML/MIME offline; no new dependencies or external CI sends. |
+| Transport ambiguity / recovery / rollback | No automatic retry of any delivery state. Exceptions/null results/stale sending retain uncertainty, independently of AI outcomes/accounting. `--recover`/`--receipt` never send. Local uniqueness is not exactly-once SMTP proof. Production rollback switches code/cache-aware flags only, retaining additive tables and all uncertain liabilities. |
+| Public host feasibility / acceptance isolation | Current v1.0.1 has no live-AI route; proposed candidate binds only loopback with SSH tunnel while public seeded demo remains old code. Explicit PHP 8.4 binary required (host default is 8.5). SMTP and dedicated folder not configured; no live activation is claimed. |
+
+Full offline evidence and outstanding acceptance/authorization are in the [6.4 runbook](runbooks/phase6-release.md). No shared-original replacement, private/retired target, provider call, email or host mutation occurred during inspection.

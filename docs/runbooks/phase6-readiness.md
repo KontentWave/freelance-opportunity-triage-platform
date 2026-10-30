@@ -2,7 +2,7 @@
 
 **Assessment date:** 2026-10-28 (initial assessment 2026-10-27). **Readiness: READY for bounded, offline-first Slice 6.2 implementation; not live activation.**
 
-**Latest evidence/decision - 2026-10-30:** **6.1 readiness is established; 6.2 backend/offline scope is ACCEPTED under the recorded counting-risk exception and merged**, with [final-head and post-merge green CI](#slice-62-final-integration-outcome---2026-10-29). [6.3 implementation and offline validation are complete after acceptance-review remediation; protected branch/PR integration is authorized](#slice-63-bounded-completion-and-integration-authorization---2026-10-30). This is not live/overall owner acceptance or deployment. **6.4 remains unstarted and overall live/release acceptance remains pending; production stays disabled.** [All 20 actual authored requests have measured counts](#owner-authorized-remaining-19-counts---2026-10-29), reusing DEMO-001; maximum 1,127 against 8,000. Unknown counting fees remain separate from modeled inference accounting; billing/endpoint retention remain unverified and another support answer is not required. Earlier sections retain their dated scope.
+**Latest evidence/decision - 2026-10-30:** **6.1 readiness is established; 6.2 backend/offline scope is ACCEPTED under the recorded counting-risk exception and merged**. **6.3 implementation, offline validation and integration are complete**, as recorded [below](#slice-63-final-integration-outcome---2026-10-30). Operator-only delivery is implemented offline in 6.4; [live acceptance, receipt and release](phase6-release.md) remain pending; production stays disabled. [All 20 actual authored requests have measured counts](#owner-authorized-remaining-19-counts---2026-10-29), reusing DEMO-001; maximum 1,127 against 8,000. Unknown counting fees remain separate from modeled inference accounting; billing/endpoint retention remain unverified and another support answer is not required. Earlier sections retain their dated scope.
 
 **Historical Slice 6.1 scope:** planning, local fixture preparation and explicitly authorized bounded host feasibility probes only. No application behavior, dependencies, migrations, permanent runtime configuration/schedules, intake, delivery or deployment changed in that slice. Following separate explicit owner approval, a short temporary shell-crontab probe was installed, observed and removed with exact restoration of the original absent crontab. The owner subsequently approved a four-hour-bounded heartbeat continuity probe; 176 pre-reconnection minute samples were verified on his return and the probe was stopped early and fully removed at 15:43:24 UTC. No application schedule was activated or temporary probe schedule retained. Under later separate owner approval, an inert owner-only staging directory with four empty credential/address files was prepared outside the application/webroot; no live settings or secrets were installed. No paid AI calls, mailbox retrieval/population, email sends, commits, pushes or publication were authorized or claimed by that scope. The seeded demo and completed Phases 1-5 remain unchanged.
 
@@ -666,3 +666,30 @@ Following the remediation results above, the owner requested any necessary docum
 The local final implementation passed 296 PHPUnit tests / 2,405 assertions, 24 Chromium tests, coverage 90.11% overall / 93.64% parser-domain / 96.90% triage and the other gates enumerated above. These checks are not a fresh locked install or protected CI result. Integration must pass the existing **Quality**, **Tests / MariaDB 11.4** and **Secret scan** checks at the exact PR head without bypass; the PR's durable GitHub record will hold the final-head CI, merge SHA and integration outcome. No new runtime or dependency changes are authorized by this integration.
 
 The earlier implementation/remediation checkpoints remain historical, including their then-pending publication and acceptance statements. Current scope preserves the counting-risk exception, approved public profile/rubric, disabled defaults and deferred live-service/owner-delivery/release limitations. Repository documentation updates do not authorize shared-original synchronization or replacement.
+
+## Slice 6.3 final integration outcome - 2026-10-30
+
+VERIFIED read-only using GitHub CLI PR metadata, workflow metadata and logs during 6.4 baseline establishment. These are **existing 6.3 results**, not newly executed 6.4 checks.
+
+| Record | Exact revision / outcome |
+| --- | --- |
+| [PR #78](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/78) | MERGED; head `628b92bffe0abae602105850575695d2768f44d1`; merge `03a36ae73fda0e617ad7be280b5c8e2635aa8692` |
+| [Final-head CI 41059440858](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/41059440858) | Success at that exact head; Quality, Tests / MariaDB 11.4 and Secret scan passed |
+| [Post-merge CI 41059905724](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/41059905724) | Success at that exact merge; same three jobs passed |
+| [Documentation integration CI 41113982663](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/41113982663) | Success at baseline `eaa26d1f8b81ed3fcd6d2f2fca81ac7339677c15`; same three jobs passed |
+| All three runs' logs | 296 PHPUnit tests / 2,405 assertions; 24 browser tests; 90.11% overall / 93.64% parser-domain / 96.90% triage coverage |
+
+This closes the conditional integration statement above without rewriting historical checkpoints. Live worker/PEEK, inference, owner receipt and release acceptance remain 6.4.
+
+## Slice 6.4 baseline and guarded original comparison - 2026-10-30
+
+Clean `main` baseline `eaa26d1f8b81ed3fcd6d2f2fca81ac7339677c15`; work continues on `feat/phase64-owner-delivery`. PHP 8.4.12 / Laravel 13.36.0 / Boost 2.10.3 / PHPUnit 13.4.4 confirmed installed. Boost was already present; no bootstrap install or dependency changes. `.ai/rules` and Morph are unavailable; workspace semantic search and bounded direct reads were used.
+
+Before sheet/roadmap edits, both shared originals were retrieved through the established protected endpoint with explicit document identity and verified response content hashes. No file replacement, force pull, state update or push:
+
+| Document | Retrieved export SHA-256 | Preserved repository SHA-256 / comparison |
+| --- | --- | --- |
+| Sheet | `71d35f9f917f61c1fd9c7007988b73a909502b1494c4852dce3210b2329858d9` | `02da13b0ab01252d1b56d80faea8fe789f25f1f3fa8cf899ed69a71b816565f0`; both match recorded sync baseline |
+| Roadmap | `10ce119dc3f834b56351ee75928207cf9528024f2869755004166c347862fc21` | `325bbaa64cb4b9b497f533941095cc5e244e724d0176f86d043f04e463c5415c`; shared baseline unchanged, subsequent repository checkpoints retained rather than replaced by the older original |
+
+Implementation, new offline evidence, protected-host feasibility and the bounded approval-gated execution sequence are recorded in the [6.4 runbook](phase6-release.md). No shared-original publication is authorized.
