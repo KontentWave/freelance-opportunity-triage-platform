@@ -30,6 +30,7 @@ final class DemoAiLedger
         private readonly DemoAiConfiguration $configuration,
         private readonly MonotonicClock $clock,
         private readonly CountingPolicy $countingPolicy,
+        private readonly DemoAiReport $reports,
     ) {}
 
     public function admit(string $workspace, string $sessionHash, string $ipHash, string $key): DemoAiRun
@@ -77,6 +78,7 @@ final class DemoAiLedger
             $run = DemoAiRun::query()->create([
                 'workspace_id' => $workspace, 'session_hash' => $sessionHash, 'ip_hash' => $ipHash,
                 'idempotency_hash' => $identity, 'status' => $failure === null ? 'queued' : 'rejected',
+                'selected_count' => 0, 'succeeded_count' => 0, 'failed_count' => 0,
                 'reservation_day' => $day, 'reserved_micro_usd' => $failure === null ? self::RUN_RESERVATION : 0,
                 'approved_snapshot' => $approvedSnapshot,
                 'approved_snapshot_sha256' => hash('sha256', CanonicalJson::encode($approvedSnapshot)),
@@ -87,15 +89,17 @@ final class DemoAiLedger
             if ($failure === null) {
                 DB::table('demo_ai_budgets')->where('day', $day)->increment('reserved_micro_usd', self::RUN_RESERVATION);
                 $this->dispatch($run->id);
+            } else {
+                $run->update(['report_snapshot' => $this->reports->snapshot($run)]);
             }
 
             return $run;
         });
     }
 
-    public function existing(string $workspace, string $sessionHash, string $key): ?DemoAiRun
+    public function existing(string $workspace, string $sessionHash, string $key, ?string $versionHash = null): ?DemoAiRun
     {
-        $identity = hash('sha256', implode('|', [$workspace, $sessionHash, $key, $this->approved->versionHash()]));
+        $identity = hash('sha256', implode('|', [$workspace, $sessionHash, $key, $versionHash ?? $this->approved->versionHash()]));
 
         return DemoAiRun::query()->where('workspace_id', $workspace)->where('session_hash', $sessionHash)
             ->where('idempotency_hash', $identity)->first();
@@ -235,6 +239,7 @@ final class DemoAiLedger
                 'reserved_micro_usd' => self::ATTEMPT_RESERVATION,
                 'pricing_snapshot' => ['version' => 'openai-standard-2026-10-27', 'ordinary_input' => 100, 'cache_read' => 10, 'cache_write' => 125, 'output' => 500, 'unit' => 'nano_usd_per_token'],
                 'request_provenance' => [
+                    'provider' => 'OpenAI',
                     'requested_model' => 'gpt-6-luna', 'request_sha256' => hash('sha256', CanonicalJson::encode($request)),
                     'service_tier' => 'default', 'reasoning_effort' => 'none', 'store' => false,
                     'cache_lifetime' => 'default-30m', 'max_input_tokens' => 8000, 'max_output_tokens' => 1440,
@@ -462,13 +467,14 @@ final class DemoAiLedger
                     break;
                 }
                 DemoAiItem::query()->where('run_id', $run->id)->update(['input_snapshot' => null, 'result' => null]);
-                $run->update(['approved_snapshot' => null, 'source_snapshot' => null, 'purged_at' => $now]);
+                $run->update(['approved_snapshot' => null, 'source_snapshot' => null, 'report_snapshot' => null, 'purged_at' => $now]);
             }
         });
     }
 
     private function finishLocked(DemoAiRun $run, ?string $code = null): void
     {
+        $firstFinalization = $run->finalized_at === null;
         $code ??= $run->finalized_at !== null ? $run->failure_code : null;
         $items = DemoAiItem::query()->where('run_id', $run->id)->orderBy('ordinal')->lockForUpdate()->get();
         foreach ($items as $item) {
@@ -487,6 +493,9 @@ final class DemoAiLedger
             'failure_code' => $code, 'finalized_at' => $run->finalized_at ?? now('UTC'),
             'expires_at' => $run->expires_at ?? now('UTC')->addDays(7),
         ]);
+        if ($firstFinalization && $run->report_snapshot === null && $run->purged_at === null) {
+            $run->update(['report_snapshot' => $this->reports->snapshot($run)]);
+        }
     }
 
     private function releasePool(DemoAiRun $run, int $amount): void

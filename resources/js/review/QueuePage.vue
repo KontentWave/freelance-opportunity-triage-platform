@@ -93,6 +93,7 @@ onMounted(async () => {
                             : "Saved experimental suggestions for human review, never automatic decisions."
                     }}
                 </p>
+                <a v-if="demoMode" href="/demo-ai" class="inline-link">Evaluate fictional alerts with AI</a>
             </div>
             <form method="POST" action="/logout">
                 <input type="hidden" name="_token" :value="csrfToken" />

@@ -12,6 +12,7 @@ use LogicException;
 /**
  * @property array<string, mixed>|null $approved_snapshot
  * @property array<string, mixed>|null $source_snapshot
+ * @property array<string, mixed>|null $report_snapshot
  * @property CarbonImmutable $reservation_day
  * @property CarbonImmutable $admitted_at
  * @property CarbonImmutable $deadline_at
@@ -33,7 +34,7 @@ class DemoAiRun extends Model
     protected function casts(): array
     {
         return [
-            'approved_snapshot' => 'array', 'source_snapshot' => 'array',
+            'approved_snapshot' => 'array', 'source_snapshot' => 'array', 'report_snapshot' => 'array',
             'admitted_at' => 'immutable_datetime', 'started_at' => 'immutable_datetime',
             'heartbeat_at' => 'immutable_datetime', 'deadline_at' => 'immutable_datetime',
             'finalized_at' => 'immutable_datetime', 'expires_at' => 'immutable_datetime',
@@ -44,9 +45,9 @@ class DemoAiRun extends Model
     protected static function booted(): void
     {
         static::updating(function (DemoAiRun $run): void {
-            foreach (['workspace_id', 'session_hash', 'idempotency_hash', 'version_hash', 'approved_snapshot', 'approved_snapshot_sha256', 'source_snapshot', 'source_snapshot_sha256'] as $field) {
+            foreach (['workspace_id', 'session_hash', 'idempotency_hash', 'version_hash', 'approved_snapshot', 'approved_snapshot_sha256', 'source_snapshot', 'source_snapshot_sha256', 'report_snapshot'] as $field) {
                 if ($run->getOriginal($field) !== null && $run->isDirty($field)
-                    && ! ($run->purged_at !== null && in_array($field, ['approved_snapshot', 'source_snapshot'], true) && $run->getAttribute($field) === null)) {
+                    && ! ($run->purged_at !== null && in_array($field, ['approved_snapshot', 'source_snapshot', 'report_snapshot'], true) && $run->getAttribute($field) === null)) {
                     throw new LogicException('Demo AI run identity and snapshots are immutable.');
                 }
             }

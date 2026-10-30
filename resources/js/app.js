@@ -1,6 +1,7 @@
 import { createApp } from "vue";
 import OpportunityPage from "./review/OpportunityPage.vue";
 import QueuePage from "./review/QueuePage.vue";
+import DemoAiPage from "./review/DemoAiPage.vue";
 
 const queueRoot = document.querySelector("#review-queue-app");
 
@@ -14,4 +15,14 @@ if (opportunityRoot) {
     createApp(OpportunityPage, {
         opportunityId: opportunityRoot.dataset.opportunityId,
     }).mount(opportunityRoot);
+}
+
+const demoAiRoot = document.querySelector("#demo-ai-app");
+
+if (demoAiRoot) {
+    createApp(DemoAiPage, {
+        intentUrl: demoAiRoot.dataset.intentUrl,
+        admissionUrl: demoAiRoot.dataset.admissionUrl,
+        statusBase: demoAiRoot.dataset.statusBase,
+    }).mount(demoAiRoot);
 }
