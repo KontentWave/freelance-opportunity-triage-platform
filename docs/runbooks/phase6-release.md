@@ -6,6 +6,7 @@
 
 - Repository baseline: `eaa26d1f8b81ed3fcd6d2f2fca81ac7339677c15`, including merged 6.3 PR #78. Existing 6.3 CI and the guarded shared-original comparison are recorded in [readiness](phase6-readiness.md#slice-63-final-integration-outcome---2026-10-30).
 - Review branch: `feat/phase64-owner-delivery`. The exact frozen PR-head SHA and passing protected checks must accompany the grouped approval. Any code change invalidates that candidate's checks.
+- [Draft PR #80](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/80) preserves the sequential implementation commit `7d4de79` and documentation commit `65f2d5c`. No auto-merge is enabled. The final approval candidate is the PR's frozen final head with its own checks, not an earlier documentation checkpoint.
 - Normal protected integration, never bypass: Quality, Tests / MariaDB 11.4 and Secret scan at the final PR head. After authorized merge, obtain the resulting **exact main SHA** and passing push CI. Download only its `release-candidate-<sha>-<attempt>` artifact, strictly verify the four files/checksums/inventory, and record its archive digest. PR-head results are not release evidence for a different main revision.
 - Proposed unused version: **v1.0.2**, following the existing publication validator's `v1.0.<patch>` convention. No versioning-policy expansion, tag overwrite or publication is authorized by this document. The exact main archive, not a local rebuild or the old v1.0.1 archive, must pass acceptance.
 
@@ -60,6 +61,12 @@ Local checks already executed during implementation:
 
 Fresh locked CI (including audits/secret scan/inventory) at the exact final PR head is required before execution approval; its durable run/check records accompany the candidate rather than substituting older results. The local browser/build used existing installed packages, not a fresh locked install. Initial failed test attempts (output matcher/expected wording and incomplete test-case match) were corrected, not suppressed or described as passes. The complete implementation, tests, migration and documentation diff was reviewed before proposing execution.
 
+### First fresh locked draft-candidate CI - 2026-10-30
+
+VERIFIED: [CI 41118856780](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/41118856780) succeeded for exact PR head `65f2d5c27eec599e65059e01ed8028ce247e50af`. Quality, Tests / MariaDB 11.4 and Secret scan all passed. Logs explicitly show fresh `composer install` and `npm ci`, successful production build, locked Composer/npm audits without reported vulnerabilities, **320 PHPUnit tests / 2,555 assertions**, coverage **90.44% / 93.64% / 96.90%**, **24 browser tests**, release/sync contracts, verified Syft inventory and candidate preparation/validation. This is new **6.4 offline** evidence, not live inference/email acceptance or post-merge release-archive evidence. This documentation-closure update must also pass its own final-head checks; the durable PR records identify that revision/run.
+
+Task infrastructure was cleaned after validation: exact container `116c405882df284a7047742ab1142e51b7d3dc8b8e38509aee9344260fdf9976`, task label, loopback binding and SQL hostname/database were reverified before removing only that disposable container/anonymous volume. Ports 3307, 8011, 8012 and 8013 were confirmed closed. No unrelated container, deployed database or host process was changed.
+
 ## Protected read-only feasibility
 
 VERIFIED on 2026-10-30 through the existing `fotp-public-demo` SSH alias, with strict known-host checking and no host changes:
@@ -74,6 +81,8 @@ VERIFIED on 2026-10-30 through the existing `fotp-public-demo` SSH alias, with s
 - No isolated active acceptance installation exists. Port availability, hard-stop execution and integrated scheduler behavior must be established during the authorized setup; a CLI/symlink check alone is not web-version evidence.
 
 Official model and pricing pages were re-read on 2026-10-30: `gpt-6-luna`, Responses/structured outputs/reasoning none, Standard USD 0.10 input / 0.01 cached / 0.125 default 30-minute writes / 0.50 output per million still match ADR-010. Recheck immediately before use and stop for a revised decision on a material change. Unknown counting fees/endpoint retention remain accepted but **NOT VERIFIED**; no support inquiry, free-counting assertion or guaranteed prepaid hard cap.
+
+[Official Websupport client configuration](https://www.websupport.sk/podpora/kb/nastavenie-posty-v-outlooku-2019/) was also checked: outgoing SMTP uses port **465, SSL/TLS**, with the exact server supplied in the owner's control panel. Do not invent the outgoing hostname from the known IMAP hostname, disable provider protections or assume SMTP authentication from historical IMAP success. The grouped decision can authorize reuse of the protected demo-mailbox credentials/From if the owner chooses; otherwise stage separate SMTP settings in a 0600 `~/.fotp-phase61-operator/smtp.env` file, never chat. No authentication or send was performed.
 
 ## One grouped execution decision
 
