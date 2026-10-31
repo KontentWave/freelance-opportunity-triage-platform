@@ -1,5 +1,7 @@
 # ADR-011: Conditional Database-Queue Execution and Recovery
 
+**2026-10-31 acceptance update:** exact integrated schema-v2 archive ran through real loopback web admission and a dedicated deadline-bounded minute scheduler/database worker. One run retained its original 30-minute deadline and finalized **partial 19/20** after 22 bounded attempts; minimum shared authorization spacing two seconds, maximum 17 operations/rolling minute. No unresolved reservations/uncertainty/jobs remain; original 19 migrations/history/report retained. Owned scheduler/server/tunnel stopped, process overlay disabled, public v1.0.1 unchanged. Failed 20/20 and owner-receipt gates prevented conditional public rollback/activation/release; this does not renew a paid repeat allowance. [Current exact evidence](../runbooks/phase6-release.md#schema-v2-integration-and-new-bounded-acceptance---2026-10-31).
+
 - **Date:** 2026-10-27
 - **Decision owner:** Marcel
 - **Status:** APPROVED planning design and detailed limits; bounded host mechanism empirically supported, integrated application acceptance PENDING

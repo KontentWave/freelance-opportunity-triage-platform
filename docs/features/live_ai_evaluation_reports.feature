@@ -271,6 +271,16 @@ Feature: Bounded authored-alert AI evaluation against the approved public profil
     And the admission schema version changes without changing public profile rubric model or caps
 
   @pending @slice64 @live
+  # 2026-10-31 newly approved schema-v2 acceptance: exact main
+  # e4364291e86f576fc20fcb27890f2abf108b400f, CI 41238369861 attempt 1.
+  # Run 01m69tea8emstgs8ep4dwj513e finalized PARTIAL: 20 selected / 19
+  # succeeded / 1 failed; DEMO-004 evidence-invalid twice, DEMO-003 retry passed.
+  # 22 counts + 22 inferences; USD 0.004872 settled, no outstanding uncertainty.
+  # New report/download/delivery HTML matched; SMTP accepted, duplicate did
+  # not resend, owner reports nonreceipt. No positive receipt was recorded.
+  # Owner required 20/20 valid successes: gate FAILED. Public v1.0.1 remains
+  # disabled; helpers/cron stopped, no new public rollback/activation/release.
+  # New one-run/one-email allowances consumed; no automatic repeat.
   # 2026-10-30 actual execution: docs/runbooks/phase6-release.md,
   # "Resumed bounded execution": exact main 19c92a463b99b8eee21469ad290399875ac08102,
   # CI 41120132226 attempt 1; one run 01m677qrdnpzan84tj7shz9jkv.
@@ -285,7 +295,7 @@ Feature: Bounded authored-alert AI evaluation against the approved public profil
   # @pending remains intentional: no recommendation acceptance or owner receipt.
   Scenario: Authorized integrated staging, owner delivery and release acceptance
     Then actual demo PEEK flag preservation and inference usage are verified
-    And selected live outputs pass the approved schema and evidence validation
+    And all twenty existing approved sources succeed with validated outputs under the approved acceptance threshold
     And one operator-only allowlisted owner delivery is verified separately
     And actual owner receipt is recorded separately from SMTP acceptance
     And the exact release candidate passes live disable and recovery acceptance
