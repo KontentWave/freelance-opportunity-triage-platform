@@ -13,7 +13,7 @@ final class ApprovedDemoInputs
 
     public const RUBRIC_VERSION = 'public-rubric-v2';
 
-    public const SCHEMA_VERSION = 'ai-evaluation-v1';
+    public const SCHEMA_VERSION = 'ai-evaluation-v2';
 
     public const PARSER_VERSION = 'demo-json-v1';
 

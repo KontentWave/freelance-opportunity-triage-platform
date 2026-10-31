@@ -73,6 +73,85 @@ final class OpenAiEvaluationProviderTest extends TestCase
     }
 
     #[Test]
+    public function it_exposes_only_existing_namespaced_non_null_evidence_and_missing_information_identifiers(): void
+    {
+        Http::preventStrayRequests();
+        $approved = app(ApprovedDemoInputs::class)->snapshot();
+        config(['demo_ai.api_key' => 'offline-test-key']);
+        $tokens = $this->createStub(InputTokenBound::class);
+        $provider = new OpenAiEvaluationProvider(new EvaluationOutput, $tokens, app(MonotonicClock::class), app(CountingPolicy::class));
+
+        foreach (range(1, 20) as $number) {
+            $input = $this->input($number);
+            $request = $provider->prepare($input, $approved);
+            $schema = $request['text']['format']['schema'];
+            $evidence = $schema['properties']['reasons']['items']['properties']['evidence']['items']['properties']['field']['enum'];
+            foreach (['input' => $input, 'profile' => $approved['profile']] as $prefix => $fields) {
+                foreach ($fields as $field => $value) {
+                    if ($value === null) {
+                        $this->assertNotContains($prefix.'.'.$field, $evidence);
+                    } else {
+                        $this->assertContains($prefix.'.'.$field, $evidence);
+                    }
+                    $this->assertNotContains($field, $evidence);
+                }
+            }
+            $this->assertCount(count(array_filter($input, fn (mixed $value): bool => $value !== null)) + count($approved['profile']), $evidence);
+            $missing = $schema['properties']['missing_information']['items']['enum'];
+            $this->assertContains('hours_per_week_max', $missing);
+            $this->assertContains('availability', $missing);
+            $this->assertNotContains('input.hours_per_week_max', $missing);
+            $this->assertNotContains('profile.availability', $missing);
+            $this->assertSame(array_values(array_unique(array_merge(array_keys($input), ApprovedDemoInputs::CRITERIA))), $missing);
+            $this->assertSame('ai_evaluation_v2', $request['text']['format']['name']);
+            $this->assertSame('public-evaluation-v2', $approved['prompt_version']);
+        }
+        Http::assertNothingSent();
+    }
+
+    #[Test]
+    public function it_rejects_observed_bare_evidence_names_without_repairing_provider_output(): void
+    {
+        Http::preventStrayRequests();
+        $result = $this->evaluationResult();
+        $result['reasons'][0]['evidence'][0]['field'] = 'description';
+        $body = $this->responseBody();
+        $body['output'][0]['content'][0]['text'] = json_encode($result, JSON_THROW_ON_ERROR);
+        Http::fake(['https://api.openai.com/v1/responses' => Http::response($body)]);
+        [$provider, $input, $approved, $request] = $this->prepared();
+
+        $outcome = $provider->evaluate($request, $input, $approved, fn (array $count): bool => true, app(MonotonicClock::class)->now() + 40);
+
+        $this->assertNull($outcome->result);
+        $this->assertSame('demo_ai.evidence_invalid', $outcome->failureCode);
+        $this->assertSame(368, $outcome->costMicroUsd);
+        $this->assertFalse($outcome->uncertain);
+        Http::assertSentCount(1);
+    }
+
+    #[Test]
+    public function it_accepts_exact_job_and_profile_quotes_only_with_their_declared_namespaces(): void
+    {
+        Http::preventStrayRequests();
+        $result = $this->evaluationResult();
+        $result['reasons'][0]['evidence'][] = [
+            'field' => 'profile.capabilities',
+            'quote' => 'Relevant focus includes manual/exploratory testing and reproducible bug reports.',
+        ];
+        $body = $this->responseBody();
+        $body['output'][0]['content'][0]['text'] = json_encode($result, JSON_THROW_ON_ERROR);
+        Http::fake(['https://api.openai.com/v1/responses' => Http::response($body)]);
+        [$provider, $input, $approved, $request] = $this->prepared();
+
+        $outcome = $provider->evaluate($request, $input, $approved, fn (array $count): bool => true, app(MonotonicClock::class)->now() + 40);
+
+        $this->assertSame($result, $outcome->result);
+        $this->assertNull($outcome->failureCode);
+        $this->assertSame(368, $outcome->costMicroUsd);
+        Http::assertSentCount(1);
+    }
+
+    #[Test]
     public function it_retains_maximum_reservations_for_connection_loss_and_missing_cache_usage(): void
     {
         Http::preventStrayRequests();

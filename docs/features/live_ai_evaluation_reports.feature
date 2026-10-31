@@ -256,8 +256,36 @@ Feature: Bounded authored-alert AI evaluation against the approved public profil
       And AI results, provider-call counts, accounting, expiry and unrelated history are unchanged
       And content cleanup preserves unresolved delivery and inference liabilities
 
+  @slice64 @offline
+  # Regression mapping: OpenAiEvaluationProviderTest and OpenAiInputTokenBoundTest.
+  # 2026-10-31 one paid diagnostic established one namespace ambiguity; it did
+  # not pass live acceptance. New v2 source is local/offline only, not deployed.
+  Scenario: Strict response schema declares the unchanged evidence identifier contract
+    Given the approved normalized authored input and public profile snapshot
+    When the provider prepares schema ai-evaluation-v2
+    Then evidence field enums contain only the actual non-null input and profile namespaces
+    And missing information enums contain only existing bare input fields and criterion identifiers
+    And counting and inference use the same exact input-dependent schema and request hash
+    And returned bare evidence names and invented quotes still fail without output repair
+    And exact prefixed job and profile quotes retain existing validation behavior
+    And the admission schema version changes without changing public profile rubric model or caps
+
   @pending @slice64 @live
+  # 2026-10-30 actual execution: docs/runbooks/phase6-release.md,
+  # "Resumed bounded execution": exact main 19c92a463b99b8eee21469ad290399875ac08102,
+  # CI 41120132226 attempt 1; one run 01m677qrdnpzan84tj7shz9jkv.
+  # TLS/PEEK and 20-source preservation, bounded worker, usage reconciliation,
+  # immutable report/download, one SMTP acceptance/duplicate prevention and
+  # actual HTTPS disabled-code rollback were exercised.
+  # Acceptance FAILED: 20 selected / 0 succeeded / 20 failed, 40 attempts:
+  # 22 evidence-invalid, 17 output-invalid, 1 incomplete; USD 0.008835 inference.
+  # Counting fees remain unknown; SMTP acceptance is not receipt.
+  # Owner reports nonreceipt; no receipt record or resend. Public v1.0.1 restored,
+  # switches disabled, owned cron/helpers stopped/removed, no v1.0.2 release.
+  # @pending remains intentional: no recommendation acceptance or owner receipt.
   Scenario: Authorized integrated staging, owner delivery and release acceptance
     Then actual demo PEEK flag preservation and inference usage are verified
+    And selected live outputs pass the approved schema and evidence validation
     And one operator-only allowlisted owner delivery is verified separately
+    And actual owner receipt is recorded separately from SMTP acceptance
     And the exact release candidate passes live disable and recovery acceptance

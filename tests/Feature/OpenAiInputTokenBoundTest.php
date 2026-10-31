@@ -49,7 +49,7 @@ final class OpenAiInputTokenBoundTest extends TestCase
             Http::assertSent(fn (Request $sent): bool => $sent->url() === 'https://api.openai.com/v1/responses/input_tokens'
                 && $sent['input'] === CanonicalJson::encode($input)
                 && $sent['instructions'] === CanonicalJson::encode($approved)
-                && $sent['text']['format']['schema'] === app(EvaluationOutput::class)->schema()
+                && $sent['text']['format']['schema'] === app(EvaluationOutput::class)->schema($input, $approved)
                 && $sent['text']['format']['strict'] === true && $sent['model'] === 'gpt-6-luna'
                 && $sent['reasoning'] === ['effort' => 'none'] && $sent['truncation'] === 'disabled'
                 && $sent['tools'] === [] && ! isset($sent['max_output_tokens']) && ! isset($sent['store']));

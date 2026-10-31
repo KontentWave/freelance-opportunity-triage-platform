@@ -48,6 +48,16 @@ APPROVED: no visitor email collection or sending endpoint. Later owner delivery 
 
 AI results need their own immutable snapshots, not overwrites of deterministic scores, enrichment or feedback. Source/prompt/profile changes require new version/hash identities. A deliberate new run may re-evaluate approved sources; HTTP retries and job redelivery may not duplicate paid work. No real-alert republication, capability invention, profile personalization or private-source fallback is permitted.
 
+### 6.4 bounded live evidence - 2026-10-30
+
+Exactly 20 approved `authored-demo-v2` messages were APPENDed once into the dedicated folder; real certificate-validated EXAMINE/BODY.PEEK selected their pinned identities/hashes and preserved persistent flags/raw content. No genuine alerts, alternative corpus or private source adapter was used. The single run produced **no accepted recommendations** after its permitted attempts; no general accuracy or expected-band success is claimed. See the [actual failed acceptance](../runbooks/phase6-release.md#resumed-bounded-execution---2026-10-30).
+
+One existing finalized **failure report** was SMTP-accepted through the operator-only command; its duplicate trigger did not send another copy. **Owner nonreceipt is OPERATOR-REPORTED**, `receipt_reported_at` remains null, and no `--receipt` command was fabricated. The owner's later source/sender clarification already matched the protected project mailbox, with the sole recipient distinct; no identity/configuration change or resend followed. The one-email allowance is consumed. Public runtime remains disabled and v1.0.1 restored; failed acceptance is not opt-in/release authorization.
+
+### Evidence schema clarification - 2026-10-31
+
+The separately approved DEMO-001 diagnostic returned exact job quotes under bare `description`, while the validator requires `input.description`; correctly prefixed profile references were present. Prefix-only offline control passes the unchanged validator, establishing this case's namespace ambiguity, not general quality or all historical failure causes. The approved local correction versions only the output transport schema to `ai-evaluation-v2`, closes evidence fields to actual non-null `input.*` / `profile.*`, and closes missing-information IDs to the existing bare input fields/criteria. Public prompt/profile/rubric/corpus remain unchanged; no live output is normalized or invented. Admission and request hashes consequently change, while original run snapshots/reports stay immutable. Local provider/counting regressions pass; correction is not integrated/deployed/live accepted. [Exact diagnostic and scope](../runbooks/phase6-release.md#one-item-diagnostic-and-offline-schema-correction---2026-10-31).
+
 ## References
 
 - [ADR-004: private transport and historical host evidence](ADR-004-scheduled-imap-polling.md)
