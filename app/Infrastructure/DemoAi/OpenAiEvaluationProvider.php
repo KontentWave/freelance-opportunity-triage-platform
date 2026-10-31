@@ -2,6 +2,7 @@
 
 namespace App\Infrastructure\DemoAi;
 
+use App\Domain\DemoAi\ApprovedDemoInputs;
 use App\Domain\DemoAi\CountingPolicy;
 use App\Domain\DemoAi\DemoAiException;
 use App\Domain\DemoAi\EvaluationOutput;
@@ -46,7 +47,10 @@ final class OpenAiEvaluationProvider implements EvaluationProvider
             'max_output_tokens' => 1440, 'truncation' => 'disabled',
             'instructions' => CanonicalJson::encode($approved),
             'input' => CanonicalJson::encode($input),
-            'text' => ['format' => ['type' => 'json_schema', 'name' => 'ai_evaluation_v1', 'strict' => true, 'schema' => $this->output->schema()]],
+            'text' => ['format' => [
+                'type' => 'json_schema', 'name' => str_replace('-', '_', ApprovedDemoInputs::SCHEMA_VERSION),
+                'strict' => true, 'schema' => $this->output->schema($input, $approved),
+            ]],
         ];
     }
 

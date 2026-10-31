@@ -7,12 +7,21 @@ use Illuminate\Validation\Rule;
 
 final class EvaluationOutput
 {
-    /** @return array<string, mixed> */
-    public function schema(): array
+    /** @param array<string, mixed> $input
+     * @param  array<string, mixed>  $approved
+     * @return array<string, mixed>
+     */
+    public function schema(array $input, array $approved): array
     {
         $evidence = $this->object([
-            'field' => ['type' => 'string'],
-            'quote' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 160],
+            'field' => [
+                'type' => 'string', 'enum' => array_keys($this->evidenceFields($input, $approved)),
+                'description' => 'Use the exact namespaced identifier: input.<field> for alert fields or profile.<field> for public profile fields. Bare field names and null fields are not evidence.',
+            ],
+            'quote' => [
+                'type' => 'string', 'minLength' => 1, 'maxLength' => 160,
+                'description' => 'An exact substring of the cited field, not a paraphrase. For non-string values, quote their JSON representation.',
+            ],
         ]);
         $reason = $this->object([
             'criterion_id' => ['type' => 'string', 'enum' => ApprovedDemoInputs::CRITERIA],
@@ -24,7 +33,11 @@ final class EvaluationOutput
             'source_id' => ['type' => 'string'],
             'recommendation' => ['type' => 'string', 'enum' => ['APPLY', 'MAYBE', 'SKIP']],
             'reasons' => ['type' => 'array', 'minItems' => 1, 'maxItems' => 4, 'items' => $reason],
-            'missing_information' => ['type' => 'array', 'maxItems' => 8, 'items' => ['type' => 'string']],
+            'missing_information' => [
+                'type' => 'array', 'maxItems' => 8,
+                'items' => ['type' => 'string', 'enum' => $this->missingInformationIdentifiers($input)],
+                'description' => 'Use distinct input field names or rubric criterion IDs from this enum, not evidence namespaces or prose. Identify every material requirement that needs clarification.',
+            ],
         ]);
     }
 
@@ -47,20 +60,12 @@ final class EvaluationOutput
             'value.reasons.*.evidence.*.field' => ['required', 'string'],
             'value.reasons.*.evidence.*.quote' => ['required', 'string', 'max:160'],
             'value.missing_information' => ['present', 'array', 'list', 'max:8'],
-            'value.missing_information.*' => ['required', 'string', 'distinct', Rule::in(array_merge(array_keys($input), ApprovedDemoInputs::CRITERIA))],
+            'value.missing_information.*' => ['required', 'string', 'distinct', Rule::in($this->missingInformationIdentifiers($input))],
         ]);
         if ($validator->fails()) {
             throw new DemoAiException('demo_ai.output_invalid');
         }
-        $evidenceFields = [];
-        foreach (['input' => $input, 'profile' => $approved['profile']] as $prefix => $fields) {
-            foreach ($fields as $field => $content) {
-                if ($content !== null) {
-                    $evidenceFields[$prefix.'.'.$field] = is_string($content)
-                        ? $content : json_encode($content, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-                }
-            }
-        }
+        $evidenceFields = $this->evidenceFields($input, $approved);
         foreach ($value['reasons'] as $reason) {
             foreach ($reason['evidence'] as $evidence) {
                 if (! isset($evidenceFields[$evidence['field']])
@@ -70,6 +75,33 @@ final class EvaluationOutput
             }
         }
         $this->validateHardConstraints($value, $input);
+    }
+
+    /** @param array<string, mixed> $input
+     * @param  array<string, mixed>  $approved
+     * @return array<string, string>
+     */
+    private function evidenceFields(array $input, array $approved): array
+    {
+        $evidenceFields = [];
+        foreach (['input' => $input, 'profile' => $approved['profile']] as $prefix => $fields) {
+            foreach ($fields as $field => $content) {
+                if ($content !== null) {
+                    $evidenceFields[$prefix.'.'.$field] = is_string($content)
+                        ? $content : json_encode($content, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                }
+            }
+        }
+
+        return $evidenceFields;
+    }
+
+    /** @param array<string, mixed> $input
+     * @return list<string>
+     */
+    private function missingInformationIdentifiers(array $input): array
+    {
+        return array_values(array_unique(array_merge(array_keys($input), ApprovedDemoInputs::CRITERIA)));
     }
 
     /** @param array<string, mixed> $value
