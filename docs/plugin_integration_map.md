@@ -1,5 +1,19 @@
 # Integration boundaries
 
+## Latest schema-v2 runtime coupling - 2026-10-31
+
+No new application hook, table, configuration key or dependency was added after the offline schema fix. [PR #82](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/82), exact main `e4364291e86f576fc20fcb27890f2abf108b400f`, passed its own independent CI/archive checks; checkpoint PR #81 and original archive remain unchanged.
+
+| Verified seam | Actual new evidence / risky coupling |
+| --- | --- |
+| Versioned schema / count / inference / validators | All 22 actual schema-v2 request-bound counts match inferred full hashes, 1,314-1,398 input tokens; unchanged validators accepted 19/20 sources. DEMO-004 failed exact evidence twice, DEMO-003 succeeded on retry. Closing the namespace enum does not guarantee exact quotes; no raw failed response was retained to establish a new root cause. Approved 20/20 gate failed, not weakened. |
+| Real loopback app / shared configuration / bounded scheduler | Exact archive assets served on loopback with authenticated forwarding; real minute scheduler inherited a new protected 45-minute process overlay. Public shared environment stayed disabled, migration inventory matched all existing 19 without migration/reseed. Owned cron/server/tunnel removed/stopped and overlay retired disabled; public current never switched away from v1.0.1. |
+| Existing IMAP / source identities / preservation | Existing 20 sources reverified through real TLS EXAMINE/PEEK, UIDVALIDITY 1793117440 / UIDNEXT 21, before/after raw hashes and persistent flags unchanged. No APPEND, genuine inbox or private-intake access. |
+| Accounting / partial report / SMTP receipt | One run `01m69tea8emstgs8ep4dwj513e`, 22 counts/inferences, USD 0.004872 known modeled inference settled, zero reservations/uncertainty/jobs. Unknown count fees separate. Matching stored/download/delivery HTML hash `812077b286c0ab11490119a5a4e81e12eed3788405aabde037bedc89c2550c86`; one new SMTP acceptance, duplicate state prevented resend, owner reports nonreceipt. No fabricated receipt or old-report resend. |
+| Recovery / public verification / release gate | Protected SQL/environment/storage readability is not isolated-restore or host-loss proof. All 11 original table digests and original report preserved; actual HTTPS old CSS/JS, safe seeded queue/session/logout pass. Failed 20/20 and receipt gates stopped conditional public rollback/activation/v1.0.2; new run/email allowances exhausted. |
+
+The original dated sections below remain historical. [Full current evidence and guarded shared-original comparison](runbooks/phase6-release.md#schema-v2-integration-and-new-bounded-acceptance---2026-10-31); no shared publication/state replacement.
+
 ## Phase 6.2 local backend - 2026-10-28
 
 No runtime plugins or external services were installed. This map records the Laravel integration seams and risky couplings discovered during the offline slice.

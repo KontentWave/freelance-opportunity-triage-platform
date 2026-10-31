@@ -1,5 +1,7 @@
 # Phase 6.4 owner delivery and bounded release acceptance
 
+**Latest execution outcome - 2026-10-31:** schema v2 is integrated through [PR #82](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/82); its independent exact-main archive passed verification and one newly approved real acceptance run. The run finalized **PARTIAL: 20 selected / 19 succeeded / 1 failed**, so the explicitly approved **20/20 release gate FAILED**. Modeled inference settled **USD 0.004872**, zero outstanding reservations/uncertainty; counting fees remain unknown. One new partial-report email was SMTP-accepted, duplicate triggering did not resend, and the owner reports **nonreceipt**. Public **v1.0.1 remains served with all switches disabled**; no public candidate switch, new rollback rehearsal, activation or v1.0.2 publication occurred. [Exact new evidence and remaining blockers](#schema-v2-integration-and-new-bounded-acceptance---2026-10-31).
+
 **2026-10-31 new execution scope APPROVED:** after independent offline verification, the owner approved a separate schema-v2 fix PR (preserving open checkpoint PR #81), normal protected integration, independent exact-main CI/four-file artifact verification, protected public-demo backup and inactive installation, and real loopback/SSH-tunnel acceptance with bounded dedicated scheduling. Existing 19 migrations/history and the already populated 20-message corpus must be retained; no blind migrations, reseeding or APPEND.
 
 The new allowance is **one run**, at most 20 items/two existing-policy attempts per item (**40 counts + 40 inferences maximum**), **USD 0.075680 maximum initial modeled-inference reservation**, original **30-minute admission deadline**, and **45-minute helper window**. Existing concurrency/rate limits and USD 1/day inference-only ledger remain; count fees/endpoint retention remain unknown under the existing accepted-risk decision. Recheck all UTC liabilities before admission and stop dispatch on uncertainty; no whole-run repeat.
@@ -8,9 +10,69 @@ The owner explicitly selected **all 20 approved inputs selected and 20/20 valid 
 
 **Independent local checks in this continuation:** 50 provider/counting tests / 1,324 assertions PASS with unreachable offline database configuration and controlled HTTP; project PHPStan, dirty Pint and whitespace checks PASS. Installed Laravel 13.36.0/Boost 2.10.3 verified; no dependency change/reinstallation. Current branch/head, all 14 modified source/evidence files, open PR #81 and protected main `19c92a463b99b8eee21469ad290399875ac08102` were reverified. No new full-suite/browser/coverage CI, host mutation, paid operation, email or release is claimed by this entry.
 
-**2026-10-31 latest outcome:** the owner separately approved one one-item/one-attempt diagnostic, then a narrowly scoped **offline schema-contract fix**. The diagnostic failed exact-evidence validation for a bare field name; its modeled inference settled USD **0.000291**, with one counting fee still unknown. The local v2 schema now declares the existing allowed evidence and missing-information identifiers; focused tests/static analysis pass, but these changes are **not committed, integrated, deployed or live accepted**. Public v1.0.1 and all disabled switches remain unchanged. Further paid work, email and release are not authorized by the offline-fix decision. See [diagnostic and offline correction](#one-item-diagnostic-and-offline-schema-correction---2026-10-31).
+**Historical offline checkpoint - 2026-10-31:** the owner separately approved one one-item/one-attempt diagnostic, then a narrowly scoped **offline schema-contract fix**. The diagnostic failed exact-evidence validation for a bare field name; its modeled inference settled USD **0.000291**, with one counting fee still unknown. The local v2 schema now declares the existing allowed evidence and missing-information identifiers; focused tests/static analysis pass, but these changes are **not committed, integrated, deployed or live accepted**. Public v1.0.1 and all disabled switches remain unchanged. Further paid work, email and release are not authorized by the offline-fix decision. See [diagnostic and offline correction](#one-item-diagnostic-and-offline-schema-correction---2026-10-31).
 
 **2026-10-30 latest outcome: offline implementation and protected integration COMPLETE; the one bounded live acceptance FAILED.** Normal artifact retrieval succeeded on resumption without an authorization bypass. The exact candidate selected 20 authored alerts, but none produced an accepted recommendation after the permitted 40 attempts. One failure-report email was SMTP-accepted; the owner reports nonreceipt. The public site was restored to v1.0.1 after an HTTPS-verified, data-preserving disabled-code rehearsal. Feature, counting, scheduler and owner delivery are disabled; v1.0.2 is not published. See [actual resumed execution](#resumed-bounded-execution---2026-10-30). Phases 1-5, previous releases, historical audits and the unsuccessful product-feasibility result are unchanged.
+
+## Schema-v2 integration and new bounded acceptance - 2026-10-31
+
+### Exact protected integration and independent archive
+
+All 14 existing modified source/evidence files were preserved. Separate branch `fix/phase64-schema-contract-v2` retained implementation commit `8ba67e0` and documentation/approval commit **`8c4e21db9ea25a91126f08faceafd5e704cedf85`**. [PR #82](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/82) passed [final-head CI 41238051695](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/41238051695), then normal protected squash integration produced **`e4364291e86f576fc20fcb27890f2abf108b400f`**. An initially mistyped match-head argument was rejected before merging; the verified exact head was subsequently supplied. No protection or runtime denial was bypassed. Checkpoint PR #81 remains OPEN at its unchanged `4cac97bf0f49acb86607ab6c12d53d02917346a9`.
+
+VERIFIED independently for that exact merge: push-to-main [CI 41238369861 / attempt 1](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/41238369861) completed Quality, Tests / MariaDB 11.4 and Secret scan successfully. Its logs report **323 PHPUnit tests / 3,645 assertions**, **24 browser tests**, **90.48% overall / 93.64% parser-domain / 96.90% triage** coverage, locked installation/build, audits and release/inventory validation. These are fresh new-revision checks, not the original candidate's historical results.
+
+Only unexpired artifact `release-candidate-e4364291e86f576fc20fcb27890f2abf108b400f-1`, ID **13056850549**, was retrieved. GitHub ZIP digest `ea6f7dfea1fac6ef6861d2d21af3589ec06f333d09b30a840cb72520189aecd3` is distinct from the application archive. Exact four-file checks, strict checksums/manifest, safe archive inventory and dependency inventory against both archived lockfiles passed locally; transferred hashes matched on the protected host.
+
+| File | Verified SHA-256 |
+| --- | --- |
+| `freelance-opportunity-triage-platform-e4364291e86f576fc20fcb27890f2abf108b400f.tar.gz` | `1e4a5695fa5fcc3d8477c3fdd1dd29ae355055aa0252e985dbd614cfa6b41dab` |
+| `candidate.json` | `3a958d37024024f91841f1a8d9a10c680d2cd944bfceb811d03d909095842b1a` |
+| `sbom.cdx.json` | `1dcb9e061c1423c3cb786f6add3f69613644e1f2d228a167dcf4d3d2d22fe802` |
+| `SHA256SUMS` | `120b8438ed357aebcf894610d0efa4c48538f81b021aa6253f5f338494dd2fda` |
+
+Original archive `19c92a463b99b8eee21469ad290399875ac08102` still hashes to `043303428b0582cef203b99b9490b0638d4db95da341daabb2872e3244578712`; it and its failed run/report/accounting remain historical, not substituted or overwritten.
+
+### Protected staging and one actual run
+
+Strict-host-key/BatchMode SSH reverified public-demo isolation, dedicated MariaDB, unchanged shared environment/key/storage and disabled private intake/all four switches. Explicit `/usr/bin/php8.4` is still 8.4.27. Protected original credential/recipient files remained owned regular 0600 files in the 0700 operator directory; values were not exposed or changed. A new 0700 protected recovery set contains completed consistent SQL dump, environment, readable storage archive/inventory, checksums and absent-crontab baseline. **No isolated restore or host-loss recovery was verified.**
+
+The exact archive was installed inactive with locked production Composer dependencies/platform checks, without rebuilding assets. Its migration inventory exactly matches the **19 already applied migrations**; **no migrations, seeding, reset or down operation ran**. A new process-only 45-minute overlay reused approved credential/corpus/recipient identities while public shared configuration stayed byte-for-byte disabled. Real PHP application bound only `127.0.0.1:8014`, reached through loopback-only SSH forwarding; actual served CSS/JS matched the new archive before admission. The initial launcher working-directory error and host crontab long-filename limitation were corrected before paid admission; neither was a model failure or permission denial.
+
+Real certificate-validated EXAMINE/BODY.PEEK reverified the existing **20 authored-demo-v2 messages**, UIDVALIDITY **1793117440**, UIDNEXT **21**, identities/approved hashes and unchanged raw contents/persistent flags before/after the run; session-local `Recent` was excluded from persistent-flag comparison. **No APPEND, mailbox move/delete or genuine-mail access occurred.** A single owned minute scheduler invoked the unchanged dedicated bounded worker/recovery through explicit PHP 8.4, inherited process-only configuration and the original helper deadline.
+
+Immediately before browser admission, actual UTC settled inference was **291 micro-USD**, zero all-day reservations/uncertainty/jobs and no accounting block. The approved admission reservation remained **75,680 micro-USD**. The one real web-admitted run **`01m69tea8emstgs8ep4dwj513e`** retained admission **20:29:28Z**, original deadline **20:59:28Z**, and finalized **20:33:13Z**:
+
+| Actual result | Verified value |
+| --- | --- |
+| Final state / counts | **partial / 20 selected / 19 succeeded / 1 failed** |
+| Count / inference operations | **22 / 22**, at most two attempts/item |
+| Failed attempts | DEMO-004 attempts 1 and 2, DEMO-003 attempt 1: `demo_ai.evidence_invalid`; DEMO-003 retry succeeded |
+| Model / exact request identity | All returned `gpt-6-luna`; every authoritative count hash matched its inferred full request |
+| Full schema-v2 input count | **1,314-1,398**, all within 8,000; old v1 counts were not reused |
+| Shared authorization spacing / rolling minute | Minimum **2 seconds**, maximum **17 operations/minute** |
+| Modeled inference settlement | **4,872 micro-USD = USD 0.004872**, all 22 outcomes known |
+| Outstanding reservation / uncertainty / jobs | **0 / 0 / 0** |
+| UTC settled total, including earlier diagnostic | **5,163 micro-USD** |
+| Counting fees / endpoint-specific retention | **NOT VERIFIED**, unchanged accepted-risk exception |
+
+The 19 stored results passed unchanged validators on independent reread. Their recommendations match the authored expected bands and no obvious hard-constraint conflict was found in the bounded review; this is not a general accuracy/commercial-usefulness claim. No raw failed model responses were captured, so **the remaining DEMO-004 exact-evidence failure is not causally diagnosed**. The schema namespace correction did not establish universal quote correctness. No output was repaired or retry allowance extended, and no second whole run was admitted.
+
+### Report, delivery, safe stop and remaining gates
+
+Real browser finalization/refresh, matching report/download bytes, filename, script/external-resource exclusion and guest/foreign-session denial passed with zero observed page errors/outside-origin browser requests. Partial report HTML is **107,913 bytes**, SHA-256 **`812077b286c0ab11490119a5a4e81e12eed3788405aabde037bedc89c2550c86`**; the durable delivery HTML hash matches it.
+
+One new `demo-ai:deliver-owner` invocation was **SMTP-accepted at 20:34:09Z**. Duplicate invocation returned existing accepted state without another send. The protected sole recipient/source identity was unchanged; the old accepted report was not resent. The owner explicitly answered **“Not received”** for this new run (OPERATOR-REPORTED), recorded separately in protected evidence; **no positive receipt timestamp/reference was fabricated**.
+
+Because **19/20 fails the newly approved 20/20 gate**, and owner receipt also remains absent, conditional public code switching/rollback rehearsal, activation and v1.0.2 publication were **NOT EXECUTED**. The owned cron was removed only after exact readback against its owned entry and absent original baseline; bounded server/tunnel stopped, process overlay disabled/retired, active helper removed. Public `current` never left **v1.0.1 / `7806994bfe639ffc3185f6d3dd742511d36b9870`**. Final actual HTTPS asset hashes, seeded authenticated queue/reload, secure isolated session, absent live link and logout/guest JSON 401 passed at **20:40:16.049Z**; an earlier check used an incorrect API URL and was corrected to the documented `/review/v1/opportunities` route.
+
+All **11 original historical-table counts/digests**, including deterministic evaluations/skills and private-intake tables, and the original immutable report were reverified unchanged. Original and new reports/accounting/delivery liabilities remain on the same 19-migration schema; no jobs, uncertainty, reservations, active task cron or paid helper remain. Prior v1.0.0/v1.0.1 tag/asset identities were rechecked; unused v1.0.2 was not created.
+
+Protected new recovery/evidence lives at `~/apps/fotp-demo/recovery-phase64-schema-v2-20261031/`; verified assets at `~/apps/fotp-demo/incoming-phase64-schema-v2-20261031/`, inactive installation at the exact SHA. `runtime.disabled.env` and `retired-operator.php` are evidence, not an active configuration/scheduler. Never reenable or rerun them automatically.
+
+Before the narrow sheet/roadmap updates, guarded read-only original comparisons at **20:38:50.286Z / 20:38:52.461Z** reconfirmed unchanged saved remote baselines (`71d35f9f917f61c1fd9c7007988b73a909502b1494c4852dce3210b2329858d9` / `10ce119dc3f834b56351ee75928207cf9528024f2869755004166c347862fc21`). Preserved pre-edit repository hashes were `ee4e3f7b538b51f79379e3df1a5765089d23da2d8ed749c7808b9ea59175ce67` / `7bd74c065d623759f4031bcd5c8cf82b188093006fd3b57d41d9b065eaa82d0e`. No document/state replacement, force pull or shared publication occurred.
+
+**Remaining blockers:** DEMO-004 evidence failure and new owner nonreceipt. The new one-run/one-email allowance is consumed. Further paid work/email needs another bounded decision; do not silently lower the accepted 20/20 gate or repeat for cleaner results. Phase 6.4 and Phase 6 remain incomplete. Later documentation-only integration does not replace this exact tested archive.
 
 ## Baseline and candidate
 

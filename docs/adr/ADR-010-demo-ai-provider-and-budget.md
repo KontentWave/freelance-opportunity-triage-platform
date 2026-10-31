@@ -1,5 +1,7 @@
 # ADR-010: Bounded AI Provider and Hard Usage Budget
 
+**2026-10-31 acceptance update:** integrated schema-v2 candidate `e4364291e86f576fc20fcb27890f2abf108b400f` passed new independent CI/archive checks. One newly bounded live run made **22 counts + 22 inferences**, actual full-input counts **1,314-1,398**, exact counted/inferred hashes matched, selected settings/rates reverified unchanged. **USD 0.004872 modeled inference** settled with zero remaining reservations/uncertainty; counting fees/endpoint retention remain unverified, not free or covered by the inference-only cap. Partial **19/20** fails the approved 20/20 gate; no further dispatch/run authorized. [Actual outcomes and exhausted allowance](../runbooks/phase6-release.md#schema-v2-integration-and-new-bounded-acceptance---2026-10-31). Historical v1 measurements below do not certify v2 requests.
+
 - **Date:** 2026-10-27
 - **Decision owner:** Marcel
 - **Status:** APPROVED for planning; model metadata access VERIFIED and account/data settings OPERATOR-REPORTED on 2026-10-28; paid inference acceptance deferred
@@ -30,7 +32,7 @@ Input: source ID; title (160 characters); description (2,400 characters); up to 
 
 Bound lists to 8 device strings of 120 characters and 20 location strings of 80 characters; client country to 80 characters. Contract type is hourly/fixed/null; nonnegative finite monetary values use at most two decimal places, weekly hours are 0-168, proposal count a nonnegative integer, rating 0-5, verification boolean/null and posted time ISO-8601/null. Reject inconsistent bounds/types or oversized content, never silently clip a hard requirement. Final serialized byte/token guards apply even when individual fields fit.
 
-Response schema `ai-evaluation-v1`, all keys required, `additionalProperties=false` throughout; cap the received HTTP response at 64 KiB before decoding (oversize/absent usage retains the maximum attempt reservation):
+Current response schema `ai-evaluation-v2` (historical v1 superseded by the identifier-contract correction), all keys required, `additionalProperties=false` throughout; cap the received HTTP response at 64 KiB before decoding (oversize/absent usage retains the maximum attempt reservation):
 
 - `source_id`: exact requested source identity.
 - `recommendation`: enum APPLY / MAYBE / SKIP.

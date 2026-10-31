@@ -1,5 +1,7 @@
 # ADR-009: Authored Demo Inputs and Public Evaluation Profile
 
+**2026-10-31 acceptance update:** the integrated schema-v2 exact archive reused the existing approved 20 messages with real TLS/PEEK identities/content/persistent flags preserved; no APPEND or corpus/profile change. New live run finalized partial **19/20**, below the owner-approved 20/20 gate. One new immutable partial-report email was SMTP-accepted without duplicate resend, but the owner reports nonreceipt; no receipt fabricated, activation or release. The original report/accounting and public disabled v1.0.1 remain preserved. [Exact current evidence](../runbooks/phase6-release.md#schema-v2-integration-and-new-bounded-acceptance---2026-10-31).
+
 - **Date:** 2026-10-27
 - **Decision owner:** Marcel
 - **Status:** APPROVED for planning, including public v2 inputs and final corpus content; host/access and owner-attested configuration prerequisites recorded 2026-10-28, live acceptance deferred
