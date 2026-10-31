@@ -1,6 +1,16 @@
 # Phase 6.4 owner delivery and bounded release acceptance
 
-**2026-10-30: offline implementation and protected integration COMPLETE; live/release acceptance PENDING.** The owner approved the grouped execution sequence below, but exact-main artifact retrieval was blocked by the tool authorization gate before host mutation or live dispatch. The public feature, counting, scheduler and owner-delivery switches remain disabled. Phases 1-5, previous releases, historical audits and the unsuccessful product-feasibility result are unchanged.
+**2026-10-31 new execution scope APPROVED:** after independent offline verification, the owner approved a separate schema-v2 fix PR (preserving open checkpoint PR #81), normal protected integration, independent exact-main CI/four-file artifact verification, protected public-demo backup and inactive installation, and real loopback/SSH-tunnel acceptance with bounded dedicated scheduling. Existing 19 migrations/history and the already populated 20-message corpus must be retained; no blind migrations, reseeding or APPEND.
+
+The new allowance is **one run**, at most 20 items/two existing-policy attempts per item (**40 counts + 40 inferences maximum**), **USD 0.075680 maximum initial modeled-inference reservation**, original **30-minute admission deadline**, and **45-minute helper window**. Existing concurrency/rate limits and USD 1/day inference-only ledger remain; count fees/endpoint retention remain unknown under the existing accepted-risk decision. Recheck all UTC liabilities before admission and stop dispatch on uncertainty; no whole-run repeat.
+
+The owner explicitly selected **all 20 approved inputs selected and 20/20 valid successful results**, no unresolved uncertainty or obvious rubric violations, as the new recommendation acceptance gate. All isolation, real PEEK preservation, report consistency, accounting, browser and recovery criteria also apply. At most **one new finalized report email** to the existing protected sole recipient is authorized through the implemented command, with duplicate-state verification and **no old-report resend or mail retry**. Record receipt only after explicit owner confirmation. Only after all gates and owner receipt pass may cache-aware disable/data-preserving HTTPS-verified rollback lead to opt-in activation and unused v1.0.2 publication from the exact accepted archive. Failure leaves/restores disabled v1.0.1; permission denials are never bypassed.
+
+**Independent local checks in this continuation:** 50 provider/counting tests / 1,324 assertions PASS with unreachable offline database configuration and controlled HTTP; project PHPStan, dirty Pint and whitespace checks PASS. Installed Laravel 13.36.0/Boost 2.10.3 verified; no dependency change/reinstallation. Current branch/head, all 14 modified source/evidence files, open PR #81 and protected main `19c92a463b99b8eee21469ad290399875ac08102` were reverified. No new full-suite/browser/coverage CI, host mutation, paid operation, email or release is claimed by this entry.
+
+**2026-10-31 latest outcome:** the owner separately approved one one-item/one-attempt diagnostic, then a narrowly scoped **offline schema-contract fix**. The diagnostic failed exact-evidence validation for a bare field name; its modeled inference settled USD **0.000291**, with one counting fee still unknown. The local v2 schema now declares the existing allowed evidence and missing-information identifiers; focused tests/static analysis pass, but these changes are **not committed, integrated, deployed or live accepted**. Public v1.0.1 and all disabled switches remain unchanged. Further paid work, email and release are not authorized by the offline-fix decision. See [diagnostic and offline correction](#one-item-diagnostic-and-offline-schema-correction---2026-10-31).
+
+**2026-10-30 latest outcome: offline implementation and protected integration COMPLETE; the one bounded live acceptance FAILED.** Normal artifact retrieval succeeded on resumption without an authorization bypass. The exact candidate selected 20 authored alerts, but none produced an accepted recommendation after the permitted 40 attempts. One failure-report email was SMTP-accepted; the owner reports nonreceipt. The public site was restored to v1.0.1 after an HTTPS-verified, data-preserving disabled-code rehearsal. Feature, counting, scheduler and owner delivery are disabled; v1.0.2 is not published. See [actual resumed execution](#resumed-bounded-execution---2026-10-30). Phases 1-5, previous releases, historical audits and the unsuccessful product-feasibility result are unchanged.
 
 ## Baseline and candidate
 
@@ -108,7 +118,7 @@ Owner inputs and decisions:
 - At most **one external report email**, no retry after SMTP ambiguity. Duplicate triggers must return stored state and produce no additional send. Owner receipt requires authorized evidence or explicit owner report.
 - One bounded setup/acceptance window (maximum 45 minutes for helpers; run deadline remains 30 minutes), with automatic no-work deadline for the temporary scheduler. No permanent helper/cron until explicitly accepted opt-in. Cleanup removes only this task's helper files/owned cron entry; preserve mailbox sources, successful results, historical review data and sent/uncertain liabilities.
 
-### Approved-sequence checklist (not yet executed)
+### Approved-sequence checklist (checkpoint plan; actual execution below)
 
 1. Freeze PR head, verify protected checks/fresh locked install and review complete diff. After authorized normal merge, wait for **that main revision's** green CI and verify/download its four-file archive/inventory. Record full SHA, run/attempt, archive SHA-256 and UTC times. Any source change restarts candidate validation, not paid acceptance.
 2. Reverify SSH account/public hostname/current link/demo DB/storage/session/key isolation and disabled private intake. Back up demo DB consistently plus shared environment/storage/current link/crontab into a new 0700 recovery directory with 0600 files outside webroot. Check completion/hash/table inventory; verify readable recovery material and rehearse non-destructive recovery on an explicitly isolated target if available. Provider-backup history is not new restore proof; do not reset live data.
@@ -131,6 +141,124 @@ Owner inputs and decisions:
 
 ## Actual live/release outcome
 
+**Historical checkpoint at `4cac97bf0f49acb86607ab6c12d53d02917346a9`, before this continuation.** The following unconsumed-allowance and authorization-blocker statements describe that checkpoint, not the subsequent execution below.
+
 **NOT VERIFIED / NOT EXECUTED:** corpus population/retrieval, paid count/inference, live worker/scheduler, SMTP acceptance, owner receipt, migration/backup/restore, host changes, disable/code rollback rehearsal, activation and release publication. Newly incurred inference/email cost is **USD 0** because none was executed; unknown historical counting charges remain unverified. No new release or owner receipt is claimed. Phase 6 cannot be marked complete until these applicable criteria have actual evidence.
 
 **Concrete blocker:** the tool authorization layer refused the exact-main candidate download/preparation call and reported that it could not obtain the required runtime permission. The operation was not retried through another path/tool/location. Read-only GitHub inspection independently verified the merged candidate's green CI afterward. Owner approval remains recorded; this is a runtime execution-permission limitation, not missing owner consent or a reason to reopen counting policy. Resume at exact candidate artifact verification only after that execution gate is available, preserving the existing one-run/one-email allowance. No paid allowance was consumed and no host/helper/scheduler cleanup is outstanding.
+
+## Resumed bounded execution - 2026-10-30
+
+### Frozen candidate and runtime gate
+
+VERIFIED: the worktree initially was clean on `docs/phase64-live-gate-checkpoint`, exactly `4cac97bf0f49acb86607ab6c12d53d02917346a9`. [PR #81](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/81) was OPEN, unmerged at that head. No checkout, merge, rebuild, dependency-manifest change, commit or push substituted another source candidate.
+
+Read-only GitHub metadata reconfirmed push-to-main [CI 41120132226](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/41120132226), exact **`19c92a463b99b8eee21469ad290399875ac08102`**, latest completed **attempt 1**, success, with Quality, Tests / MariaDB 11.4 and Secret scan all successful. The matching artifact `release-candidate-19c92a463b99b8eee21469ad290399875ac08102-1`, ID `13006989577`, was unexpired until `2026-11-29T20:06:16Z`. Its GitHub-reported ZIP digest was `ea48ee875acabd7c5f575e3d294e26ecc937fd441ef814015abf5f757610d033`; this is distinct from the independently checked application archive.
+
+The first normal `gh run download` invocation in this continuation succeeded through the supported execution interface. No current denial was routed around or blanket permission granted. This establishes that retrieval was permitted now, **not the cause of the earlier runtime denial**. Existing owner authorization was not requested again.
+
+VERIFIED locally and after protected SSH transfer: exactly four regular files, strict `SHA256SUMS`, exact manifest repository/SHA/run/attempt, safe archive inventory and complete dependency inventory against both archived lockfiles. The repository's `validateFiles` validator passed. No branch checkout, old release archive or local build was used.
+
+| File | Independently verified SHA-256 |
+| --- | --- |
+| `freelance-opportunity-triage-platform-19c92a463b99b8eee21469ad290399875ac08102.tar.gz` | `043303428b0582cef203b99b9490b0638d4db95da341daabb2872e3244578712` |
+| `candidate.json` | `3499a48e084c5bfdc03a09abdd55e749d987217b39b3580a40f73b0b7564d552` |
+| `sbom.cdx.json` | `c6d8c499154142aaf4d4febc17ae30fe4041d17582ca4e1b342e52632de6a383` |
+| `SHA256SUMS` | `7bd5b0dae0aabe775844a8ef59bcd0536bd7919c3c9587f7e37021ca34d306c0` |
+
+The 320 PHPUnit tests / 2,555 assertions, 24 browser tests and 90.44% / 93.64% / 96.90% coverage remain the **existing exact-revision CI evidence**, not a rerun in this continuation.
+
+### Protected target, recovery and isolated execution
+
+VERIFIED with `fotp-public-demo`, BatchMode and strict host-key checking: original v1.0.1 link/webroot, dedicated MariaDB `_demo`, demo mode, disabled private intake, independent shared environment/storage, valid application key and secure host-only public session configuration. Protected directory/file ownership, non-symlink regular files and 0700/0600 modes passed without disclosure. `/usr/bin/php8.4` was **8.4.27**. The first port probe could not use absent `ss`; a subsequent actual loopback bind and later `/proc/net/tcp` inspection established availability/isolation. An initial overly narrow `mysql`-connection-name check was corrected read-only to the existing supported `mariadb` driver; no target or database was changed to satisfy it.
+
+At **20:18:47Z**, a new protected same-host recovery set held a complete consistent SQL dump, original environment, readable storage archive/inventory, original current link, absent crontab baseline, table inventory and historical row digests. File modes/checksums and dump completion passed; historical application rows remained unchanged during preparation. **Restore into an isolated database was NOT VERIFIED.** Readability is not restore proof; SQL/storage are not a cross-resource atomic snapshot, and same-host copies do not prove host-loss recovery or renew private REL-03 backup evidence.
+
+The exact archive was installed inactive at `releases/19c92a463b99b8eee21469ad290399875ac08102`, with the existing public-demo shared environment/storage links. Locked production Composer installation and platform checks passed under explicit PHP 8.4; assets were not rebuilt. Rechecking the actual 16 applied migrations found exactly the three approved pending additive migrations. Only those ran, completing at **20:19:14Z** with **19 applied migrations**. No reset, seeder, historical deletion or down migration ran.
+
+A protected, host-only runtime overlay supplied the approved dedicated source/SMTP identity and sole recipient. The shared public `.env` remained byte-for-byte unchanged and disabled. Only the isolated candidate processes received enabled feature/counting/scheduler values; owner delivery stayed disabled except for its bounded command. Loopback browser cookies were separately named; public HTTPS session settings were unchanged.
+
+VERIFIED: real candidate served at **127.0.0.1:8014 only**, accessed through authenticated loopback-only SSH forwarding, with automatic 45-minute hard stop. Actual served CSS/JS matched archive bytes at **20:24:00Z**. The public seeded site remained old code during paid acceptance. No controlled browser-test router was used.
+
+Exactly the approved **20 authored-demo-v2 RFC822 files** were APPENDed once to `FOTP-Authored-Demo-Phase6`; per-message durable intent/acceptance evidence prevents silent repetition. Real certificate-validated EXAMINE/BODY.PEEK established **UIDVALIDITY 1793117440, UIDNEXT 21**, 20 unique approved normalized hashes/IDs. The real application selected descending UIDs 20 through 1, with no duplicate/rejected source. Before/after raw content hashes and persistent flags matched at **20:32:54Z**; session-local `\Recent` was not misrepresented as a persistent flag. No genuine alerts, SMTP-fabricated marketplace sends, moves, deletion or unrelated mailbox changes were performed.
+
+The temporary owned minute cron invoked the real `schedule:run`, dedicated database worker and recovery with the committed timeout/queue/overlap controls. An initial long-filename `crontab <file>` invocation failed before installation; its supported stdin interface succeeded with exact readback. This was an OS command failure, not the earlier runtime authorization denial. A fixed helper deadline and stop sentinel bounded further work. Default/private queues were not drained.
+
+### One live run: actual failure and reconciled usage
+
+Immediately before admission at **20:24:02Z**, the actual UTC ledger showed **0 settled / 0 outstanding reserved micro-USD**, no runs/attempts/deliveries and no accounting block. The measured remaining capacity after the planned **75,680 micro-USD** reservation was **924,320 micro-USD**. This was measured here, not inferred from the fresh-schema expectation.
+
+The real browser admitted exactly one run, **`01m677qrdnpzan84tj7shz9jkv`**, at **20:24:05Z**, original deadline **20:54:05Z**. Replay of its original server-issued intent returned the same run without a second admission. Stored progress was observed from queued through running to **failed**, finalized **20:32:18Z**, expiring **2026-11-06T20:32:18Z**.
+
+| Actual observation | Result |
+| --- | --- |
+| Selected / succeeded / failed | **20 / 0 / 20**; no accepted recommendation |
+| Count / inference operations | **40 / 40**, one request-bound count per actual inference attempt |
+| Attempts | **40**, maximum **2 per item**; only the existing classified retry |
+| Classified failures | **22 `demo_ai.evidence_invalid`**, **17 `demo_ai.output_invalid`**, **1 `demo_ai.response_incomplete`** |
+| Actual full-input counts | **1,081-1,122**, all below 8,000; current attempt provenance, not reused historical corpus measurements |
+| Requested / returned model | `gpt-6-luna`; current official model/settings/rates rechecked unchanged before use |
+| Shared operation authorization spacing / rolling minute | Minimum **2 seconds**, maximum **16 operations** in any rolling minute; sequential attempts, no overlapping durable attempt intervals |
+| Actual usage | **120 ordinary input / 22,072 cache-read / 22,072 cache-write / 11,649 output tokens** |
+| Settled modeled inference | **8,835 micro-USD = USD 0.008835**, per-attempt upward rounding |
+| Inference uncertainty / remaining reservations | **0 / 0**; all 40 attempts known, accounting unblocked |
+| Counting fees / endpoint retention | **NOT VERIFIED**; all 40 potentially charged counts retain null/unverified fees, separately from inference settlement |
+| Queue after completion | **0 jobs / 0 failed jobs** |
+
+The usage is actual application/provider-response reconciliation, not an independently inspected provider invoice. Unknown counting fees and any separate email charge are not claimed zero. The USD 1.00/day contract still covers modeled inference only. No counting-policy support inquiry, model/rate/cap change, fabricated evidence, paid replay or second whole run occurred.
+
+The finalized failure report is honest: all items are unsuccessful, not invented SKIP recommendations. No recommendation-quality or hard-constraint accuracy pass can be claimed when none succeeded. The retained codes identify validation/incomplete-response failures, **not their exact raw-response root cause**; raw responses were deliberately not retained, and no new paid diagnostic request was made. Do not weaken the validators to make this candidate pass.
+
+### Stored report, single owner send and nonreceipt
+
+VERIFIED through the owning real browser session: on-screen report and actual HTML download endpoint returned identical bodies, with the expected safe filename. Finalized snapshot SHA-256 **`7565225013bd5acbd5ed40d639586d6677998b7be7be0084c1cd4dba3ad39453`**; rendered/delivered HTML SHA-256 **`6c886573cc857d77ad7ac3ed5bd2a918e205aa9a7390d9fd3e37c9474b34bd43`**. The stored report contains the failed outcomes and remains immutable through recovery and rollback.
+
+At **20:33:23Z**, one invocation of `demo-ai:deliver-owner 01m677qrdnpzan84tj7shz9jkv` returned **accepted** using the approved protected source identity and `smtp.m1.websupport.sk:465` with required TLS/certificate verification. This verifies application-observed SMTP acceptance/authentication, not owner receipt. A duplicate invocation returned the same durable accepted state without another send; exactly one delivery row remains. AI attempts/results/accounting were not restarted by delivery.
+
+**OPERATOR-REPORTED: owner has not received the report.** The owner clarified that the newly supplied address referred to the dedicated project source/SMTP sender, not the recipient. A host-only comparison VERIFIED that the already-used protected source identity exactly matched that clarification and that the protected sole recipient was distinct. No identity/address was changed or exposed. No positive `--receipt` command was run; `receipt_reported_at` remains null. Nonreceipt is retained separately from the durable accepted SMTP state. No resend, alternate destination or personal-inbox inspection was attempted.
+
+### Disable, same-schema rollback and safe handoff
+
+VERIFIED: owned cron removed with exact restoration of the originally absent crontab; bounded work quiesced, recovery run with feature/counting/scheduler/owner-delivery disabled. The staging SSH/server stop initially left two identifiable remote web processes; only those exact PIDs were terminated, then host/tunnel port closure was verified. The runtime overlay was explicitly disabled and retired into protected recovery; owned mailbox/scheduler helper files were removed. Final host ports **3307, 8011, 8012, 8013 and 8014** had no listeners. No permanent scheduler was installed.
+
+Both releases' config caches were explicitly cleared with PHP 8.4, without flushing sessions, data caches, locks or historical data. With all switches disabled and no outstanding work, `current` briefly selected the candidate at **20:42:56Z**. After a bounded 130-second cache-convergence wait, **actual HTTPS HTML and exact candidate CSS/JS** passed at **20:45:16.516Z**. The existing public session, queue, three reviewed opportunities, retained feedback/enrichment, foreign-workspace 404 and disabled admission were checked. A no-origin authenticated API-context tokenless write returned **419**. An earlier same-origin browser-fetch proxy for this check reached validation (422); it was not falsely reported as a successful negative-CSRF test.
+
+Code/assets alone rolled back at **20:46:44Z**, retaining the same shared configuration/storage and all **19 migrations**. After the same bounded wait, **actual HTTPS v1.0.1 HTML/CSS/JS** passed at **20:49:04.943Z**. The same browser session retained saved feedback, then logout/guest JSON 401 passed. Historical table counts/digests, original application key/shared environment, report identity, all 40 attempts, the one delivery and settled accounting were preserved. The candidate was **not reactivated after failed acceptance**; safe final public code is **v1.0.1 / `7806994bfe639ffc3185f6d3dd742511d36b9870`**.
+
+VERIFIED GitHub readback: v1.0.0/v1.0.1 tag targets, publication dates and four-asset inventories retained their recorded identities/archive digests; no release was edited. No v1.0.2 tag/release or release-workflow dispatch was created.
+
+**BLOCKED / NOT ACCEPTED:** live recommendation acceptance and owner receipt. The one-run/one-email allowance is now consumed; **do not automatically rerun or resend**. Next work is a separately reviewed offline investigation of the evidence/output/incomplete-response failures and authorized delivery/nonreceipt investigation. Any changed source needs new exact-candidate checks; another paid acceptance run or external send needs a new bounded decision. The existing conditional opt-in/publication authorization cannot make a failed run or nonreceipt pass. Phase 6 stays incomplete.
+
+Protected host recovery at `~/apps/fotp-demo/recovery-phase64-19c92a463b99-20261030/` retains SQL/environment/storage, original state, per-APPEND receipts, before/after mailbox hashes, `actual-attempt-provenance.json`, immutable report, `owner-receipt-observation.json` and `final-handoff.json`. The disabled staging overlay is retained there as `staging-runtime.disabled.env`; do not source it as an enabled configuration. The four verified files remain in protected `~/apps/fotp-demo/incoming-phase64-19c92a463b99/`; the inactive candidate release is retained. No protected values or raw transport errors were copied into these documents. Repository evidence updates in this continuation remain local on the checkpoint branch; PR #81 was not pushed or merged, and the frozen candidate was not changed.
+
+## One-item diagnostic and offline schema correction - 2026-10-31
+
+The preceding 2026-10-30 no-further-diagnostic statements remain historical. The owner subsequently approved **one DEMO-001 diagnostic: one count, one inference, no retry or email**, and explicitly clarified consent to the existing temporary full-run/item reservation mechanics. Before dispatch, the dedicated UTC ledger showed zero settled/reserved, no work or uncertainty, and all public switches disabled. Official selected-model settings and rates were rechecked unchanged. The diagnostic reused the already approved/stored synthetic input and snapshot through the real ledger, counting, provider and validator; it did **not** repeat IMAP retrieval/APPEND, web admission, scheduler/worker acceptance, host deployment or migrations.
+
+| Diagnostic evidence | VERIFIED application/provider result |
+| --- | --- |
+| Unmodified candidate / run | `19c92a463b99b8eee21469ad290399875ac08102` / `01m69rgs00twm1rpczfnsqj9nt` |
+| Single attempt / outcome | `01m69rgs1ne76vkeem1jgqq83z` / known `demo_ai.evidence_invalid`, terminal failed |
+| Count / inference / retry / email | **1 / 1 / 0 / 0**; diagnostic retry suppressed, no recommendation fabricated |
+| Original reservation mechanics | 75,680 micro-USD admission pool; one selected item reduces to 3,784; one dispatch reserves 1,892; all remaining reservation released after known terminal settlement |
+| Full input count / request hash | **1,111** / `4441c7293c7b13349777dca3faabfdc19b8fbf659255beb12dc9889fcf2f85b6` |
+| Provider request / returned model | `req_376ddc3cdcfa456db39045457806ca09` / `gpt-6-luna` |
+| Disjoint actual usage | **3 ordinary input / 0 cache-read / 1,108 cache-write / 304 output tokens** |
+| Modeled inference settled / remaining reserved | **291 micro-USD = USD 0.000291 / 0**; no uncertainty or jobs |
+| Counting fee | **NOT VERIFIED; null**, separately from inference settlement |
+
+Protected temporary successful synthetic-response inspection established exact valid job quotes under **`field: "description"`**, while the unchanged validator requires **`input.description`**. Profile references were correctly namespaced. Local offline replay reproduced the original rejection; changing only the job-field prefixes in an **offline causal control** passed the unchanged shape, exact-quote, missing-information and hard-constraint validators. No production/model result was repaired. Xdebug launches completed without pausing; breakpoint/variable inspection is **not** claimed. This proves one schema/prompt-contract ambiguity, **not** every historical evidence failure or the 17 output-invalid/one incomplete outcomes.
+
+Under the subsequent explicit offline-fix decision, `EvaluationOutput` now shares its existing non-null evidence-field map between schema and exact-quote validation. Schema `ai-evaluation-v2` / provider format `ai_evaluation_v2` constrains `field` to actual `input.*` / `profile.*` names and `missing_information` to the existing bare input-field/criterion IDs. Descriptions explain exact substring/namespace requirements. Validators still reject bare/unknown evidence, invented quotes and unsupported missing identifiers; no output normalization, scoring/rubric/profile/prompt/model/rate/cap change. The schema version enters the admission version hash, and the exact input-dependent schema enters the full counted/inferred request hash. Old counts cannot certify this new request.
+
+**New local offline evidence:** focused provider/counting tests **50 tests / 1,324 assertions PASS**, including all 20 authored inputs, rejection of observed bare names, valid namespaced job/profile quotes, preserved invented-quote rejection and identical counted/inferred schema. Dirty PHP formatting and project PHPStan pass. Existing 320-test/full-browser/coverage CI remains evidence only for the frozen original revision; no fresh whole-suite/coverage, main CI or live v2 inference is claimed.
+
+**OPERATOR-REPORTED:** the owner observed USD **0.01** for the earlier full run; this is not a verified invoice/fee breakdown and does not replace its measured modeled inference USD **0.008835**. The owner also supplied a Support reply acknowledging that general API no-training-by-default/abuse-log rules do not answer counting-specific questions. Successful/failed counting fees, account/tier conditions, Response/cache/application state, endpoint retention/deletion/backups/exceptions and effective dates remain **NOT VERIFIED**. Counting is not proved free and Responses `store=false` is not transferred onto the counting endpoint. Support requires no test requests/screenshots to clarify policy; no inquiry was reopened. The existing accepted-risk exception remains unchanged.
+
+At **2026-10-31T20:01:21Z**, host readback verified original historical row digests and the immutable first report hash unchanged, one diagnostic item/attempt, no uncertainty/reservations/jobs, still one original delivery, 19 migrations, disabled private intake/all four switches, and current v1.0.1 code. Protected temporary response/input copies were removed after sanitized causal/provenance evidence was written; diagnostic intent/outcome and original accounting/recovery remain retained. No new SMTP connection/send or positive receipt occurred. PR #81 remains OPEN at `4cac97bf0f49acb86607ab6c12d53d02917346a9`; local evidence/source changes have not been published into it or the frozen candidate.
+
+Before the sheet/roadmap edits, protected read-only shared-original comparisons at **20:00:42Z / 20:00:44Z** confirmed unchanged remote baselines: sheet `71d35f9f917f61c1fd9c7007988b73a909502b1494c4852dce3210b2329858d9`, roadmap `10ce119dc3f834b56351ee75928207cf9528024f2869755004166c347862fc21`. Pre-edit local hashes were `08132134ee154b33a606beff0458fc3f8fde1a73637c9790edb41329f05d635d` / `6b0c774587a21e44b5c6ea00fb84d5ecc121ae8f804eeaad8908689fab694586`. No files/sync state were replaced, force-pulled or shared-published.
+
+**Remaining gate:** the newly approved diagnostic allowance is consumed. The offline fix is not a released/accepted candidate. Further integration/deployment and a new exact archive with independent checks need a separately reviewed next scope before additional paid validation; no automatic repeat/send. Other historical failure causes, recommendation acceptance and owner nonreceipt remain unresolved. v1.0.1 stays public, opt-in/counting/scheduler/delivery disabled, v1.0.2 unpublished and Phase 6 incomplete.
+
+Final offline recheck still passed **50 tests / 1,324 assertions** after PHP formatting; `git diff --check` passed. At **2026-10-31T20:04:32.298Z**, certificate-validated actual public HTTPS CSS/JS matched the v1.0.1 release files byte-for-byte, with the current release identity unchanged. No app navigation/admission/provider/mailbox path was invoked for this read-only asset check. Disposable local diagnostic helper/replay/response/input files and their empty directory were removed; the original four-file candidate artifact remains retained.
