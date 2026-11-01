@@ -1,5 +1,66 @@
 # Integration boundaries
 
+## Received EML / immutable HTML evidence - 2026-11-01
+
+Owner-supplied single EML was parsed locally/in memory without raw header/identity/private-content output, file alteration, disk extraction or mailbox access. Its actual received attachment exactly matches the partial run's **107,913-byte** HTML and SHA-256 **`812077b286c0ab11490119a5a4e81e12eed3788405aabde037bedc89c2550c86`**. Inline MIME text is **109,210 bytes** but differs only by **1,297 LF-to-CRLF line endings**; normalizing those yields byte equality. Do not mistake the MIME-body hash difference for report mutation or silently normalize immutable attachment evidence.
+
+Both parts preserve actual partial 20/19/1 counts, all 20 item states and failed/UNEVALUATED DEMO-004, with no detected executable/external references. Supplied authentication header reports SPF/DKIM/DMARC pass for this exact received message; no independent DNS/signature or general deliverability claim. No new hook/table/dependency/configuration/code, network operation, resend or AI work; receipt records/partial exception/#84/exact candidate unchanged. [Received MIME evidence and final release boundary](runbooks/phase6-release.md#owner-supplied-received-report-verification---2026-11-01).
+
+## Fresh confirmation versus report/local-test receipts - 2026-11-01
+
+One separately approved public-host console send of plain text used the same protected project source/owner target, approved smtps/465, verified TLS, ten-second timeout and public EHLO. At **09:05:44Z**, `FOTP-confirmation-20261101-090544-43fa729b` was SMTP-accepted; owner explicitly confirmed **this exact subject received**. No app/retired-helper bootstrap, report/delivery/accounting/configuration/cron write, AI call, extra send or public switch.
+
+The owner's preceding last-seen 09:28 statement narrows earlier all-email confirmation: later local-curl test receipt remains unconfirmed. Both separately explicit durable report receipts remain unchanged; this fresh test is not a report delivery row or universal delivery guarantee. Its new single-message allowance is consumed; partial-run exception/#84 and disabled v1.0.1/final release boundary preserved. [Exact receipt distinctions](runbooks/phase6-release.md#fresh-public-host-confirmation---2026-11-01).
+
+## Final owner-receipt resolution - 2026-11-01, 09:01:46Z
+
+| Verified seam | Final evidence / retained boundary |
+| --- | --- |
+| Protected identities / local curl / actual owner acknowledgment | One separately approved local WSL curl test used memory-only SSH credentials/private config pipe, explicit smtps, CRLF and bounded timeout; exit 0/SMTP 250/497 bytes/TLS verification 0 at 08:53:08Z. Private comparison verifies the owner's earlier successful test destination matches source, not owner. Owner subsequently found **all emails** in actual protected owner mailbox; no agent inbox access or credential/identity disclosure. Prior nonreceipt snapshots do not establish a repaired transport failure. |
+| `demo-ai:deliver-owner --receipt` / `OwnerReportDelivery::receipt` / `demo_ai_deliveries` | Explicit owner approval for BOTH existing reports led to two receipt-only command calls at 09:01:46Z. Separate OPERATOR-REPORTED timestamps/hashed opaque references persisted; original `accepted` status and every non-receipt column remain unchanged. No SMTP send/AI work. Acknowledgment timestamps are not actual inbox arrival times/provider traces. |
+| Receipt / immutable reports / inference / historical state | Pre/post checks prove both report snapshots, all 11 historical-table counts/digests, attempts/budgets/accounting/jobs, 19 migrations and shared environment unchanged. No validator repair, fabricated 20/20 or release from the exact-run partial exception; DEMO-004 #84 remains OPEN. |
+| Candidate / release / disabled public target | Exact archive digest reverified, no transport-code/dependency/configuration change or newer-main substitution. Public v1.0.1 current/all switches remain disabled. Final candidate-specific disable/data-preserving code rollback/restoration/actual-HTTPS acceptance, opt-in/scheduling/publication require a fresh bounded decision; receipt approval did not authorize them. |
+
+[Final receipts, local test and preservation/release evidence](runbooks/phase6-release.md#confirmed-owner-receipt-and-preserved-release-boundary---2026-11-01). Historical nonreceipt and failed-run evidence below is preserved, now superseded by explicit owner acknowledgment; no shared-original publication/state replacement.
+
+## Recipient roles and owner's curl protocol - 2026-11-01
+
+**Subsequent working local path:** owner reports successful explicit-smtps local curl upload with a privately prompted password and actual message receipt, from the owner's different account into the project/source mailbox. This is local-test receipt only, not evidence of project-source -> protected-owner report receipt. No account/credential values retained, new agent authentication/send, delivery-table write or configuration/code change; reason for earlier login denial remains unestablished.
+
+The owner clarified that initial checks used the project/source mailbox, whereas protected report/console delivery uses **project source -> distinct protected owner**. Read-only configuration reverified those roles without emitting addresses. The owner subsequently reports both console tests absent after checking the protected recipient, keeps that recipient, and supplied a curl timeout rather than partial-report receipt. No inbox access, overrides or receipt write occurred.
+
+Offline curl documentation and an all-protocols-disabled probe verify scheme-less endpoint selection as `smtp`; port 465 needs explicit `smtps://`, unlike `--ssl-reqd` upgrading on SMTP. The user's CLI timeout is distinct from our already-smtps console submissions and not their established cause. The supplied credential/addresses were not executed, retained, reused or sent to public documentation; password rotation was advised. No new SMTP/IMAP connection/send, code/configuration change, AI call or publication. [Exact clarification and preserved receipt gate](runbooks/phase6-release.md#recipient-role-clarification-and-owner-curl-timeout---2026-11-01).
+
+## Outlook differential and sender delivery-status boundary - 2026-11-01
+
+| Boundary | Actual evidence / limits |
+| --- | --- |
+| Working Outlook / project-source console transport | Owner confirms same intended destination and SMTP server/465, but different sending account; authentication verdicts unknown. Read-only locked-factory check confirms default EHLO `[127.0.0.1]` versus normal public configuration `fotp.kontentwave.com`. One newly approved plain-text project-source send supplied the latter; SMTP accepted at 08:28:00Z, owner reports nonreceipt. No persistent code/setting change, alternative account or report resend. EHLO correction alone did not establish delivery. |
+| `DemoImapProtocol` / dedicated source INBOX / DSN evidence | Separately approved read-only source-INBOX scope reused certificate-validated SSL/993, protected source credentials, disabled debug/UID caching and bounded deadlines. EXAMINE plus server-side reference/subject search restricted to last 100 UID positions since October 30, maximum ten matches; matching DSN-only BODY.PEEK capability, no unrelated bodies/folders. At 08:30:40Z, zero matches/DSN parts, unchanged UIDVALIDITY, socket reset without CLOSE/EXPUNGE. Bounded absence is not proof no bounce exists elsewhere or final delivery occurred. |
+| Authorization / candidate / receipt | New EHLO-test allowance consumed; sender-notice check finished/stopped with no further send. No application bootstrap, delivery/accounting/migration/cron change or new hooks/dependencies. Exact partial-run exception/#84 retained; public v1.0.1 disabled, report receipt/downstream cause and remaining release gates unresolved. Wider access/further tests or transport changes need new bounded approval; different owner-account credentials are not authorized. |
+
+[Working-path comparison, actual checks and guarded-original evidence](runbooks/phase6-release.md#outlook-comparison-ehlo-test-and-sender-notice-check---2026-11-01). Earlier no-authentication/no-send entries below retain their historical scope.
+
+## Separately authorized ordinary console email - 2026-11-01, 08:16:02Z
+
+One newly approved standalone `text/plain` SMTP test used the inactive candidate's locked Symfony Mailer directly from the console, approved protected source/recipient/server, smtps/465, verified TLS and ten-second timeout. Same default EHLO `[127.0.0.1]`; no HTML/attachment, application bootstrap, retired-helper execution, setting export/activation, AI call or delivery-table write. SMTP accepted exactly one message, then the owner explicitly reported **"Not received"**.
+
+This reproduces owner nonreceipt without report-specific MIME, but does not establish a downstream cause or authentication/filter/routing verdict. New single-test allowance consumed; both original accepted-report states remain separate and must not be reset/resubmitted. No hook, table, dependency, configuration or public version changed; exact-run exception/#84 unchanged and public v1.0.1 disabled. [Authorization, unique test reference and limits](runbooks/phase6-release.md#separately-approved-single-console-email---2026-11-01). Earlier no-send rows below describe the preceding read-only scope.
+
+## Owner-delivery investigation and exact-run exception - 2026-11-01
+
+No hook, table, dependency or runtime setting changed. The owner explicitly accepted the actual partial 19/20 run/candidate as a recommendation exception with OPEN [DEMO-004 tracking #84](https://github.com/KontentWave/freelance-opportunity-triage-platform/issues/84); owner receipt and remaining release gates are not waived.
+
+| Inspected seam | Verified fact / risky coupling |
+| --- | --- |
+| `DeliverOwnerReportCommand` / `OwnerReportDelivery` / `demo_ai_deliveries` | Both original and new reports remain `accepted` with null receipt, matching retained status/receipt metadata. No command was rerun. SMTP DATA acceptance is not final delivery or owner receipt. Durable schema stores no Message-ID/queue ID/reply; sent-object debug/IDs were not retained. Available acceptance-window application logs provide no downstream disposition. |
+| Isolated `MailManager::build` / `config/mail.php` / locked Symfony | Laravel 13.36.0, Mailer 8.1.7 and MIME 8.1.10 verified against inactive candidate lock; delivery service hash equals exact candidate. Protected retired SMTP host/465/smtps and From/authenticated approved source/sole distinct recipient identities agree. Builder uses `mail.mailers.smtp` host/port/credentials and `mail.from.address`, but omits `local_domain` (normal config derives it from `MAIL_EHLO_DOMAIN`/APP_URL), retaining Symfony EHLO `[127.0.0.1]`. No app DKIM signer; provider signing/authentication/filter verdicts unavailable, not inferred failures. |
+| Immutable `review.ai-report` / MIME body and attachment | Offline unchanged renderer reproduces exact 107,913-byte new HTML/hash and identical attachment; HTML-only `multipart/mixed`, quoted-printable body/base64 attachment, no plain text. Non-sent `.invalid`-header specimen is 262,184 bytes, not original wire evidence. Size/attachment filtering or client clipping are hypotheses, not nonreceipt causes established by this reconstruction. |
+| Protected evidence / MariaDB / public HTTPS | Read-only guarded transaction confirms all 11 original table digests/report, new report/accounting, zero jobs/uncertainty/reservations and 19 matching migrations. Recovery checksums/shared environment match; public/retired switches disabled, helper absent/8014 closed. Actual HTTPS v1.0.1 CSS/JS hashes match; no state reset, archive substitution or code/public switch. |
+| Authorization / next evidence | Owner approved obtaining sanitized sender-provider traces for only the two existing accepted submissions, narrow UTC windows; no trace/receipt supplied yet. No inbox/provider-console access, SMTP authentication/test/send or AI work occurred. Any necessary new operation/code change needs separate bounded approval and, for code, new protected exact-main artifact/acceptance. |
+
+[Detailed decision, protected read-only/offline operations and pending evidence](runbooks/phase6-release.md#owner-exception-and-read-only-delivery-investigation---2026-11-01). Historical failures below remain preserved; no shared-original publication/state replacement.
+
 ## Latest schema-v2 runtime coupling - 2026-10-31
 
 No new application hook, table, configuration key or dependency was added after the offline schema fix. [PR #82](https://github.com/KontentWave/freelance-opportunity-triage-platform/pull/82), exact main `e4364291e86f576fc20fcb27890f2abf108b400f`, passed its own independent CI/archive checks; checkpoint PR #81 and original archive remain unchanged.

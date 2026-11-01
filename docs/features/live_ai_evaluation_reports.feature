@@ -271,6 +271,22 @@ Feature: Bounded authored-alert AI evaluation against the approved public profil
     And the admission schema version changes without changing public profile rubric model or caps
 
   @pending @slice64 @live
+  # 2026-11-01 final receipt: owner located all emails in correct protected
+  # inbox and explicitly approved receipt-only recording for both reports.
+  # At 09:01:46Z both receipt_reported_at/reference fields persisted; original
+  # SMTP accepted state, snapshots, results/accounting/history unchanged.
+  # Exact-run 19/20 recommendation exception/#84 retained; no resend/AI work.
+  # @pending now covers final candidate-specific disable/rollback/HTTPS
+  # acceptance and separately authorized opt-in/publication, not nonreceipt.
+  # Earlier nonreceipt observations below retain historical scope.
+  # 2026-11-01 owner explicitly APPROVED an exact-run/candidate exception:
+  # accept actual PARTIAL 19/20 for 01m69tea8emstgs8ep4dwj513e on
+  # e4364291e86f576fc20fcb27890f2abf108b400f; DEMO-004 issue #84 OPEN.
+  # Original 20/20 failure and all outputs/provenance remain unchanged.
+  # Both durable SMTP acceptances still lack receipt; downstream cause unknown.
+  # Owner approved sanitized existing sender-provider trace gathering only;
+  # no trace supplied yet, no AI/send/host change/activation/publication.
+  # @pending remains intentional for receipt and remaining release gates.
   # 2026-10-31 newly approved schema-v2 acceptance: exact main
   # e4364291e86f576fc20fcb27890f2abf108b400f, CI 41238369861 attempt 1.
   # Run 01m69tea8emstgs8ep4dwj513e finalized PARTIAL: 20 selected / 19
@@ -295,7 +311,16 @@ Feature: Bounded authored-alert AI evaluation against the approved public profil
   # @pending remains intentional: no recommendation acceptance or owner receipt.
   Scenario: Authorized integrated staging, owner delivery and release acceptance
     Then actual demo PEEK flag preservation and inference usage are verified
-    And all twenty existing approved sources succeed with validated outputs under the approved acceptance threshold
+    And all twenty existing approved sources succeed with validated outputs unless the owner explicitly approves a documented exception for that exact run and candidate
     And one operator-only allowlisted owner delivery is verified separately
     And actual owner receipt is recorded separately from SMTP acceptance
     And the exact release candidate passes live disable and recovery acceptance
+
+  @slice64
+  Scenario: An exact-run recommendation exception never fabricates success or receipt
+    Given the owner explicitly accepts partial 19/20 run 01m69tea8emstgs8ep4dwj513e on candidate e4364291e86f576fc20fcb27890f2abf108b400f
+    Then the stored partial counts, unchanged validators and all historical failures remain preserved
+    And DEMO-004 exact-evidence failure is tracked without claiming its unestablished root cause
+    And no 20/20 success or general recommendation accuracy is claimed
+    And owner receipt and every other release gate remain independently required
+    And no new paid run, resend, delivery-state reset or publication follows the exception
