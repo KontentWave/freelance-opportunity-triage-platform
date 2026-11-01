@@ -1,5 +1,7 @@
 # Phase 5 Candidate, Host Smoke and Rollback
 
+**Current public release - 2026-11-01:** [v1.0.2](https://github.com/KontentWave/freelance-opportunity-triage-platform/releases/tag/v1.0.2), unchanged schema-v2 archive `e4364291e86f576fc20fcb27890f2abf108b400f`, is published and serves the separately approved public opt-in. Candidate-specific actual-HTTPS/cache-aware v1.0.1 code rollback/restoration, original CI/four asset digests, dedicated bounded scheduler and final HTTPS readback passed. Same additive schema/shared history retained; private intake and owner delivery disabled. [Phase 6.4 final evidence and recovery limits](phase6-release.md#phase-64-completion-approved-persistent-opt-in-and-v102---2026-11-01). The October/September records below remain historical, not the current served release.
+
 This procedure promotes one CI-built archive. Deployment and release dispatch require explicit operator approval. See the [Phase 4 review runbook](phase4-review-dashboard.md) for demo setup, isolation, browser and accessibility checks; do not reset a private database. Earlier host smoke of `65bf4ea` is historical and does not qualify a new archive.
 
 ## Current public demo (2026-10-25)
