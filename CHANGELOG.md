@@ -1,9 +1,12 @@
 # Changelog
 
-## Unreleased
+## v1.0.2 - 2026-11-01
 
+- Published the unchanged schema-v2 CI archive after candidate-specific actual-HTTPS disable, data-preserving v1.0.1 code rollback and restoration. Verified the exact tag/four asset digests and previous-release immutability.
+- Added session-owned authored-alert AI evaluation, bounded dedicated queue/recovery, explicit partial/failure states and immutable on-screen/downloadable HTML reports; schema v2 aligns provider evidence identifiers with unchanged validators.
 - Added operator-only, default-disabled delivery of immutable synthetic AI reports through verified TLS SMTP, with durable duplicate protection, uncertain-outcome recovery and separately recorded owner receipt. No visitor recipients, sending route, queued mail retries or AI reruns.
-- Recorded merged Phase 6.3 integration evidence and the approval-gated Phase 6.4 acceptance/release/rollback plan. Live acceptance, owner receipt and publication remain pending.
+- Separately approved and verified persistent public visitor opt-in and its bounded minute scheduler; private intake and owner delivery remain disabled. Preserved all original historical/report/receipt/accounting rows.
+- Completed Phase 6 under the exact-run partial 19/20 recommendation exception and accepted unknown counting-fee/retention risk. Both report acknowledgments are recorded; DEMO-004 remains tracked in OPEN #84. No general accuracy, total-charge or isolated-restore/host-loss guarantee is claimed.
 
 ## v1.0.1 - 2026-10-25
 

@@ -1,5 +1,109 @@
 # Phase 6.4 owner delivery and bounded release acceptance
 
+## Phase 6.4 completion: approved persistent opt-in and v1.0.2 - 2026-11-01
+
+**Phase 6.4 / Phase 6 is complete under the recorded exact-run recommendation exception and counting-risk decision.** After the candidate-specific acceptance below passed, the owner separately explicitly approved **persistent public opt-in activation, resulting visitor-requested paid work under the existing limits, and v1.0.2 publication**. No new operator live acceptance run, mailbox inspection/import, SMTP authentication/send, receipt rewrite or private-host change was authorized or performed. DEMO-004 #84 remains OPEN; completion is not 20/20 success, general recommendation accuracy, verified free counting or a total-charge guarantee.
+
+### Closure documentation and remaining follow-ups
+
+At the release checkpoint, only repository integration of the prepared completion documentation remained. On **2026-11-01**, the owner explicitly authorized documenting the remaining limits, creating a new documentation branch, committing/pushing, opening and merging a PR through the required checks, and returning to synchronized `main`. This is documentation integration only, not a new host/deployment/scheduler/provider/mailbox/email/publication operation. Preserve OPEN checkpoint PR #81 separately.
+
+| Remaining limitation / follow-up | Closure disposition |
+| --- | --- |
+| DEMO-004 exact-evidence root cause is unestablished; raw failed responses were not retained | OPEN [tracking issue #84](https://github.com/KontentWave/freelance-opportunity-triage-platform/issues/84). Exact partial 19/20 run/candidate is accepted by owner exception; no validator/output repair or diagnostic AI allowance follows from documentation closure |
+| Counting fees and endpoint-specific retention remain unknown | Existing accepted-risk decision remains in force. The USD 1.00/day limit is modeled-inference-only; no free-counting or total-charge guarantee, and no policy investigation is reopened |
+| Isolated restoration of this backup and host-loss recovery were not performed | Protected backup completion/readability/checksums are recorded, not restore proof. A future isolated restore or off-host recovery needs its own target, scope and authorization |
+| General recommendation accuracy/commercial usefulness and server-side egress capture are not established | Do not infer them from this exact integration acceptance or zero outside-origin browser requests. Existing feasibility history remains unchanged |
+| Persistent runtime monitoring, uncertainty handling and seven-day retention continue after release | These are standing operating responsibilities under the approved opt-in, not unperformed release gates. Follow the existing stop/recovery procedure without clearing liabilities or repeating exhausted acceptance runs/emails |
+
+No additional Phase 6.4 runtime release gate remains unperformed within the approved scope. The documentation PR and any ensuing documentation-main CI/archive do **not** replace released runtime `e4364291e86f576fc20fcb27890f2abf108b400f`, original CI `41238369861` / attempt 1, or archive SHA-256 `1e4a5695fa5fcc3d8477c3fdd1dd29ae355055aa0252e985dbd614cfa6b41dab`.
+
+### Actual opt-in activation and scheduler
+
+The unchanged exact candidate uses existing dedicated protected input files; their identities were compared in memory with accepted schema-v2 evidence before configuration. Only approved demo mailbox/provider fields and the existing accepted-risk policy/reference were added to shared configuration. Retained `runtime.disabled.env` was read as evidence only; neither it nor the retired operator helper was executed/reactivated. Shared application key, database/storage/session identity and all unrelated fields remain preserved. Credentials/addresses/allowlist values stay protected and were not output.
+
+Feature/counting/scheduler are now **enabled persistently until explicitly disabled**; private intake, debug and owner delivery remain **disabled**. Configuration remains uncached. Effective PHP 8.4 configuration verified `owner_accepted_risk`, the exact existing acceptance reference, no invented policy-evidence hash, unchanged `gpt-6-luna` and dedicated queue `retry_after=150`. Actual HTTPS candidate HTML/assets/opt-in availability passed at **10:07:17.004Z**, without an operator run admission.
+
+One owned minute-crontab entry invokes **`/usr/bin/php8.4 artisan schedule:run --no-interaction`** from `~/apps/fotp-demo/current`; `MAILTO=""` and protected log redirection suppress cron mail. Exact installed readback matched the owned evidence. A real cron tick verified both existing `demo-ai:recover` and bounded `queue:work demo-ai --queue=demo-ai` at **10:09:08Z**, with no failure marker. Worker remains stop-when-empty, max-time 40, timeout 45, sleep 1, tries 1, outer timeout 100 + 5-second kill grace and 180-second overlap. No private/default queue worker, recurring mailbox poll or persistent worker daemon was enabled.
+
+Resulting visitor-requested work is authorized within the unchanged 20-source/run, one-active/two-queued, 30-minute deadline, two-attempt/item, concurrency-one, 30-operations/rolling-minute, two-second spacing and session/IP/global admission controls. **USD 1.00/day limits modeled inference only**, including conservative uncertainty/retries; counting fees and endpoint retention remain unknown under the existing accepted-risk decision. The existing seven-day feature-content expiry/recovery applies without erasing durable receipt/accounting liabilities or protected recovery evidence.
+
+Recovery created the expected **2026-11-01 UTC budget row with zero reserved/settled inference**. The other **20 preserved table snapshots** remain identical to post-restoration, with every historical budget row retained. No new run/attempt/provider operation occurred during these operator checks; zero jobs, active runs, in-flight/uncertain attempts, reservations or accounting block were observed.
+
+### Exact publication and final HTTPS readback
+
+[Release workflow **41296258148**](https://github.com/KontentWave/freelance-opportunity-triage-platform/actions/runs/41296258148) was dispatched once from documentation `main`, with **original CI 41238369861 / attempt 1**, unused **v1.0.2**, exact archive digest and successful post-restoration smoke **`2026-11-01T10:01:53.662Z`**. Both validation/publication jobs passed. This workflow retrieved/promoted the original runtime artifact, not documentation-main assets or a local rebuild.
+
+[**v1.0.2**](https://github.com/KontentWave/freelance-opportunity-triage-platform/releases/tag/v1.0.2) was published, neither draft nor prerelease, at **2026-11-01T10:10:23Z**. Its direct commit tag targets **`e4364291e86f576fc20fcb27890f2abf108b400f`**; all four asset digests match:
+
+| Published asset | SHA-256 |
+| --- | --- |
+| Application archive | `1e4a5695fa5fcc3d8477c3fdd1dd29ae355055aa0252e985dbd614cfa6b41dab` |
+| `candidate.json` | `3a958d37024024f91841f1a8d9a10c680d2cd944bfceb811d03d909095842b1a` |
+| `sbom.cdx.json` | `1dcb9e061c1423c3cb786f6add3f69613644e1f2d228a167dcf4d3d2d22fe802` |
+| `SHA256SUMS` | `120b8438ed357aebcf894610d0efa4c48538f81b021aa6253f5f338494dd2fda` |
+
+Independent postpublication readback at **10:11:02.051Z** verified v1.0.0/v1.0.1 direct tag targets, publication timestamps and all four previous asset digests unchanged. No tag/asset replacement or publication retry occurred.
+
+Final real Chromium HTTPS readback passed at **10:11:29.922Z**: published candidate HTML references the exact archived CSS/JS, compiled byte hashes match, public opt-in is available, seeded session/logout and guest JSON 401 pass. **18 captured browser requests, zero outside-origin browser requests, zero page errors and zero operator run admissions.** This is not a server-side egress capture or a new paid acceptance run. Final public release is **enabled v1.0.2**; dedicated scheduler active, owner delivery/private intake disabled, config caches absent. Both original reports/receipt acknowledgments, honest partial 19/20 and USD 0.004872 settlement remain preserved.
+
+Protected activation baseline/configuration, exact owned cron/log, original safe-stop and corrected acceptance outcomes, final snapshots and publication/HTTPS evidence are retained in `~/apps/fotp-demo/recovery-phase64-final-20261101-094215/`. Completed/readable/checksummed backup is **not isolated-restore or host-loss proof**. These remain documented operational limits, not fabricated release passes.
+
+### Guarded documentation and standing recovery boundary
+
+Immediately before completion edits, guarded original comparisons again passed at **10:10:15.251Z (sheet) / 10:10:11.788Z (roadmap)**. Shared exports remain `71d35f9f917f61c1fd9c7007988b73a909502b1494c4852dce3210b2329858d9` / `10ce119dc3f834b56351ee75928207cf9528024f2869755004166c347862fc21`; preserved local pre-edit hashes are `1dcfb22eb688cd49ce14286a67114a2d1ac614e7128833fd9d58a5a84ced06e0` / `c873d46eef61882600f0a2597aee2fa90c3d6e7737fd3eb15744d59bbd51e887`. No shared replacement/publication or sync-state update occurred. At that release checkpoint, documentation changes remained local and no commit/push/PR had been authorized; the subsequent owner-approved documentation integration is recorded above.
+
+For a subsequent stop, follow steps 11-12: disable all four live switches/cache-aware, quiesce bounded work without releasing uncertain liabilities, compare the current cron with the retained owned entry before removing only that entry, and keep private intake disabled. Code-only fallback is the retained **v1.0.1**, on the same additive schema/current shared environment/storage, with bounded convergence and actual HTTPS HTML/assets verification. Do not restore stale shared data, down-migrate, replay retired helpers or repeat exhausted AI/email tests. Unexpected uncertainty remains an explicit stop condition even after publication.
+
+The preceding missing-operation/disabled-candidate checkpoints below are dated historical states. All release-completion gates within the separately approved scope now have actual evidence; DEMO-004 investigation and unverified backup/counting-policy limits remain explicitly separate from this release acceptance.
+
+## Exact schema-v2 disabled HTTPS acceptance and restoration - 2026-11-01
+
+**Final candidate-specific disable/code rollback/restoration acceptance PASSED. Phase 6.4 is not complete:** opt-in activation, scheduling and v1.0.2 publication remain unperformed and require separate fresh authorization. The owner approved preparation/read-only verification first, then the bounded final acceptance plan, and separately approved the corrected untouched-fixture continuation after a safely stopped precondition check. No activation, publication, additional live AI run or email allowance follows from these approvals.
+
+### Frozen provenance and protected preparation
+
+Clean synchronized `main`/GitHub main was reverified at documentation revision `af49b54d4b08f735fa465893d2c16b536dafc657`; documentation-main CI `41292909731` passed. Runtime remains **`e4364291e86f576fc20fcb27890f2abf108b400f`**, original independent main CI **`41238369861` / attempt 1**, unexpired artifact **`13056850549`**. Its logs confirm 323 PHPUnit tests / 3,645 assertions, 24 browser tests and 90.48% / 93.64% / 96.90% coverage; required jobs passed. These are independently reread existing CI results, not new local test runs.
+
+Original CI artifact retrieval succeeded normally without rebuilding. Manifest identities and all four hashes match the [accepted schema-v2 assets](#exact-protected-integration-and-independent-archive), including application archive SHA-256 **`1e4a5695fa5fcc3d8477c3fdd1dd29ae355055aa0252e985dbd614cfa6b41dab`**. All **359 archived non-storage regular files** match the inactive extracted release, and installed production package versions match its archived Composer lockfile; platform requirements pass under explicit **`/usr/bin/php8.4` 8.4.27**. The documentation candidate is not substituted. PR #81 and issue #84 remain OPEN; v1.0.2 had no tag/release, and existing v1.0.0/v1.0.1 asset identities were reverified.
+
+Protected recovery evidence is retained outside webroot in **`~/apps/fotp-demo/recovery-phase64-final-20261101-094215/`**, with 0700 directory/0600 evidence files: completed consistent SQL dump, shared environment copy, readable storage archive/inventory, checksums, current-link/absent-crontab baseline, aggregate/individual-row-hash snapshots and both acceptance outcomes. Backup checksums remain unchanged. **No isolated restore or host-loss recovery was performed or certified.** No credentials, addresses, allowlist digests, raw mail/transport dumps or private content were emitted.
+
+### Safely stopped fixture precondition and corrected approval
+
+The first attempt verified actual candidate HTTPS welcome/compiled CSS/JS, seeded session/25-plus-1 pagination and foreign-workspace denial, then stopped **before any feedback/enrichment write** because `Synthetic opportunity 06` already had historical feedback/enrichment. This was an untouched-fixture precondition failure, not a provider/application failure. Actual HTTPS v1.0.1 fallback was verified by **09:50:40.305Z**; all 21 preserved-table snapshots remained unchanged. No attempt to overwrite that feedback or automatically retry acceptance occurred.
+
+Read-only schema inspection established that feedback ownership is through `opportunity_reviews.evaluation_id` -> `opportunity_evaluations.opportunity_id`, not a nonexistent reviews `opportunity_id`. Corrected read-only selection identified `Synthetic opportunity 01`, with an existing evaluation and no feedback/enrichment. The owner freshly approved a maximum-20-minute continuation using that fixture. Browser detail rechecked these preconditions before the only two permitted synthetic additions.
+
+### Actual served release, cache and rollback evidence
+
+All four live switches were made **explicitly false** in shared configuration; before this, they were absent and used candidate defaults. Other shared configuration, application key, demo database/storage identity and disabled private intake were retained. Both releases' configuration caches were cleared under PHP 8.4 and left absent. No broad cache/session/lock flush, migration, reseeding, scheduler/worker restart, retained operator-helper execution or shared-host service reload occurred.
+
+Each atomic code switch used the **same 19-migration additive schema and shared environment/key/storage**, with a bounded **130-second** path/OPcache convergence wait. Actual HTTPS welcome HTML selected the correct archived compiled CSS; authenticated HTML and separately retrieved compiled CSS/JS hashes established the served candidate/previous release, not only CLI/symlink state. No generated-view invalidation was needed. This observes convergence for these checks, not web-pool TTL measurement or proof that CLI OPcache invalidation affects shared web workers.
+
+| Exact served acceptance | Verified UTC outcome |
+| --- | --- |
+| Disabled schema-v2 candidate, seeded queue/detail and one permitted feedback/enrichment pair | **PASSED 2026-11-01T09:57:02.631Z** |
+| Code/assets rollback to `7806994bfe639ffc3185f6d3dd742511d36b9870` / v1.0.1, same schema/shared state, retained authenticated session/feedback | **PASSED 2026-11-01T09:59:26.889Z** |
+| Exact candidate restoration, repeated HTTPS/assets/disable/isolation, retained feedback, logout and final preservation | **PASSED 2026-11-01T10:01:53.662Z** |
+
+Standalone real Chromium, not the destructive repository browser suite, verified 25/1 seeded pagination, scoped detail, desktop/narrow-screen overflow checks, secure HTTP-only host-only SameSite Lax session, foreign-workspace 404, no-origin tokenless enrichment 419, disabled AI availability with no admission key/run and rejected admission 404, foreign historical/missing status/report/download 404, guest report 401 and final logout/guest review JSON 401. Candidate AI HTML/JS served the disabled flow; no live link was present in the seeded queue. **44 captured browser requests, zero outside-origin browser requests and zero page errors**; separate API-context checks are not a server-side egress capture or private-host authenticated acceptance.
+
+### Preserved evidence and remaining boundary
+
+Exactly **one new synthetic feedback row and one allowlisted preset-enrichment row** were retained on opportunity 01. Every pre-existing row hash remained unchanged, including all **11 historical tables** and all feature tables. The other **19 of 21** preserved table snapshots were identical; only the two approved append-only synthetic additions changed review/enrichment counts from 3/2 to **4/3**. All 19 migrations, historical failed/partial statuses, immutable reports, SMTP acceptance, owner acknowledgments at **09:01:46Z**, and accounting remain unchanged. Partial run remains **20 selected / 19 succeeded / 1 failed**, 22 attempts and **4,872 micro-USD** modeled inference; zero jobs, active runs, in-flight/uncertain attempts, outstanding reservations or accounting block.
+
+**Final public state:** exact schema-v2 candidate served at `https://fotp.kontentwave.com`, **not yet published as v1.0.2**; feature/counting/scheduler/owner-delivery explicitly disabled, private intake disabled, both configuration caches absent, crontab absent. Old v1.0.1 remains the verified code-only safe fallback. No corpus/mailbox access, provider/counting/inference operation, SMTP authentication/send/receipt rewrite, paid smoke run, release workflow dispatch, tag change or commit/push occurred. The exact-run 19/20 owner exception and OPEN DEMO-004 #84 remain; unknown counting charges/retention are not reopened or represented as free.
+
+Guarded shared-original comparisons immediately before sheet/roadmap edits passed at **10:02:49.437Z / 10:02:50.638Z**, preserving local changes and saved synchronization state:
+
+| Document | Unchanged shared export SHA-256 | Preserved repository SHA-256 before these edits |
+| --- | --- | --- |
+| Sheet | `71d35f9f917f61c1fd9c7007988b73a909502b1494c4852dce3210b2329858d9` | `13dc6a59bbdbde8e75480c8e3eb32ca68c2bcf16edbaec617cd0dfb0b3ae5c94` |
+| Roadmap | `10ce119dc3f834b56351ee75928207cf9528024f2869755004166c347862fc21` | `dae9b4070f303158db77dbd8634690a187bf51b6d566bf39291a24b216bbeea4` |
+
+No force pull, document replacement, sync-state update or shared publication occurred. **Next gate:** separate explicit opt-in/scheduler/paid-dispatch limits and publication approval, unchanged original artifact and the fresh post-restoration smoke timestamp above. Earlier dated pending/failure/disabled-v1.0.1 checkpoints below remain historical, not the current served-code state.
+
 ## Phase 6.4 documentation checkpoint: pending release verification - 2026-11-01
 
 **Phase 6.4 is not complete.** The remaining release operations are **not yet performed for the exact schema-v2 candidate**, not newly failed tests. The owner approved documenting this checkpoint through a separate branch/commit/PR/merge and returning to `main`; that approval does **not** authorize host changes, activation, scheduling, SMTP authentication/testing/sending, paid operations or v1.0.2 publication. Earlier dated observations below retain their historical scope; the current receipt/exception decisions supersede earlier nonreceipt and unwaived-gate blockers without erasing their evidence.

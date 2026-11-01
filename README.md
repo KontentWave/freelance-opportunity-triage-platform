@@ -4,6 +4,8 @@ The credential-free `/demo` is a synthetic portfolio walkthrough of a ranked rev
 
 **Public portfolio demo:** [fotp.kontentwave.com/demo](https://fotp.kontentwave.com/demo). Use this credential-free entry, not the domain root, which retains the published application's login routing. The [October 25 hosting record](docs/runbooks/phase5-release.md#current-public-demo-2026-10-25) documents the isolated deployment, verification and rollback. The former public demo host is retired with HTTP 410.
 
+**Live opt-in - v1.0.2:** the public demo now separately offers bounded AI evaluation of authored fictional alerts against the fixed public profile, with session-owned progress and HTML reports. Private intake and owner delivery stay disabled; the seeded queue does not perform ingestion/evaluation on reads. The exact-run 19/20 exception is not general recommendation accuracy, and the USD 1.00/day modeled-inference cap excludes unknown counting fees. [Verified release, authorization and recovery limits](docs/runbooks/phase6-release.md#phase-64-completion-approved-persistent-opt-in-and-v102---2026-11-01). Local defaults remain disabled.
+
 The application also supports offline normalization of supported Upwork hourly email alerts, authorized scheduled IMAP intake, deterministic triage and a private authenticated review dashboard. It runs on PHP 8.4, Laravel 13, MariaDB 11.4, Vue and Node 22.23 for building frontend assets. No general marketplace API connector exists.
 
 ## Synthetic Demo From a Clean Checkout

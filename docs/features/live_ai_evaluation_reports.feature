@@ -256,6 +256,25 @@ Feature: Bounded authored-alert AI evaluation against the approved public profil
       And AI results, provider-call counts, accounting, expiry and unrelated history are unchanged
       And content cleanup preserves unresolved delivery and inference liabilities
 
+  @slice64 @protected-host @manual
+  Rule: Publication follows exact-candidate served rollback and separately approved paid opt-in
+
+    # docs/runbooks/phase6-release.md: 2026-11-01 final acceptance and publication
+    # Manual evidence, not a new Gherkin runner or a paid CI test.
+    Scenario: Preserve the exact schema-v2 archive and history through release completion
+      Given the original main CI archive and its four asset hashes are verified
+      And the owner accepts the exact partial 19 of 20 run without rewriting failures
+      And both original report acknowledgments are recorded separately from SMTP acceptance
+      When approved disabled candidate HTTPS smoke and same-schema v1.0.1 rollback and restoration pass
+      Then all original historical report receipt and accounting rows remain unchanged
+      And only explicitly approved synthetic feedback and enrichment additions are permitted
+      When the owner separately approves persistent visitor paid opt-in and publication
+      Then the dedicated bounded scheduler runs without enabling private intake or owner delivery
+      And the unchanged archive is published as v1.0.2 with its exact commit tag and four digests
+      And previous releases remain immutable
+      And no new operator live run or email test is used as a release smoke shortcut
+      And counting fees and isolated restoration remain explicitly unverified
+
   @slice64 @offline
   # Regression mapping: OpenAiEvaluationProviderTest and OpenAiInputTokenBoundTest.
   # 2026-10-31 one paid diagnostic established one namespace ambiguity; it did
