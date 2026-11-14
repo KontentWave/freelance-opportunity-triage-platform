@@ -12,6 +12,7 @@ use App\Http\Controllers\DemoAiRunController;
 use App\Infrastructure\Email\BoundedDemoMailbox;
 use App\Infrastructure\Email\DeadlineAwareImapProtocol;
 use App\Infrastructure\Email\DemoEmailNormalizer;
+use App\Infrastructure\Email\DemoImapProtocol;
 use App\Infrastructure\Email\UpworkDemoAlertNormalizer;
 use App\Jobs\ProcessDemoAiRun;
 use App\Models\DemoAiItem;
@@ -23,6 +24,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use Webklex\PHPIMAP\Config;
 use Webklex\PHPIMAP\Connection\Protocols\ImapProtocol;
 use Webklex\PHPIMAP\Connection\Protocols\Response;
 
@@ -124,6 +126,29 @@ final class DemoAiUpworkLiveBatchTest extends TestCase
             'https://www.upwork.com/jobs/~277777777777777777777',
             DemoAiReport::canonicalJobUrl($discovered['sources'][1]['source_namespace'], $discovered['sources'][1]['source_id']),
         );
+    }
+
+    #[Test]
+    public function it_raises_demo_imap_protocol_command_byte_ceiling_for_multipart_upwork_messages(): void
+    {
+        $protocol = new DemoImapProtocol(Config::make(['options' => ['debug' => false, 'uid_cache' => false]]), true, 'ssl');
+        $sockets = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+        $this->assertIsArray($sockets);
+        [$client, $server] = $sockets;
+        fwrite($server, str_repeat('a', 95_100)."\r\n");
+        fclose($server);
+
+        $reflection = new \ReflectionProperty(ImapProtocol::class, 'stream');
+        $reflection->setValue($protocol, $client);
+        $protocol->useByteLimits(18_000_000, 1_100_000);
+        $protocol->useDeadline(app(MonotonicClock::class), app(MonotonicClock::class)->now() + 10.0);
+
+        $response = Response::empty();
+        $line = $protocol->nextLine($response);
+        fclose($client);
+        $reflection->setValue($protocol, false);
+
+        $this->assertSame(95_102, strlen($line));
     }
 
     #[Test]

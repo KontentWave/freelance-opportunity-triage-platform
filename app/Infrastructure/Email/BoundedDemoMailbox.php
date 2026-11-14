@@ -49,6 +49,9 @@ final class BoundedDemoMailbox
             $protocol->disableDebug();
             $protocol->disableUidCache();
             $protocol->setConnectionTimeout(5);
+            if ($protocol instanceof DemoImapProtocol && $upworkMode) {
+                $protocol->useByteLimits(18_000_000, 1_100_000);
+            }
             if ($protocol instanceof DeadlineAwareImapProtocol) {
                 $protocol->useDeadline($this->clock, $started + 5);
             }

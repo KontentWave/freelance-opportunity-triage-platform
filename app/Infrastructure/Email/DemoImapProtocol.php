@@ -12,6 +12,16 @@ final class DemoImapProtocol extends DeadlineAwareImapProtocol
 
     private int $commandBytes = 0;
 
+    private int $maxReceivedBytes = 7_000_000;
+
+    private int $maxCommandBytes = 70_000;
+
+    public function useByteLimits(int $maxReceivedBytes, int $maxCommandBytes): void
+    {
+        $this->maxReceivedBytes = $maxReceivedBytes;
+        $this->maxCommandBytes = $maxCommandBytes;
+    }
+
     public function fetch(array|string $items, array|int $from, mixed $to = null, int|string $uid = IMAP::ST_UID): Response
     {
         $this->commandBytes = 0;
@@ -21,7 +31,7 @@ final class DemoImapProtocol extends DeadlineAwareImapProtocol
 
     protected function readByte(): string|false
     {
-        if (++$this->receivedBytes > 7_000_000 || ++$this->commandBytes > 70_000) {
+        if (++$this->receivedBytes > $this->maxReceivedBytes || ++$this->commandBytes > $this->maxCommandBytes) {
             throw new DemoAiException('demo_ai.transport_size');
         }
 
