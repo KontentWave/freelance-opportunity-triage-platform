@@ -21,6 +21,7 @@ const demoAiRoot = document.querySelector("#demo-ai-app");
 
 if (demoAiRoot) {
     createApp(DemoAiPage, {
+        sourceMode: demoAiRoot.dataset.sourceMode ?? "authored",
         intentUrl: demoAiRoot.dataset.intentUrl,
         admissionUrl: demoAiRoot.dataset.admissionUrl,
         statusBase: demoAiRoot.dataset.statusBase,

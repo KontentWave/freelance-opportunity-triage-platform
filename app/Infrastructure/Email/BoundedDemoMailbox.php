@@ -19,6 +19,7 @@ final class BoundedDemoMailbox
         private readonly DemoEmailNormalizer $normalizer,
         private readonly MonotonicClock $clock,
         private readonly ?Closure $protocolFactory = null,
+        private readonly ?UpworkDemoAlertNormalizer $upworkNormalizer = null,
     ) {}
 
     /** @return array{mailbox_key: string, uidvalidity: int, uidnext: int, scanned: int, bodies: int, bytes: int, duplicates: int, rejected: int, sources: list<array<string, mixed>>} */
@@ -35,6 +36,10 @@ final class BoundedDemoMailbox
                 && config('demo_ai.mailbox_username') === config('opportunity_mailbox.username'))) {
             throw new DemoAiException('demo_ai.mailbox_configuration');
         }
+        $upworkMode = config('demo_ai.source_mode', 'authored') === 'upwork';
+        $maxMessageBytes = $upworkMode ? UpworkDemoAlertNormalizer::MAX_RAW_BYTES : 65_536;
+        $maxTotalBytes = $upworkMode ? 16_777_216 : 6_553_600;
+        $upworkParser = $upworkMode ? ($this->upworkNormalizer ?? app(UpworkDemoAlertNormalizer::class)) : null;
         $started = $this->clock->now();
         $deadline = $started + 20;
         $protocol = $this->protocolFactory !== null
@@ -73,7 +78,7 @@ final class BoundedDemoMailbox
                     throw new DemoAiException('demo_ai.transport_identity');
                 }
                 $size = $this->positiveInteger($values['RFC822.SIZE'] ?? null);
-                if ($size > 65_536) {
+                if ($size > $maxMessageBytes) {
                     $result['rejected']++;
 
                     continue;
@@ -88,18 +93,18 @@ final class BoundedDemoMailbox
                 }
                 $result['bodies']++;
                 $result['bytes'] += strlen($raw);
-                if ($result['bodies'] > 100 || $result['bytes'] > 6_553_600) {
+                if ($result['bodies'] > 100 || $result['bytes'] > $maxTotalBytes) {
                     throw new DemoAiException('demo_ai.scan_limit');
                 }
                 try {
-                    $source = $this->normalizer->parse($raw);
+                    $source = $upworkParser !== null ? $upworkParser->parse($raw) : $this->normalizer->parse($raw);
                 } catch (DemoAiException) {
                     $result['rejected']++;
 
                     continue;
                 }
                 if (isset($seen[$source['source_id']])) {
-                    if ($seen[$source['source_id']] !== $source['body_sha256']) {
+                    if (! $upworkMode && $seen[$source['source_id']] !== $source['body_sha256']) {
                         throw new DemoAiException('demo_ai.source_conflict');
                     }
                     $result['duplicates']++;

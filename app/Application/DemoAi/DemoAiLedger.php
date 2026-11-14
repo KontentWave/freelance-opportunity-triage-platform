@@ -70,8 +70,10 @@ final class DemoAiLedger
                     ->where(fn ($query) => $query->where('session_hash', $sessionHash)->orWhere('ip_hash', $ipHash))->exists()) {
                 $failure = 'demo_ai.admission_rate';
             }
+            $upworkMode = $this->approved->isUpworkMode();
             $approvedSnapshot = $this->approved->snapshot() + [
-                'manifest_version' => 'authored-demo-v2', 'parser_version' => ApprovedDemoInputs::PARSER_VERSION,
+                'manifest_version' => $upworkMode ? 'live-upwork-imap' : 'authored-demo-v2',
+                'parser_version' => $upworkMode ? ApprovedDemoInputs::UPWORK_PARSER_VERSION : ApprovedDemoInputs::PARSER_VERSION,
                 'schema_version' => ApprovedDemoInputs::SCHEMA_VERSION, 'model' => 'gpt-6-luna',
                 'pricing_version' => 'openai-standard-2026-10-27',
             ];
@@ -103,6 +105,42 @@ final class DemoAiLedger
 
         return DemoAiRun::query()->where('workspace_id', $workspace)->where('session_hash', $sessionHash)
             ->where('idempotency_hash', $identity)->first();
+    }
+
+    public function latestReusableUpworkRun(string $workspace): ?DemoAiRun
+    {
+        $now = CarbonImmutable::now('UTC');
+
+        return DemoAiRun::query()
+            ->where('workspace_id', $workspace)
+            ->where('approved_snapshot->source_mode', 'upwork')
+            ->whereNull('purged_at')
+            ->where(fn ($query) => $query->whereNull('expires_at')->orWhere('expires_at', '>', $now))
+            ->where(function ($query): void {
+                $query->whereIn('status', ['queued', 'running'])
+                    ->orWhere(fn ($done) => $done->whereIn('status', ['completed', 'partial'])->where('succeeded_count', '>', 0));
+            })
+            ->orderByDesc('admitted_at')
+            ->first();
+    }
+
+    public function upworkCooldownUntil(string $workspace, string $sessionHash, string $ipHash, int $minutes): ?int
+    {
+        $cutoff = CarbonImmutable::now('UTC')->subMinutes(max(1, $minutes));
+        $recent = DemoAiRun::query()
+            ->where('workspace_id', $workspace)
+            ->where('approved_snapshot->source_mode', 'upwork')
+            ->where('status', '!=', 'rejected')
+            ->where('admitted_at', '>', $cutoff)
+            ->where(fn ($query) => $query->where('session_hash', $sessionHash)->orWhere('ip_hash', $ipHash))
+            ->orderByDesc('admitted_at')
+            ->first(['admitted_at']);
+
+        if ($recent === null) {
+            return null;
+        }
+
+        return $recent->admitted_at->addMinutes(max(1, $minutes))->getTimestamp();
     }
 
     public function start(string $runId): ?DemoAiRun
@@ -159,23 +197,60 @@ final class DemoAiLedger
             if (count($sources) > 20) {
                 throw new DemoAiException('demo_ai.scan_limit');
             }
+            $upworkMode = ($run->approved_snapshot['source_mode'] ?? 'authored') === 'upwork';
+            $reusableResults = [];
+            if ($upworkMode && $sources !== []) {
+                $now = CarbonImmutable::now('UTC');
+                $cachedItems = DemoAiItem::query()
+                    ->where('workspace_id', $run->workspace_id)
+                    ->where('source_namespace', ApprovedDemoInputs::UPWORK_SOURCE_NAMESPACE)
+                    ->whereIn('source_id', array_column($sources, 'source_id'))
+                    ->where('status', 'succeeded')
+                    ->whereNotNull('result')
+                    ->whereIn('run_id', DemoAiRun::query()
+                        ->where('workspace_id', $run->workspace_id)
+                        ->where('version_hash', $run->version_hash)
+                        ->whereNull('purged_at')
+                        ->where(fn ($query) => $query->whereNull('expires_at')->orWhere('expires_at', '>', $now))
+                        ->select('id'))
+                    ->orderByDesc('updated_at')
+                    ->get(['source_id', 'input_sha256', 'result']);
+                foreach ($cachedItems as $cached) {
+                    $cacheKey = $cached->source_id.'|'.$cached->input_sha256;
+                    if (! isset($reusableResults[$cacheKey]) && is_array($cached->result)) {
+                        $reusableResults[$cacheKey] = $cached->result;
+                    }
+                }
+            }
+            $pendingCount = 0;
+            $reusedCount = 0;
             foreach ($sources as $index => $source) {
+                $reused = $reusableResults[$source['source_id'].'|'.$source['input_sha256']] ?? null;
+                if ($reused !== null) {
+                    $reusedCount++;
+                } else {
+                    $pendingCount++;
+                }
                 DemoAiItem::query()->create([
                     'workspace_id' => $run->workspace_id, 'run_id' => $runId, 'ordinal' => $index,
                     'source_namespace' => $source['source_namespace'], 'source_id' => $source['source_id'],
                     'mailbox_key' => $source['mailbox_key'], 'uidvalidity' => $source['uidvalidity'], 'uid' => $source['uid'],
                     'body_sha256' => $source['body_sha256'], 'input_sha256' => $source['input_sha256'],
-                    'raw_sha256' => $source['raw_sha256'], 'input_snapshot' => $source['input'], 'status' => 'pending',
+                    'raw_sha256' => $source['raw_sha256'], 'input_snapshot' => $source['input'],
+                    'status' => $reused !== null ? 'succeeded' : 'pending',
+                    'result' => $reused,
                 ]);
             }
-            $needed = count($sources) * 2 * self::ATTEMPT_RESERVATION;
+            $needed = $pendingCount * 2 * self::ATTEMPT_RESERVATION;
             $this->releasePool($run, $run->reserved_micro_usd - $needed);
             $run->update([
                 'source_snapshot' => $snapshot,
                 'source_snapshot_sha256' => hash('sha256', CanonicalJson::encode($snapshot)),
-                'selected_count' => count($sources), 'heartbeat_at' => now('UTC'),
+                'selected_count' => count($sources),
+                'succeeded_count' => $reusedCount,
+                'heartbeat_at' => now('UTC'),
             ]);
-            if ($sources === []) {
+            if ($pendingCount === 0) {
                 $this->finishLocked($run);
             } else {
                 $this->dispatch($runId);
