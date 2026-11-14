@@ -20,6 +20,7 @@ const key = ref(null);
 const keyExpiry = ref(null);
 const cooldownUntil = ref(null);
 const reusedBatch = ref(false);
+const expandedItems = ref({});
 const error = ref("");
 const inaccessible = ref(false);
 const expired = ref(false);
@@ -124,6 +125,44 @@ function itemBadgeClass(item) {
         return `suggestion-${item.result.recommendation.toLowerCase()}`;
     }
     return "suggestion-unscored";
+}
+
+function isExpanded(sourceId) {
+    return Boolean(expandedItems.value[sourceId]);
+}
+
+function toggleItem(sourceId) {
+    expandedItems.value = {
+        ...expandedItems.value,
+        [sourceId]: !expandedItems.value[sourceId],
+    };
+}
+
+function setAllExpanded(open) {
+    if (!Array.isArray(run.value?.items)) return;
+    const next = {};
+    for (const item of run.value.items) {
+        next[item.source_id] = open;
+    }
+    expandedItems.value = next;
+}
+
+const allExpanded = computed(() =>
+    Array.isArray(run.value?.items)
+    && run.value.items.length > 0
+    && run.value.items.every((item) => Boolean(expandedItems.value[item.source_id])),
+);
+
+function panelId(sourceId) {
+    return `alert-panel-${String(sourceId).replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+}
+
+function itemSummaryLine(item) {
+    if (item.status === "succeeded" && item.result?.reasons?.length) {
+        return item.result.reasons[0].explanation;
+    }
+    if (item.explanation) return item.explanation;
+    return item.input?.description ?? "";
 }
 
 function resetRequests() {
@@ -414,40 +453,66 @@ onBeforeUnmount(() => {
                 <p v-else-if="terminal">A stored report is not available for this historical run. Opening this run never restarts evaluation.</p>
             </div>
         </section>
-        <section v-if="run && !expired && !inaccessible && Array.isArray(run.items) && run.items.length" class="grid gap-4" aria-labelledby="live-items-heading">
-            <h2 id="live-items-heading">{{ upworkMode ? `Evaluated Upwork alerts (${run.items.length})` : `Alerts in this run (${run.items.length})` }}</h2>
-            <div class="grid gap-4">
-                <article v-for="item in run.items" :key="item.source_id" class="grid min-w-0 gap-3 border-t-2 border-[#718078] bg-white p-4 shadow-sm">
-                    <div class="flex flex-wrap items-center justify-between gap-2">
-                        <div class="flex flex-wrap items-center gap-2">
-                            <span :class="['suggestion', itemBadgeClass(item)]">{{ itemBadgeLabel(item) }}</span>
-                            <span class="text-xs font-bold uppercase tracking-wide text-[#536159]">{{ item.source_id }}</span>
+        <section v-if="run && !expired && !inaccessible && Array.isArray(run.items) && run.items.length" class="grid gap-3" aria-labelledby="live-items-heading">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <h2 id="live-items-heading">{{ upworkMode ? `Evaluated Upwork alerts (${run.items.length})` : `Alerts in this run (${run.items.length})` }}</h2>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button type="button" class="secondary-button min-h-9 px-3 py-1 text-xs" :disabled="allExpanded" @click="setAllExpanded(true)">Expand all</button>
+                    <button type="button" class="secondary-button min-h-9 px-3 py-1 text-xs" :disabled="!Object.values(expandedItems).some(Boolean)" @click="setAllExpanded(false)">Collapse all</button>
+                </div>
+            </div>
+            <div class="grid gap-2">
+                <article v-for="item in run.items" :key="item.source_id" class="grid min-w-0 border-t-2 border-[#718078] bg-white shadow-sm">
+                    <button
+                        type="button"
+                        class="flex w-full min-w-0 cursor-pointer items-start justify-between gap-3 p-3.5 text-left hover:bg-[#f7f9f7]"
+                        :aria-expanded="isExpanded(item.source_id) ? 'true' : 'false'"
+                        :aria-controls="panelId(item.source_id)"
+                        @click="toggleItem(item.source_id)"
+                    >
+                        <span class="grid min-w-0 grow gap-1">
+                            <span class="flex flex-wrap items-center gap-2">
+                                <span :class="['suggestion', itemBadgeClass(item)]">{{ itemBadgeLabel(item) }}</span>
+                                <span class="text-base font-semibold leading-snug text-[#17221d] break-words">{{ item.input?.title ?? item.source_id }}</span>
+                            </span>
+                            <span class="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-[#536159]">
+                                <span v-if="formatTerms(item.input)" class="font-medium break-words">{{ formatTerms(item.input) }}</span>
+                                <span v-if="item.input?.posted_at">Posted UTC: {{ item.input.posted_at }}</span>
+                            </span>
+                            <span v-if="!isExpanded(item.source_id) && itemSummaryLine(item)" class="line-clamp-1 text-xs text-[#4a5750] break-words">
+                                {{ itemSummaryLine(item) }}
+                            </span>
+                        </span>
+                        <span class="shrink-0 pt-0.5 text-xs font-bold whitespace-nowrap text-[#174d3b]" aria-hidden="true">
+                            {{ isExpanded(item.source_id) ? "Hide ▴" : "Details ▾" }}
+                        </span>
+                    </button>
+                    <div
+                        v-if="isExpanded(item.source_id)"
+                        :id="panelId(item.source_id)"
+                        class="grid min-w-0 gap-3 border-t border-[#dce3de] px-4 pb-4 pt-3"
+                    >
+                        <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-[#536159]">
+                            <span class="font-bold uppercase tracking-wide">{{ item.source_id }}</span>
+                            <a v-if="item.canonical_url" :href="item.canonical_url" target="_blank" rel="noopener noreferrer" class="inline-link text-sm font-semibold break-all">View job on Upwork ({{ item.canonical_url }})</a>
                         </div>
-                        <span v-if="item.input?.posted_at" class="text-xs text-[#536159]">Alert / posted UTC: {{ item.input.posted_at }}</span>
-                    </div>
-                    <div class="grid min-w-0 gap-1">
-                        <h3 class="text-lg font-semibold leading-snug break-words">{{ item.input?.title ?? item.source_id }}</h3>
-                        <p v-if="formatTerms(item.input)" class="text-sm font-medium text-[#4a5750] break-words">{{ formatTerms(item.input) }}</p>
-                        <p v-if="item.canonical_url">
-                            <a :href="item.canonical_url" target="_blank" rel="noopener noreferrer" class="inline-link text-sm font-semibold break-all">View job on Upwork ({{ item.canonical_url }})</a>
-                        </p>
-                    </div>
-                    <p v-if="item.input?.description" class="text-sm leading-relaxed text-[#2c3832] break-words">{{ item.input.description }}</p>
-                    <div v-if="Array.isArray(item.input?.skills) && item.input.skills.length" class="flex flex-wrap gap-1.5">
-                        <span v-for="skill in item.input.skills" :key="skill" class="rounded bg-[#e8efe9] px-2 py-0.5 text-xs font-medium text-[#174d3b]">{{ skill }}</span>
-                    </div>
-                    <div v-if="item.status === 'succeeded' && item.result" class="grid min-w-0 gap-2 border-t border-[#dce3de] pt-2">
-                        <div v-for="(reason, rIdx) in item.result.reasons ?? []" :key="rIdx" class="grid min-w-0 gap-1 text-sm">
-                            <p class="break-words"><strong class="uppercase text-xs tracking-wide text-[#174d3b]">{{ reason.criterion_id }}:</strong> {{ reason.explanation }}</p>
-                            <blockquote v-for="(ev, eIdx) in reason.evidence ?? []" :key="eIdx" class="border-l-2 border-[#174d3b] pl-3 text-xs italic text-[#4a5750] break-words">
-                                “{{ ev.quote }}” <span class="not-italic font-semibold">({{ ev.field }})</span>
-                            </blockquote>
+                        <p v-if="item.input?.description" class="text-sm leading-relaxed text-[#2c3832] break-words">{{ item.input.description }}</p>
+                        <div v-if="Array.isArray(item.input?.skills) && item.input.skills.length" class="flex flex-wrap gap-1.5">
+                            <span v-for="skill in item.input.skills" :key="skill" class="rounded bg-[#e8efe9] px-2 py-0.5 text-xs font-medium text-[#174d3b]">{{ skill }}</span>
                         </div>
-                        <p v-if="Array.isArray(item.result.missing_information) && item.result.missing_information.length" class="text-xs font-medium text-[#895800] break-words">
-                            Needs clarification: {{ item.result.missing_information.join(", ") }}
-                        </p>
+                        <div v-if="item.status === 'succeeded' && item.result" class="grid min-w-0 gap-2 border-t border-[#dce3de] pt-2">
+                            <div v-for="(reason, rIdx) in item.result.reasons ?? []" :key="rIdx" class="grid min-w-0 gap-1 text-sm">
+                                <p class="break-words"><strong class="uppercase text-xs tracking-wide text-[#174d3b]">{{ reason.criterion_id }}:</strong> {{ reason.explanation }}</p>
+                                <blockquote v-for="(ev, eIdx) in reason.evidence ?? []" :key="eIdx" class="border-l-2 border-[#174d3b] pl-3 text-xs italic text-[#4a5750] break-words">
+                                    “{{ ev.quote }}” <span class="not-italic font-semibold">({{ ev.field }})</span>
+                                </blockquote>
+                            </div>
+                            <p v-if="Array.isArray(item.result.missing_information) && item.result.missing_information.length" class="text-xs font-medium text-[#895800] break-words">
+                                Needs clarification: {{ item.result.missing_information.join(", ") }}
+                            </p>
+                        </div>
+                        <p v-else-if="item.explanation" class="text-sm text-[#a32f23]">{{ item.explanation }}</p>
                     </div>
-                    <p v-else-if="item.explanation" class="text-sm text-[#a32f23]">{{ item.explanation }}</p>
                 </article>
             </div>
         </section>

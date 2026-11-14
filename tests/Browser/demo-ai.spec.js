@@ -575,10 +575,22 @@ test.describe.serial("demo AI progress and reports", () => {
         await enter(page);
         await expect(page.getByRole("heading", { name: "Fresh Upwork alert evaluation" })).toBeVisible();
         await expect(page.getByText("Evaluated Upwork alerts (1)")).toBeVisible();
-        await expect(page.getByText("QA Engineer for Playwright Checkout Suite")).toBeVisible();
+        const cardToggle = page.getByRole("button", { name: /QA Engineer for Playwright Checkout Suite/ });
+        await expect(cardToggle).toBeVisible();
+        await expect(cardToggle).toHaveAttribute("aria-expanded", "false");
         await expect(page.getByText("Fixed-price: $1500 · Payment verified · Slovakia")).toBeVisible();
+        await expect(page.getByRole("link", { name: /View job on Upwork/ })).toHaveCount(0);
+
+        await cardToggle.click();
+        await expect(cardToggle).toHaveAttribute("aria-expanded", "true");
         const upworkLink = page.getByRole("link", { name: /View job on Upwork/ });
         await expect(upworkLink).toHaveAttribute("href", "https://www.upwork.com/jobs/~288888888888888888888");
+
+        await page.getByRole("button", { name: "Collapse all" }).click();
+        await expect(cardToggle).toHaveAttribute("aria-expanded", "false");
+        await page.getByRole("button", { name: "Expand all" }).click();
+        await expect(cardToggle).toHaveAttribute("aria-expanded", "true");
+
         await expect(page.getByRole("button", { name: /30-min refresh cooldown active/ })).toBeDisabled();
         await page.setViewportSize({ width: 320, height: 720 });
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
