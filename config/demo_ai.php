@@ -3,6 +3,8 @@
 return [
     'enabled' => (bool) env('DEMO_AI_ENABLED', false),
     'scheduler_enabled' => (bool) env('DEMO_AI_SCHEDULER_ENABLED', false),
+    'source_mode' => (string) env('DEMO_AI_SOURCE_MODE', 'authored'),
+    'cooldown_minutes' => (int) env('DEMO_AI_COOLDOWN_MINUTES', 30),
     'mailbox_key' => env('DEMO_AI_MAILBOX_KEY'),
     'mailbox_host' => env('DEMO_AI_MAILBOX_HOST'),
     'mailbox_port' => (int) env('DEMO_AI_MAILBOX_PORT', 993),

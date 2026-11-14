@@ -12,13 +12,17 @@ use App\Models\DemoAiRun;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Cookie as HttpCookie;
 use Symfony\Component\HttpFoundation\Response;
 
 final class DemoAiRunController extends Controller
 {
+    public const COOLDOWN_COOKIE = 'fotp_demo_ai_cooldown';
+
     public function __construct(private readonly DemoAiConfiguration $configuration) {}
 
     public function index(Request $request): View
@@ -31,6 +35,9 @@ final class DemoAiRunController extends Controller
     public function create(Request $request, DemoAiLedger $ledger, ApprovedDemoInputs $approved): JsonResponse
     {
         [$workspace, $session] = $this->context($request, false);
+        $ipHash = $this->ipHash($request);
+        $upworkMode = $approved->isUpworkMode();
+        $cooldownUntil = $upworkMode ? $this->cooldownUntil($request, $ledger, $workspace, $session, $ipHash) : null;
         $key = $request->session()->get('demo_ai_intent');
         if ($request->isMethod('post') || (! is_string($key) && config('demo_ai.enabled'))) {
             abort_unless(config('demo_ai.enabled'), 404);
@@ -50,11 +57,20 @@ final class DemoAiRunController extends Controller
         }
         $existing = is_string($key)
             ? $ledger->existing($workspace, $session, $key, $request->session()->get('demo_ai_intent_version')) : null;
+        $reusedBatch = false;
+        if ($existing === null && $upworkMode && ! $request->isMethod('post')) {
+            $existing = $ledger->latestReusableUpworkRun($workspace);
+            $reusedBatch = $existing !== null;
+        }
 
         return response()->json([
-            'available' => (bool) config('demo_ai.enabled'), 'idempotency_key' => $key,
+            'available' => (bool) config('demo_ai.enabled'),
+            'source_mode' => $upworkMode ? 'upwork' : 'authored',
+            'idempotency_key' => $key,
             'key_expires_at' => is_string($key) ? $request->session()->get('demo_ai_keys.'.$key) : null,
-            'run' => $existing === null ? null : $this->summary($existing),
+            'cooldown_until' => $cooldownUntil,
+            'reused_batch' => $reusedBatch,
+            'run' => $existing === null ? null : $this->summaryWithItems($existing, $workspace),
         ])->header('Cache-Control', 'no-store');
     }
 
@@ -75,7 +91,7 @@ final class DemoAiRunController extends Controller
         }
         $existing = $ledger->existing($workspace, $session, $data['idempotency_key'], $version);
         if ($existing !== null) {
-            return response()->json($this->summary($existing), $existing->status === 'rejected' ? 429 : 202)->header('Cache-Control', 'no-store');
+            return response()->json($this->summaryWithItems($existing, $workspace), $existing->status === 'rejected' ? 429 : 202)->header('Cache-Control', 'no-store');
         }
         $until = $request->session()->get('demo_ai_keys.'.$data['idempotency_key']);
         if (! is_int($until) || $until <= time()) {
@@ -84,13 +100,41 @@ final class DemoAiRunController extends Controller
         if ($version !== $approved->versionHash()) {
             throw ValidationException::withMessages(['idempotency_key' => 'The approved inputs changed. Deliberately request a new evaluation.']);
         }
+
+        $ipHash = $this->ipHash($request);
+        $upworkMode = $approved->isUpworkMode();
+        if ($upworkMode) {
+            $reusable = $ledger->latestReusableUpworkRun($workspace);
+            if ($reusable !== null && in_array($reusable->status, ['queued', 'running'], true)) {
+                return response()->json($this->summaryWithItems($reusable, $workspace) + [
+                    'reused_batch' => true,
+                    'cooldown_until' => $this->cooldownUntil($request, $ledger, $workspace, $session, $ipHash),
+                ], 202)->header('Cache-Control', 'no-store');
+            }
+            $cooldownUntil = $this->cooldownUntil($request, $ledger, $workspace, $session, $ipHash);
+            if ($cooldownUntil !== null && $reusable !== null) {
+                return response()->json($this->summaryWithItems($reusable, $workspace) + [
+                    'reused_batch' => true,
+                    'cooldown_until' => $cooldownUntil,
+                ], 202)->header('Cache-Control', 'no-store');
+            }
+        }
+
         try {
-            $run = $ledger->admit($workspace, $session, hash_hmac('sha256', (string) $request->ip(), (string) config('app.key')), $data['idempotency_key']);
+            $run = $ledger->admit($workspace, $session, $ipHash, $data['idempotency_key']);
         } catch (DemoAiException $exception) {
             return response()->json(['error_code' => $exception->failureCode], 503);
         }
 
-        return response()->json($this->summary($run), $run->status === 'rejected' ? 429 : 202)->header('Cache-Control', 'no-store');
+        $response = response()->json($this->summaryWithItems($run, $workspace), $run->status === 'rejected' ? 429 : 202)
+            ->header('Cache-Control', 'no-store');
+        if ($upworkMode && $run->status !== 'rejected') {
+            $minutes = max(1, (int) config('demo_ai.cooldown_minutes', 30));
+            $cookieUntil = now()->getTimestamp() + ($minutes * 60);
+            $response->withCookie($this->makeCooldownCookie($cookieUntil, $minutes));
+        }
+
+        return $response;
     }
 
     public function show(Request $request, string $run): JsonResponse
@@ -101,12 +145,14 @@ final class DemoAiRunController extends Controller
         if (! Cache::store('demo-ai')->add('demo-ai:status:'.$session.':'.$run, true, 2)) {
             return response()->json(['error_code' => 'demo_ai.poll_rate'], 429)->header('Retry-After', '2');
         }
-        $items = DemoAiItem::query()->where('run_id', $run)->where('workspace_id', $workspace)->orderBy('ordinal')
-            ->get(['source_id', 'status', 'result', 'failure_code']);
+        $upworkRun = ($record->approved_snapshot['source_mode'] ?? 'authored') === 'upwork';
 
         return response()->json($this->summary($record) + [
-            'label' => "Fictional demo alerts evaluated against Marcel's public profile",
-            'items' => $items, 'profile_version' => $record->approved_snapshot['profile_version'] ?? null,
+            'label' => $upworkRun
+                ? "Upwork job alerts evaluated against Marcel's public profile"
+                : "Fictional demo alerts evaluated against Marcel's public profile",
+            'items' => $this->formatItems($run, $workspace),
+            'profile_version' => $record->approved_snapshot['profile_version'] ?? null,
             'prompt_version' => $record->approved_snapshot['prompt_version'] ?? null,
         ])->header('Cache-Control', 'no-store');
     }
@@ -121,13 +167,16 @@ final class DemoAiRunController extends Controller
         }
         abort_if($record->report_snapshot === null, 409);
 
+        $upworkRun = ($record->report_snapshot['approved']['source_mode'] ?? 'authored') === 'upwork';
+        $prefix = $upworkRun ? 'upwork-demo-' : 'fictional-demo-';
+
         $response = response()->view('review.ai-report', ['report' => $record->report_snapshot])
             ->header('Cache-Control', 'private, no-store')
             ->header('X-Content-Type-Options', 'nosniff')
             ->header('Referrer-Policy', 'no-referrer')
             ->header('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'");
         if ($request->routeIs('demo-ai.download')) {
-            $response->header('Content-Disposition', 'attachment; filename="fictional-demo-'.$record->id.'.html"');
+            $response->header('Content-Disposition', 'attachment; filename="'.$prefix.$record->id.'.html"');
         }
 
         return $response;
@@ -135,6 +184,14 @@ final class DemoAiRunController extends Controller
 
     private function owned(string $id, string $workspace, string $session): DemoAiRun
     {
+        if (config('demo_ai.source_mode', 'authored') === 'upwork') {
+            return DemoAiRun::query()
+                ->whereKey($id)
+                ->where('workspace_id', $workspace)
+                ->where(fn ($query) => $query->where('session_hash', $session)->orWhere('approved_snapshot->source_mode', 'upwork'))
+                ->firstOrFail();
+        }
+
         return DemoAiRun::query()->whereKey($id)->where('workspace_id', $workspace)
             ->where('session_hash', $session)->firstOrFail();
     }
@@ -177,5 +234,89 @@ final class DemoAiRunController extends Controller
             'report_url' => $run->report_snapshot === null ? null : route('demo-ai.report', ['run' => $run->id], false),
             'download_url' => $run->report_snapshot === null ? null : route('demo-ai.download', ['run' => $run->id], false),
         ];
+    }
+
+    /** @return array<string, mixed> */
+    private function summaryWithItems(DemoAiRun $run, string $workspace): array
+    {
+        return $this->summary($run) + [
+            'items' => $this->expired($run) ? [] : $this->formatItems($run->id, $workspace),
+        ];
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function formatItems(string $run, string $workspace): array
+    {
+        return DemoAiItem::query()
+            ->where('run_id', $run)
+            ->where('workspace_id', $workspace)
+            ->orderBy('ordinal')
+            ->get(['source_namespace', 'source_id', 'status', 'input_snapshot', 'result', 'failure_code'])
+            ->map(function (DemoAiItem $item): array {
+                $input = is_array($item->input_snapshot) ? $item->input_snapshot : null;
+
+                return [
+                    'source_id' => $item->source_id,
+                    'status' => $item->status,
+                    'result' => $item->result,
+                    'failure_code' => $item->failure_code,
+                    'explanation' => DemoAiReport::explanation($item->failure_code),
+                    'canonical_url' => DemoAiReport::canonicalJobUrl($item->source_namespace, $item->source_id),
+                    'input' => $input === null ? null : [
+                        'title' => $input['title'] ?? null,
+                        'description' => $input['description'] ?? null,
+                        'contract_type' => $input['contract_type'] ?? null,
+                        'hourly_min_usd' => $input['hourly_min_usd'] ?? null,
+                        'hourly_max_usd' => $input['hourly_max_usd'] ?? null,
+                        'fixed_budget_usd' => $input['fixed_budget_usd'] ?? null,
+                        'estimated_duration' => $input['estimated_duration'] ?? null,
+                        'posted_at' => $input['posted_at'] ?? null,
+                        'skills' => $input['skills'] ?? [],
+                        'client_payment_verified' => $input['client_payment_verified'] ?? null,
+                        'client_rating' => $input['client_rating'] ?? null,
+                        'client_spend_usd' => $input['client_spend_usd'] ?? null,
+                        'client_country' => $input['client_country'] ?? null,
+                    ],
+                ];
+            })
+            ->all();
+    }
+
+    private function ipHash(Request $request): string
+    {
+        return hash_hmac('sha256', (string) $request->ip(), (string) config('app.key'));
+    }
+
+    private function cooldownUntil(Request $request, DemoAiLedger $ledger, string $workspace, string $session, string $ipHash): ?int
+    {
+        $nowTimestamp = now()->getTimestamp();
+        $minutes = max(1, (int) config('demo_ai.cooldown_minutes', 30));
+        $serverUntil = $ledger->upworkCooldownUntil($workspace, $session, $ipHash, $minutes);
+        $cookieUntil = null;
+        $rawCookie = $request->cookie(self::COOLDOWN_COOKIE);
+        if (is_string($rawCookie) && $rawCookie !== '') {
+            $decoded = json_decode($rawCookie, true);
+            if (is_array($decoded) && is_int($decoded['until'] ?? null) && $decoded['until'] > $nowTimestamp) {
+                $cookieUntil = $decoded['until'];
+            }
+        }
+        $until = max($serverUntil ?? 0, $cookieUntil ?? 0);
+
+        return $until > $nowTimestamp ? $until : null;
+    }
+
+    private function makeCooldownCookie(int $until, int $minutes): HttpCookie
+    {
+        return Cookie::make(
+            name: self::COOLDOWN_COOKIE,
+            value: json_encode(['until' => $until], JSON_THROW_ON_ERROR),
+            minutes: $minutes,
+            path: '/',
+            domain: null,
+            secure: (bool) config('session.secure'),
+            httpOnly: true,
+            raw: false,
+            sameSite: 'lax',
+        );
     }
 }

@@ -11,6 +11,7 @@
     <a href="#main">Skip to evaluation</a>
     <main id="main">
         <div id="demo-ai-app"
+             data-source-mode="{{ config('demo_ai.source_mode', 'authored') }}"
              data-intent-url="{{ route('demo-ai.create', [], false) }}"
              data-admission-url="{{ route('demo-ai.store', [], false) }}"
              data-status-base="{{ route('demo-ai.store', [], false) }}"></div>

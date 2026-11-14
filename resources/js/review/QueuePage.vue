@@ -5,6 +5,10 @@ import { reviewRequest } from "./http.js";
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
 const demoMode =
     document.querySelector('meta[name="review-mode"]')?.content === "demo";
+const liveUpworkBatch =
+    demoMode &&
+    document.querySelector('meta[name="demo-ai-source-mode"]')?.content ===
+        "upwork";
 const query = new URLSearchParams(window.location.search);
 const filters = reactive({
     recommendation: query.get("recommendation") ?? "ALL",
@@ -88,12 +92,26 @@ onMounted(async () => {
                 <h1>Opportunity review queue</h1>
                 <p>
                     {{
-                        demoMode
-                            ? "Fixed fictional opportunities. Shared changes may be reset."
-                            : "Saved experimental suggestions for human review, never automatic decisions."
+                        liveUpworkBatch
+                            ? "Baseline synthetic walkthrough below. Use the live batch button to pull fresh incoming Upwork job alerts and run OpenAI triage."
+                            : demoMode
+                              ? "Fixed fictional opportunities. Shared changes may be reset."
+                              : "Saved experimental suggestions for human review, never automatic decisions."
                     }}
                 </p>
-                <a v-if="demoMode" href="/demo-ai" class="inline-link">Evaluate fictional alerts with AI</a>
+                <div
+                    v-if="liveUpworkBatch"
+                    class="flex flex-wrap items-center gap-3 pt-1"
+                >
+                    <a
+                        href="/demo-ai"
+                        class="primary-button inline-flex items-center no-underline"
+                        >Load fresh live Upwork batch</a
+                    >
+                </div>
+                <a v-else-if="demoMode" href="/demo-ai" class="inline-link"
+                    >Evaluate fictional alerts with AI</a
+                >
             </div>
             <form method="POST" action="/logout">
                 <input type="hidden" name="_token" :value="csrfToken" />

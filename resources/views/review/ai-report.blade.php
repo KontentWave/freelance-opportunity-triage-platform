@@ -28,9 +28,15 @@
 </head>
 <body>
 <main>
+@php($upworkMode = ($report['approved']['source_mode'] ?? 'authored') === 'upwork')
     <header>
-        <p><strong>Fictional / synthetic data. Not live marketplace listings.</strong></p>
-        <h1>Fictional demo alerts evaluated against Marcel's public profile</h1>
+        @if ($upworkMode)
+            <p><strong>Live Upwork job-alert evaluation (real incoming alerts, read-only snapshot).</strong></p>
+            <h1>Upwork job alerts evaluated against Marcel's public profile</h1>
+        @else
+            <p><strong>Fictional / synthetic data. Not live marketplace listings.</strong></p>
+            <h1>Fictional demo alerts evaluated against Marcel's public profile</h1>
+        @endif
         <p>These recommendations concern Marcel's approved public profile, not the visitor.
             AI suggestions can be wrong and require human review. No proposal is sent.</p>
     </header>
@@ -87,6 +93,9 @@
         @foreach ($report['items'] as $item)
             <article aria-labelledby="item-{{ $loop->index }}">
                 <h3 id="item-{{ $loop->index }}">{{ $item['source_id'] }}: {{ $item['input']['title'] ?? 'Title unavailable' }}</h3>
+                @if (! empty($item['canonical_url']))
+                    <p><a href="{{ $item['canonical_url'] }}" target="_blank" rel="noopener noreferrer">View job on Upwork ({{ $item['canonical_url'] }})</a></p>
+                @endif
                 <p><strong>{{ $item['status'] === 'succeeded' && $item['result'] ? $item['result']['recommendation'] : 'UNEVALUATED' }}</strong>
                     &mdash; stored item state: {{ $item['status'] }}</p>
                 <p>Alert posted timestamp: {{ $item['input']['posted_at'] ?? 'Unknown' }}. This is not the evaluation time.</p>

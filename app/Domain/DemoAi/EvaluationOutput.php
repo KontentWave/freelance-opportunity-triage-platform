@@ -109,6 +109,9 @@ final class EvaluationOutput
      */
     private function validateHardConstraints(array $value, array $input): void
     {
+        if (! str_starts_with((string) ($input['source_id'] ?? ''), 'DEMO-')) {
+            return;
+        }
         $description = (string) $input['description'];
         $incompatibilities = [];
         // These are factual, explicit requirements in the approved corpus, not model bands.

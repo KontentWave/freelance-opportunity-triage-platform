@@ -529,4 +529,58 @@ test.describe.serial("demo AI progress and reports", () => {
         await page.keyboard.press("Tab");
         await expect(page.getByRole("link", { name: "Return to seeded review queue" })).toBeFocused();
     });
+
+    test("renders live inline Upwork alert cards, canonical listing links and 30-min cooldown notice without horizontal overflow", async ({ page }) => {
+        const now = Math.floor(Date.now() / 1000);
+        await page.route("**/demo-ai/admission-key", (route) => route.fulfill({
+            json: {
+                available: true,
+                source_mode: "upwork",
+                idempotency_key: "u".repeat(48),
+                key_expires_at: now + 1800,
+                cooldown_until: now + 1500,
+                reused_batch: true,
+                run: record("completed", {
+                    selected_count: 1,
+                    succeeded_count: 1,
+                    report_url: "/demo-ai/runs/01AAAAAAAAAAAAAAAAAAAAAAAA/report",
+                    download_url: "/demo-ai/runs/01AAAAAAAAAAAAAAAAAAAAAAAA/report.html",
+                    items: [{
+                        source_id: "UPW-~288888888888888888888",
+                        status: "succeeded",
+                        canonical_url: "https://www.upwork.com/jobs/~288888888888888888888",
+                        input: {
+                            title: "QA Engineer for Playwright Checkout Suite",
+                            description: "Build and verify three critical checkout Playwright journeys.",
+                            contract_type: "fixed",
+                            fixed_budget_usd: 1500,
+                            posted_at: "2026-11-14T11:30:00Z",
+                            skills: ["Playwright", "Quality Assurance"],
+                            client_payment_verified: true,
+                            client_country: "Slovakia",
+                        },
+                        result: {
+                            recommendation: "APPLY",
+                            reasons: [{
+                                criterion_id: "delivery_fit",
+                                explanation: "Bounded Playwright testing matches approved public profile.",
+                                evidence: [{ field: "input.title", quote: "Playwright Checkout Suite" }],
+                            }],
+                            missing_information: [],
+                        },
+                    }],
+                }),
+            },
+        }));
+        await enter(page);
+        await expect(page.getByRole("heading", { name: "Fresh Upwork alert evaluation" })).toBeVisible();
+        await expect(page.getByText("Evaluated Upwork alerts (1)")).toBeVisible();
+        await expect(page.getByText("QA Engineer for Playwright Checkout Suite")).toBeVisible();
+        await expect(page.getByText("Fixed-price: $1500 · Payment verified · Slovakia")).toBeVisible();
+        const upworkLink = page.getByRole("link", { name: /View job on Upwork/ });
+        await expect(upworkLink).toHaveAttribute("href", "https://www.upwork.com/jobs/~288888888888888888888");
+        await expect(page.getByRole("button", { name: /30-min refresh cooldown active/ })).toBeDisabled();
+        await page.setViewportSize({ width: 320, height: 720 });
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    });
 });

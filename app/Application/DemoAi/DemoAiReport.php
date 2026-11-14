@@ -2,6 +2,7 @@
 
 namespace App\Application\DemoAi;
 
+use App\Domain\DemoAi\ApprovedDemoInputs;
 use App\Models\DemoAiAttempt;
 use App\Models\DemoAiItem;
 use App\Models\DemoAiRun;
@@ -9,6 +10,16 @@ use Illuminate\Support\Arr;
 
 final class DemoAiReport
 {
+    public static function canonicalJobUrl(?string $sourceNamespace, string $sourceId): ?string
+    {
+        if ($sourceNamespace !== ApprovedDemoInputs::UPWORK_SOURCE_NAMESPACE
+            || preg_match('/^UPW-~(\d{1,26})$/D', $sourceId, $matches) !== 1) {
+            return null;
+        }
+
+        return 'https://www.upwork.com/jobs/~'.$matches[1];
+    }
+
     /** @return array<string, mixed> */
     public function snapshot(DemoAiRun $run): array
     {
@@ -31,24 +42,29 @@ final class DemoAiReport
             'approved_sha256' => $run->approved_snapshot_sha256,
             'version_hash' => $run->version_hash,
             'scan' => Arr::only($run->source_snapshot ?? [], ['scanned', 'bodies', 'duplicates', 'rejected']),
-            'items' => $items->map(fn (DemoAiItem $item): array => [
-                'source_id' => $item->source_id, 'status' => $item->status,
-                'input' => $item->input_snapshot, 'input_sha256' => $item->input_sha256,
-                'result' => $item->result, 'explanation' => self::explanation($item->failure_code),
-                'attempts' => ($attempts->get($item->id) ?? collect())->map(fn (DemoAiAttempt $attempt): array => [
-                    'number' => $attempt->attempt_number, 'status' => $attempt->status,
-                    'evaluation_started_at' => $attempt->inference_authorized_at?->toIso8601String(),
-                    'settled_at' => $attempt->settled_at?->toIso8601String(),
-                    'provider' => $attempt->request_provenance['provider'] ?? null,
-                    'requested_model' => $attempt->request_provenance['requested_model'] ?? null,
-                    'returned_model' => $attempt->returned_model,
-                    'provider_request_id' => $attempt->provider_request_id,
-                    'request_sha256' => $attempt->request_provenance['request_sha256'] ?? null,
-                    'settings' => Arr::only($attempt->request_provenance, [
-                        'reasoning_effort', 'store', 'service_tier', 'cache_lifetime', 'max_input_tokens', 'max_output_tokens',
-                    ]),
-                ])->all(),
-            ])->all(),
+            'items' => $items->map(function (DemoAiItem $item) use ($attempts): array {
+                $canonicalUrl = self::canonicalJobUrl($item->source_namespace, $item->source_id);
+
+                return [
+                    'source_id' => $item->source_id, 'status' => $item->status,
+                    ...($canonicalUrl !== null ? ['canonical_url' => $canonicalUrl] : []),
+                    'input' => $item->input_snapshot, 'input_sha256' => $item->input_sha256,
+                    'result' => $item->result, 'explanation' => self::explanation($item->failure_code),
+                    'attempts' => ($attempts->get($item->id) ?? collect())->map(fn (DemoAiAttempt $attempt): array => [
+                        'number' => $attempt->attempt_number, 'status' => $attempt->status,
+                        'evaluation_started_at' => $attempt->inference_authorized_at?->toIso8601String(),
+                        'settled_at' => $attempt->settled_at?->toIso8601String(),
+                        'provider' => $attempt->request_provenance['provider'] ?? null,
+                        'requested_model' => $attempt->request_provenance['requested_model'] ?? null,
+                        'returned_model' => $attempt->returned_model,
+                        'provider_request_id' => $attempt->provider_request_id,
+                        'request_sha256' => $attempt->request_provenance['request_sha256'] ?? null,
+                        'settings' => Arr::only($attempt->request_provenance, [
+                            'reasoning_effort', 'store', 'service_tier', 'cache_lifetime', 'max_input_tokens', 'max_output_tokens',
+                        ]),
+                    ])->all(),
+                ];
+            })->all(),
         ];
     }
 
