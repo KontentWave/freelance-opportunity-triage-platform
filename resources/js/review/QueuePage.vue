@@ -1,6 +1,11 @@
 <script setup>
 import { onMounted, reactive, ref, watch } from "vue";
+import EvaluatedProfileBox from "./EvaluatedProfileBox.vue";
 import { reviewRequest } from "./http.js";
+
+const props = defineProps({
+    evaluatedProfile: { type: Object, default: null },
+});
 
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
 const demoMode =
@@ -118,6 +123,18 @@ onMounted(async () => {
                 <button class="secondary-button" type="submit">Sign out</button>
             </form>
         </header>
+
+        <EvaluatedProfileBox
+            v-if="demoMode && props.evaluatedProfile"
+            class="mt-5"
+            :profile-data="props.evaluatedProfile"
+            :subtitle="
+                liveUpworkBatch
+                    ? &quot;Marcel's approved public profile evaluated by OpenAI against live Upwork job alerts (read-only)&quot;
+                    : &quot;Marcel's approved public profile evaluated by OpenAI against demo job alerts (read-only)&quot;
+            "
+            id-prefix="queue-ai-profile"
+        />
 
         <section aria-labelledby="filters-heading" class="filter-band">
             <h2 id="filters-heading">Filter queue</h2>

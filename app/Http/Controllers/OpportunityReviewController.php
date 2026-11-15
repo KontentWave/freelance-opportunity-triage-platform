@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Application\Review\ListReviewOpportunities;
 use App\Application\Review\ShowReviewOpportunity;
+use App\Domain\DemoAi\ApprovedDemoInputs;
 use App\Http\Resources\Review\OpportunityDetailResource;
 use App\Http\Resources\Review\OpportunityListResource;
 use App\Infrastructure\Triage\LocalScoringProfileLoader;
@@ -17,9 +18,13 @@ use Illuminate\View\View;
 
 final class OpportunityReviewController extends Controller
 {
-    public function index(): View
+    public function index(ApprovedDemoInputs $approved): View
     {
-        return view('review.index');
+        return view('review.index', [
+            'evaluatedProfile' => config('opportunity_review.mode') === 'demo'
+                ? $approved->publicProfilePayload()
+                : null,
+        ]);
     }
 
     public function show(

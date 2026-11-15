@@ -22,10 +22,23 @@ final class DemoAiRunEndpointTest extends TestCase
     {
         $this->configureUser();
         Queue::fake([ProcessDemoAiRun::class]);
+        $this->get('/demo-ai')
+            ->assertOk()
+            ->assertSee('data-evaluated-profile=', false)
+            ->assertSee('public-profile-v2')
+            ->assertSee('Slovakia-based Software Project');
         $key = $this->getJson('/demo-ai/admission-key')->assertOk()->json('idempotency_key');
-        $id = $this->postJson('/demo-ai/runs', ['idempotency_key' => $key])->assertAccepted()->json('id');
+        $id = $this->postJson('/demo-ai/runs', ['idempotency_key' => $key])
+            ->assertAccepted()
+            ->assertJsonPath('profile_version', 'public-profile-v2')
+            ->assertJsonPath('profile.geography', 'Slovakia')
+            ->json('id');
         $this->postJson('/demo-ai/runs', ['idempotency_key' => $key])->assertAccepted()->assertJsonPath('id', $id);
-        $this->getJson('/demo-ai/runs/'.$id)->assertOk()->assertJsonPath('status', 'queued');
+        $this->getJson('/demo-ai/runs/'.$id)
+            ->assertOk()
+            ->assertJsonPath('status', 'queued')
+            ->assertJsonPath('profile_version', 'public-profile-v2')
+            ->assertJsonPath('profile.availability', 'Maximum availability: 20 hours/week.');
         $this->getJson('/demo-ai/runs/'.$id)->assertTooManyRequests()->assertHeader('Retry-After', '2');
 
         $this->assertDatabaseCount('demo_ai_runs', 1);
