@@ -92,6 +92,38 @@ final class ApprovedDemoInputs
         return $snapshot;
     }
 
+    /**
+     * @return array{profile_version: string, profile: array<string, string>}|null
+     */
+    public function publicProfilePayload(): ?array
+    {
+        try {
+            $snapshot = $this->snapshot();
+        } catch (DemoAiException) {
+            return null;
+        }
+
+        if (! is_array($snapshot['profile'] ?? null)) {
+            return null;
+        }
+
+        $profile = [];
+        foreach ($snapshot['profile'] as $key => $value) {
+            if (is_string($key) && is_string($value)) {
+                $profile[$key] = $value;
+            }
+        }
+
+        if ($profile === []) {
+            return null;
+        }
+
+        return [
+            'profile_version' => (string) $snapshot['profile_version'],
+            'profile' => $profile,
+        ];
+    }
+
     public function versionHash(): string
     {
         if ($this->isUpworkMode()) {

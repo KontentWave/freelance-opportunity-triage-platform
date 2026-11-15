@@ -14,7 +14,10 @@
              data-source-mode="{{ config('demo_ai.source_mode', 'authored') }}"
              data-intent-url="{{ route('demo-ai.create', [], false) }}"
              data-admission-url="{{ route('demo-ai.store', [], false) }}"
-             data-status-base="{{ route('demo-ai.store', [], false) }}"></div>
+             data-status-base="{{ route('demo-ai.store', [], false) }}"
+             @if (($evaluatedProfile ?? null) !== null)
+                 data-evaluated-profile="{{ json_encode($evaluatedProfile, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) }}"
+             @endif></div>
     </main>
 </body>
 </html>

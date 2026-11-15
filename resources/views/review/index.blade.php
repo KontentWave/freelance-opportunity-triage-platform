@@ -11,6 +11,11 @@
 </head>
 <body>
     <a href="#main">Skip to review queue</a>
-    <main id="main"><div id="review-queue-app"></div></main>
+    <main id="main">
+        <div id="review-queue-app"
+             @if (($evaluatedProfile ?? null) !== null)
+                 data-evaluated-profile="{{ json_encode($evaluatedProfile, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) }}"
+             @endif></div>
+    </main>
 </body>
 </html>

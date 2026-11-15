@@ -22,6 +22,13 @@ final class ReviewDemoTest extends TestCase
     {
         $this->get('/demo')->assertNotFound();
         $this->post('/demo-session')->assertNotFound();
+
+        $user = User::factory()->create(['workspace_id' => Workspace::factory()]);
+        $this->actingAs($user)
+            ->get('/opportunities')
+            ->assertOk()
+            ->assertDontSee('data-evaluated-profile=', false)
+            ->assertDontSee('public-profile-v2');
     }
 
     #[Test]
@@ -56,6 +63,11 @@ final class ReviewDemoTest extends TestCase
         $this->assertGuest();
         $this->post('/demo-session')->assertRedirect(route('opportunities.index'));
         $this->assertAuthenticatedAs(User::query()->findOrFail(41001));
+        $this->get('/opportunities')
+            ->assertOk()
+            ->assertSee('data-evaluated-profile=', false)
+            ->assertSee('public-profile-v2')
+            ->assertSee('Slovakia-based Software Project');
 
         $opportunity = Opportunity::query()
             ->whereHas('workspace.users', fn ($query) => $query->whereKey(41001))

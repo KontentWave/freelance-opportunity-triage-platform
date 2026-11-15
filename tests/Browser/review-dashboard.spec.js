@@ -186,6 +186,27 @@ test.describe.serial("review dashboard acceptance", () => {
         await expect(
             page.evaluate(() => document.documentElement.scrollWidth <= 320),
         ).resolves.toBe(true);
+        const profileToggle = page.getByRole("button", {
+            name: /Evaluated freelancer profile/i,
+        });
+        await expect(profileToggle).toHaveAttribute("aria-expanded", "false");
+        await expect(
+            page.getByRole("textbox", {
+                name: /Approved public profile evaluated against job alerts/i,
+            }),
+        ).toHaveCount(0);
+        await profileToggle.click();
+        await expect(profileToggle).toHaveAttribute("aria-expanded", "true");
+        const profileBox = page.getByRole("textbox", {
+            name: /Approved public profile evaluated against job alerts/i,
+        });
+        await expect(profileBox).toHaveAttribute("readonly", "");
+        await expect(profileBox).toHaveValue(
+            /Identity:\nMarcel is a Slovakia-based Software Project/,
+        );
+        await expect(
+            page.evaluate(() => document.documentElement.scrollWidth <= 320),
+        ).resolves.toBe(true);
         await page.setViewportSize({ width: 640, height: 900 });
         await page.evaluate(() => {
             document.documentElement.style.zoom = "2";
@@ -196,6 +217,10 @@ test.describe.serial("review dashboard acceptance", () => {
         await page.evaluate(() => {
             document.documentElement.style.zoom = "";
         });
+        await profileToggle.click();
+        await expect(profileToggle).toHaveAttribute("aria-expanded", "false");
+        await page.setViewportSize({ width: 1280, height: 720 });
+        await page.evaluate(() => document.activeElement?.blur());
 
         await keyboardActivate(page, "Synthetic opportunity 03");
         await expect(

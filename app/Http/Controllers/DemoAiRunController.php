@@ -25,11 +25,13 @@ final class DemoAiRunController extends Controller
 
     public function __construct(private readonly DemoAiConfiguration $configuration) {}
 
-    public function index(Request $request): View
+    public function index(Request $request, ApprovedDemoInputs $approved): View
     {
         $this->context($request, false);
 
-        return view('review.ai');
+        return view('review.ai', [
+            'evaluatedProfile' => $approved->publicProfilePayload(),
+        ]);
     }
 
     public function create(Request $request, DemoAiLedger $ledger, ApprovedDemoInputs $approved): JsonResponse
@@ -152,7 +154,6 @@ final class DemoAiRunController extends Controller
                 ? "Upwork job alerts evaluated against Marcel's public profile"
                 : "Fictional demo alerts evaluated against Marcel's public profile",
             'items' => $this->formatItems($run, $workspace),
-            'profile_version' => $record->approved_snapshot['profile_version'] ?? null,
             'prompt_version' => $record->approved_snapshot['prompt_version'] ?? null,
         ])->header('Cache-Control', 'no-store');
     }
@@ -225,12 +226,16 @@ final class DemoAiRunController extends Controller
     /** @return array<string, mixed> */
     private function summary(DemoAiRun $run): array
     {
+        $storedProfile = $run->approved_snapshot['profile'] ?? null;
+
         return [
             'id' => $run->id, 'status' => $run->status, 'selected_count' => $run->selected_count,
             'succeeded_count' => $run->succeeded_count, 'failed_count' => $run->failed_count,
             'failure_code' => $run->failure_code, 'admitted_at' => $run->admitted_at,
             'deadline_at' => $run->deadline_at, 'finalized_at' => $run->finalized_at, 'expires_at' => $run->expires_at,
             'explanation' => DemoAiReport::explanation($run->failure_code),
+            'profile_version' => $run->approved_snapshot['profile_version'] ?? null,
+            'profile' => is_array($storedProfile) ? $storedProfile : null,
             'report_url' => $run->report_snapshot === null ? null : route('demo-ai.report', ['run' => $run->id], false),
             'download_url' => $run->report_snapshot === null ? null : route('demo-ai.download', ['run' => $run->id], false),
         ];

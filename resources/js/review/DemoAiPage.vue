@@ -1,11 +1,13 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
+import EvaluatedProfileBox from "./EvaluatedProfileBox.vue";
 
 const props = defineProps({
     sourceMode: { type: String, default: "authored" },
     intentUrl: { type: String, required: true },
     admissionUrl: { type: String, required: true },
     statusBase: { type: String, required: true },
+    evaluatedProfile: { type: Object, default: null },
 });
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
 const serverSourceMode = ref(null);
@@ -152,6 +154,16 @@ const allExpanded = computed(() =>
     && run.value.items.length > 0
     && run.value.items.every((item) => Boolean(expandedItems.value[item.source_id])),
 );
+
+const activeProfileData = computed(() => {
+    if (run.value?.profile && typeof run.value.profile === "object") {
+        return {
+            profile_version: run.value.profile_version ?? props.evaluatedProfile?.profile_version ?? null,
+            profile: run.value.profile,
+        };
+    }
+    return props.evaluatedProfile;
+});
 
 function panelId(sourceId) {
     return `alert-panel-${String(sourceId).replace(/[^a-zA-Z0-9_-]/g, "-")}`;
@@ -409,6 +421,15 @@ onBeforeUnmount(() => {
                 <a class="inline-link" href="/opportunities">Return to seeded review queue</a>
             </div>
         </header>
+        <EvaluatedProfileBox
+            :profile-data="activeProfileData"
+            :subtitle="
+                upworkMode
+                    ? &quot;Marcel's approved public profile evaluated by OpenAI against incoming Upwork job alerts (read-only)&quot;
+                    : &quot;Marcel's approved public profile evaluated by OpenAI against authored demo alerts (read-only)&quot;
+            "
+            id-prefix="demo-ai-profile"
+        />
         <section class="filter-band grid grid-cols-1 gap-4" aria-labelledby="evaluation-heading">
             <h2 id="evaluation-heading">Evaluation run</h2>
             <p v-if="ready && !available">Live mode is disabled or unavailable. The seeded review queue remains a static, synthetic demonstration, not a live AI result.</p>
